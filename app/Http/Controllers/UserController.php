@@ -23,6 +23,7 @@ class UserController extends Controller
             'company_name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8',
+            'confirmed_password' => 'required|same:password',
             'first_name' => 'required|string|max:50',
             'last_name' => 'required|string|max:50',
         ]);
@@ -95,6 +96,7 @@ class UserController extends Controller
                 Rule::unique(User::class)->ignore(User::where('email', $request->input('email'))->first()),
             ],
             'password' => 'required|string|min:8',
+            'confirmed_password' => 'required|same:password',
             'first_name' => 'required|string|max:50',
             'last_name' => 'required|string|max:50',
         ]);

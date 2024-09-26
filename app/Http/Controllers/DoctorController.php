@@ -37,6 +37,7 @@ class DoctorController extends Controller
                 'company_code' => 'required|string|max:255',
                 'email' => 'required|string|email:rfc,dns|max:255|unique:doctor__accounts',
                 'password' => 'required|string|min:8',
+                'confirmed_password' => 'required|same:password',
                 'first_name' => 'required|string|max:50',
                 'last_name' => 'required|string|max:50',
             ]);
