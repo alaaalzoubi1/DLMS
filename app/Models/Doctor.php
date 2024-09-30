@@ -11,7 +11,8 @@ class Doctor extends Model
 
     protected $fillable = [
         'first_name',
-         'last_name'
+         'last_name',
+        'clinic_name',
     ];
     public function subscribers()
     {

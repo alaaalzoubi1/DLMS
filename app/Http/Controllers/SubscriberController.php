@@ -5,16 +5,23 @@ namespace App\Http\Controllers;
 use App\Models\Subscriber;
 use App\Http\Requests\StoreSubscriberRequest;
 use App\Http\Requests\UpdateSubscriberRequest;
+use Illuminate\Http\Request;
 
 class SubscriberController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function check_company_code(Request $request)
     {
-        //
+        $companyExists = Subscriber::where('company_code', $request->company_code)->exists();
+
+        return response()->json([
+            'success' => $companyExists,
+            'message' => $companyExists ? 'Company code exists' : 'Company code does not exist',
+        ]);
     }
+
 
     /**
      * Show the form for creating a new resource.

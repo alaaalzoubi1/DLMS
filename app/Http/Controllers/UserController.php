@@ -61,7 +61,7 @@ class UserController extends Controller
             'token' => $token,
         ], 201);
     }
-    public function loginAdmin(Request $request)
+    public function login(Request $request)
     {
         $credentials = $request->only('email', 'password');
         try {
@@ -73,11 +73,14 @@ class UserController extends Controller
 
             $user = Auth::guard('admin')->user();
 
-            if (!$user->hasRole('admin')) {
-                return response()->json(['success' => false, 'error' => 'User does not have admin role'], 403);
-            }
 
-            return response()->json(['token' => $token]);
+
+            return response()->json(['token' => $token,
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
+                'role' => $user->getRoleNames()->first(),
+
+            ]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'error' => 'Failed to login, please try again.'], 500);
         }
@@ -156,7 +159,6 @@ class UserController extends Controller
     public function logout(Request $request)
     {
         try {
-
             Auth::guard('admin')->logout();
             return response()->json(['message' => 'Logged out successfully'], 200);
         } catch (\Exception $e) {

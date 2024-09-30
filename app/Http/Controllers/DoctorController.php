@@ -32,7 +32,7 @@ class DoctorController extends Controller
     }
     public function registerDoctor(Request $request)
     {
-        try {
+//        try {
             $validatedData = $request->validate([
                 'company_code' => 'required|string|max:255',
                 'email' => 'required|string|email:rfc,dns|max:255|unique:doctor__accounts',
@@ -40,6 +40,7 @@ class DoctorController extends Controller
                 'confirmed_password' => 'required|same:password',
                 'first_name' => 'required|string|max:50',
                 'last_name' => 'required|string|max:50',
+                'clinic_name' => 'required|string|max:50',
             ]);
             $subscriber = Subscriber::where('company_code', $validatedData['company_code'])->first();
             if (!$subscriber) {
@@ -50,6 +51,7 @@ class DoctorController extends Controller
             $doctor = Doctor::create([
                 'first_name' => $validatedData['first_name'],
                 'last_name' => $validatedData['last_name'],
+                'clinic_name' => $validatedData['clinic_name'],
             ]);
             $doctor_account = Doctor_Account::create([
                 'email' => $validatedData['email'],
@@ -67,24 +69,47 @@ class DoctorController extends Controller
             return response()->json(['message' => 'Doctor registered successfully',
                 'token' => $token], 201);
 
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'An error occurred while registering the doctor'], 500);
-        }
+//        } catch (\Exception $e) {
+//            return response()->json(['error' => 'An error occurred while registering the doctor'], 500);
+//        }
     }
+
+
     public function loginDoctor(Request $request)
     {
         $credentials = $request->only('email', 'password');
+
         try {
             $token = Auth::guard('api')->attempt($credentials);
 
             if (!$token) {
                 return response()->json(['success' => false, 'error' => 'Invalid credentials'], 401);
             }
-            return response()->json(['token' => $token]);
+
+            // Retrieve doctor information
+            $doctor = Doctor_Account::with('doctor')->where('email', $request->email)->first();
+
+            if (!$doctor) {
+                return response()->json(['success' => false, 'error' => 'Doctor not found'], 404);
+            }
+
+
+            $response = [
+                'token' => $token,
+                'doctor' => [
+                    'first_name' => $doctor->doctor->first_name,
+                    'last_name' => $doctor->doctor->last_name,
+                    'clinic_name' => $doctor->doctor->clinic_name,
+                ]
+            ];
+
+            return response()->json($response);
+
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'error' => 'Failed to login, please try again.'], 500);
         }
     }
+
     public function logout(Request $request)
     {
         try {
