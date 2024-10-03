@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Subscriber;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -14,10 +15,15 @@ class SubscriberFactory extends Factory
      *
      * @return array<string, mixed>
      */
-    public function definition(): array
+    protected $model =  Subscriber::class;
+
+    public function definition()
     {
         return [
-            //
+            'company_name' => $this->faker->company,
+            'company_code' => $this->faker->unique()->bothify('???????'),
+            'trial_start_at' => now()->addDays(rand(30, 90)),
+            'trial_end_at' => now()->addMonths(rand(6, 12)),
         ];
     }
 }

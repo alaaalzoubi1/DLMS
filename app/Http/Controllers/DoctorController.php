@@ -119,6 +119,17 @@ class DoctorController extends Controller
             return response()->json(['success' => false, 'error' => 'Failed to log out'], 500);
         }
     }
+
+
+    public function getDoctors(Request $request)
+    {
+        $user = Auth::user();
+        $subscriberDoctors = Subscriber_Doctor::with('doctor.account')
+            ->where('subscriber_id','=',$user->subscriber_id)->get();
+        return response()->json($subscriberDoctors);
+    }
+
+
     /**
      * Show the form for creating a new resource.
      */
@@ -140,7 +151,7 @@ class DoctorController extends Controller
      */
     public function show(Doctor $doctor)
     {
-        //
+
     }
 
     /**
@@ -166,4 +177,5 @@ class DoctorController extends Controller
     {
         //
     }
+
 }

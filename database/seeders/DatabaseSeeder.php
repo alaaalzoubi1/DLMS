@@ -3,6 +3,11 @@
 namespace Database\Seeders;
 
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Doctor;
+use App\Models\Doctor_Account;
+use App\Models\Subscriber;
+use App\Models\Subscriber_Doctor;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
 
@@ -22,6 +27,14 @@ class DatabaseSeeder extends Seeder
         // ]);
         Role::create(['name' => 'admin' , 'guard_name' => 'admin']);
         Role::create(['name' => 'technical','guard_name' => 'admin']);
+        Subscriber::factory()->count(100)->create();
 
+        User::factory()->count(100)->create();
+
+        Doctor::factory()->count(50)->create();
+
+        Subscriber_Doctor::factory()->count(500)->create();
+
+        Doctor_Account::factory()->count(50)->create();
     }
 }

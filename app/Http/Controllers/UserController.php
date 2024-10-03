@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Subscriber;
+use App\Models\Subscriber_Doctor;
 use App\Models\User;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -165,5 +166,19 @@ class UserController extends Controller
             return response()->json(['success' => false, 'error' => 'Failed to log out'], 500);
         }
     }
+    public function getTechnical(Request $request)
+    {
+        $user = Auth::user();
+
+        $technicalRole = Role::where('name', 'technical')->first();
+
+        $technicals = User::whereHas('roles', function ($query) use ($user) {
+            $query->where('name', 'technical')
+                ->where('subscriber_id', $user->subscriber_id);
+        })->get();
+
+        return response()->json($technicals);
+    }
+
 
 }

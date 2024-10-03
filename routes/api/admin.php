@@ -11,6 +11,10 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('/login-admin', [UserController::class, 'loginAdmin']);
 Route::post('/register-company', [UserController::class, 'registerCompany']);
-Route::middleware(['auth:admin'])->group(function () {
+
+
+Route::middleware(['auth:admin', 'admin.role'])->group(function () {
     Route::get('logout', [UserController::class, 'logout']);
+    Route::get('get-doctors',[DoctorController::class,'getDoctors']);
+    Route::get('get-technicals',[UserController::class,'getTechnical']);
 });
