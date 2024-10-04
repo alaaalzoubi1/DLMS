@@ -32,7 +32,7 @@ class DoctorController extends Controller
     }
     public function registerDoctor(Request $request)
     {
-//        try {
+        try {
             $validatedData = $request->validate([
                 'company_code' => 'required|string|max:255',
                 'email' => 'required|string|email:rfc,dns|max:255|unique:doctor__accounts',
@@ -66,12 +66,19 @@ class DoctorController extends Controller
             ]);
             $credentials = ['email' => $validatedData['email'], 'password' => $validatedData['password']];
             $token = Auth::guard('api')->attempt($credentials);
-            return response()->json(['message' => 'Doctor registered successfully',
-                'token' => $token], 201);
+            $response = [
+                'token' => $token,
+                'doctor' => [
+                    'first_name' => $doctor->first_name,
+                    'last_name' => $doctor->last_name,
+                    'clinic_name' => $doctor->clinic_name,
+                ]
+            ];
+            return response()->json($response, 201);
 
-//        } catch (\Exception $e) {
-//            return response()->json(['error' => 'An error occurred while registering the doctor'], 500);
-//        }
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'An error occurred while registering the doctor'], 500);
+        }
     }
 
 
