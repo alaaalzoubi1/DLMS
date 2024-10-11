@@ -30,4 +30,8 @@ class Subscriber extends Model
     {
         return $this->belongsToMany(Specialization::class)->withTimestamps();
     }
+    public function users()
+    {
+        return $this->hasMany(User::class);
+    }
 }

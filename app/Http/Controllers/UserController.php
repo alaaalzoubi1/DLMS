@@ -65,7 +65,7 @@ class UserController extends Controller
     public function login(Request $request)
     {
         $credentials = $request->only('email', 'password');
-        try {
+//        try {
             $token = Auth::guard('admin')->attempt($credentials);
 
             if (!$token) {
@@ -73,18 +73,27 @@ class UserController extends Controller
             }
 
             $user = Auth::guard('admin')->user();
+            $subscriber = Subscriber::find($user->subscriber_id);
 
+            if ($user->hasRole('technical')){
+                return response()->json(['token' => $token,
+                    'first_name' => $user->first_name,
+                    'last_name' => $user->last_name,
+                    'company_name'=> $subscriber->company_name,
+                    'role' => $user->getRoleNames()->first(),
 
-
+                ]);
+            }
             return response()->json(['token' => $token,
                 'first_name' => $user->first_name,
                 'last_name' => $user->last_name,
                 'role' => $user->getRoleNames()->first(),
-
+                'company'=> $subscriber,
             ]);
-        } catch (\Exception $e) {
-            return response()->json(['success' => false, 'error' => 'Failed to login, please try again.'], 500);
-        }
+
+//        } catch (\Exception $e) {
+//            return response()->json(['success' => false, 'error' => 'Failed to login, please try again.'], 500);
+//        }
     }
 
 
@@ -133,6 +142,7 @@ class UserController extends Controller
             'last_name' => $validatedData['last_name'],
             'trial_start_at' => $subscriber->trial_start_at,
             'trial_end_at' => $subscriber->trial_end_at,
+            'company_name' => $subscriber->company_name,
             'token' => $token,
         ], 201);
     }
@@ -152,7 +162,9 @@ class UserController extends Controller
                 return response()->json(['success' => false, 'error' => 'User does not have admin role'], 403);
             }
 
-            return response()->json(['token' => $token]);
+            return response()->json([
+                'company_name'=> $user->subscribers->company_name,
+                'token' => $token]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'error' => 'Failed to login, please try again.'], 500);
         }

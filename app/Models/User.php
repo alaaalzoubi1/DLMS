@@ -71,4 +71,8 @@ class User extends Authenticatable  implements ShouldQueue , JWTSubject
     {
         return $this->hasMany(Order::class);
     }
+    public function subscribers()
+    {
+        return $this->belongsTo(Subscriber::class);
+    }
 }
