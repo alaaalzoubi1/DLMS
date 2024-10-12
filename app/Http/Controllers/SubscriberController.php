@@ -14,12 +14,15 @@ class SubscriberController extends Controller
      */
     public function check_company_code(Request $request)
     {
-        $companyExists = Subscriber::where('company_code', $request->company_code)->exists();
-
-        return response()->json([
-            'success' => $companyExists,
-            'message' => $companyExists ? 'Company code exists' : 'Company code does not exist',
-        ]);
+        $companyExists = Subscriber::where('company_code', $request->company_code)->select('company_name')->first();
+        if ($companyExists==null){
+            return response()->json([
+                'message' => 'company not exist'
+            ]);
+        }
+        return response()->json(
+             $companyExists
+        );
     }
 
 
