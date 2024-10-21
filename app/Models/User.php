@@ -65,8 +65,13 @@ class User extends Authenticatable  implements ShouldQueue , JWTSubject
     }
     public function specializations()
     {
-        return $this->belongsToMany(Specialization::class)->withTimestamps();
+        return $this->belongsToMany(Specialization::class, 'specialization__users', 'user_id', 'subscriber_specializations_id')
+            ->join('specialization__subscribers', 'specialization__users.subscriber_specializations_id', '=', 'specialization__subscribers.id')
+            ->join('specializations as sub_specializations', 'specialization__subscribers.specializations_id', '=', 'sub_specializations.id')
+            ->select('sub_specializations.name');
     }
+
+
     public function orders()
     {
         return $this->hasMany(Order::class);

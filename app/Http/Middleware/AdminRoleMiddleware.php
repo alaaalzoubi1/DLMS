@@ -10,11 +10,13 @@ class AdminRoleMiddleware
     public function handle($request, Closure $next)
     {
         if (Auth::guard('admin')->check()) {
-            if (Auth::guard('admin')->user()->hasRole('admin')) {
-                return $next($request);
-            }
+                if (Auth::guard('admin')->user()->hasRole('admin')) {
+                    return $next($request);
+                }
         }
 
-        abort(403,"Unauthenticated");
+
+
+        abort(403,"Unauthenticated  ");
     }
 }

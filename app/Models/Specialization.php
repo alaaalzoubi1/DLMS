@@ -23,4 +23,7 @@ class Specialization extends Model
     {
         return $this->hasMany(Order::class);
     }
+    public function specialization_subscribers(){
+        return $this->hasMany(Specialization_Subscriber::class);
+    }
 }

@@ -181,7 +181,7 @@ class UserController extends Controller
     public function getTechnical(Request $request)
     {
         $user = Auth::user();
-        $technicals = User::whereHas('roles', function ($query) use ($user) {
+        $technicals = User::with('specializations')->whereHas('roles', function ($query) use ($user) {
             $query->where('name', 'technical')
                 ->where('subscriber_id', $user->subscriber_id);
         })->get();
