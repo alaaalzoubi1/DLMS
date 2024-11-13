@@ -27,14 +27,14 @@ class DatabaseSeeder extends Seeder
         // ]);
         Role::create(['name' => 'admin' , 'guard_name' => 'admin']);
         Role::create(['name' => 'technical','guard_name' => 'admin']);
-        Subscriber::factory()->count(100)->create();
-
-        User::factory()->count(100)->create();
-
-        Doctor::factory()->count(50)->create();
-
-        Subscriber_Doctor::factory()->count(500)->create();
-
-        Doctor_Account::factory()->count(50)->create();
+//        Subscriber::factory()->count(100)->create();
+//
+//        User::factory()->count(100)->create();
+//
+//        Doctor::factory()->count(50)->create();
+//
+//        Subscriber_Doctor::factory()->count(500)->create();
+//
+//        Doctor_Account::factory()->count(50)->create();
     }
 }

@@ -12,7 +12,7 @@ class Doctor extends Model
     protected $fillable = [
         'first_name',
          'last_name',
-        'clinic_name',
+        'clinic_id',
     ];
     public function subscribers()
     {
@@ -29,5 +29,9 @@ class Doctor extends Model
     public function orders()
     {
         return $this->hasMany(Order::class);
+    }
+    public function clinic()
+    {
+        return $this->belongsTo(Clinic::class);
     }
 }

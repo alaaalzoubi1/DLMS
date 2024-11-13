@@ -27,6 +27,7 @@ class UserController extends Controller
             'confirmed_password' => 'required|same:password',
             'first_name' => 'required|string|max:50',
             'last_name' => 'required|string|max:50',
+            'tax_number' => 'nullable|string|max:20|unique:subscribers',
         ]);
 
         $companyCode = Str::slug($validatedData['company_name']) . Str::random(3);
@@ -38,6 +39,7 @@ class UserController extends Controller
             'company_code' => strtoupper($companyCode),
             'trial_start_at' => $trial_start_at,
             'trial_end_at' => $trial_end_at,
+            'tax_number' => $validatedData['tax_number'],
         ]);
 
         $user = User::create([
@@ -57,11 +59,13 @@ class UserController extends Controller
             'company_code' => strtoupper($subscriber->company_code),
             'first_name' => $validatedData['first_name'],
             'last_name' => $validatedData['last_name'],
+            'tax_number' => $subscriber->tax_number,
             'trial_start_at' => $trial_start_at,
             'trial_end_at' => $trial_end_at,
             'token' => $token,
         ], 201);
     }
+
     public function login(Request $request)
     {
         $credentials = $request->only('email', 'password');

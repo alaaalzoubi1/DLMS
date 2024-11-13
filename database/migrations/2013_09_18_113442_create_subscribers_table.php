@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('company_code')->unique();
             $table->dateTime('trial_start_at');
             $table->dateTime('trial_end_at');
+            $table->string('tax_number')->nullable()->unique();
             $table->timestamps();
         });
     }

@@ -13,6 +13,7 @@ class Subscriber extends Model
         'company_code',
         'trial_start_at',
         'trial_end_at',
+        'tax_number',
         ];
     public function doctors()
     {

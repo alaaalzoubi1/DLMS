@@ -10,11 +10,15 @@ class Product extends Model
     use HasFactory;
     protected $fillable = [
         'name',
-        'subscriber_id',
+        'category_id',
     ];
 
-    public function subscriber()
+    public function category()
     {
-        return $this->belongsTo(Subscriber::class);
+        return $this->belongsTo(Category::class);
+    }
+    public function clinics()
+    {
+        return $this->hasMany(ClinicProduct::class);
     }
 }

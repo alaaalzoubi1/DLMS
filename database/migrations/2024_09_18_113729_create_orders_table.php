@@ -17,16 +17,24 @@ return new class extends Migration
             $table->unsignedBigInteger('user_id');
 
             $table->enum('status', ['pending', 'completed', 'cancelled']);
-            $table->boolean('paid')->default(false);
+
+
+            $table->enum('type', ['futures', 'new', 'test','returned']);
+            $table->boolean('invoiced')->default(true);
+            $table->integer('paid')->default(0);
             $table->integer('cost');
             $table->string('patient_name');
-            $table->date('order_date');
+            $table->date('receive');
+            $table->date('delivery')->nullable();
             $table->string('patient_id');
-            $table->unsignedBigInteger('sub_spec_id');
+            $table->string('specialization');
+            $table->string(' tooth_number');
+            $table->unsignedBigInteger('tooth_color_id');
+
+            $table->foreign('tooth_color_id')->references('id')->on('tooth_colors')->onDelete('cascade');
 
             $table->foreign('doctor_id')->references('id')->on('doctors')->onDelete('cascade');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-            $table->foreign('sub_spec_id')->references('id')->on('specializations')->onDelete('cascade');
 
             $table->timestamps();
         });
