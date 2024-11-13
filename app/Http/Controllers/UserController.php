@@ -55,13 +55,6 @@ class UserController extends Controller
         $token = auth('admin')->attempt($credentials);
         return response()->json([
             'message' => 'Company registered successfully',
-            'company_name' => $validatedData['company_name'],
-            'company_code' => strtoupper($subscriber->company_code),
-            'first_name' => $validatedData['first_name'],
-            'last_name' => $validatedData['last_name'],
-            'tax_number' => $subscriber->tax_number,
-            'trial_start_at' => $trial_start_at,
-            'trial_end_at' => $trial_end_at,
             'token' => $token,
         ], 201);
     }
@@ -69,37 +62,26 @@ class UserController extends Controller
     public function login(Request $request)
     {
         $credentials = $request->only('email', 'password');
-//        try {
+        try {
             $token = Auth::guard('admin')->attempt($credentials);
-
             if (!$token) {
                 return response()->json(['success' => false, 'error' => 'Invalid credentials'], 401);
             }
-
-            $user = Auth::guard('admin')->user();
-            $subscriber = Subscriber::find($user->subscriber_id);
-
-            if ($user->hasRole('technical')){
-                return response()->json(['token' => $token,
-                    'first_name' => $user->first_name,
-                    'last_name' => $user->last_name,
-                    'company_name'=> $subscriber->company_name,
-                    'role' => $user->getRoleNames()->first(),
-
-                ]);
-            }
-            return response()->json(['token' => $token,
-                'first_name' => $user->first_name,
-                'last_name' => $user->last_name,
-                'role' => $user->getRoleNames()->first(),
-                'company'=> $subscriber,
+            return response()->json(['token' => $token
             ]);
-
-//        } catch (\Exception $e) {
-//            return response()->json(['success' => false, 'error' => 'Failed to login, please try again.'], 500);
-//        }
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'error' => 'Failed to login, please try again.'], 500);
+        }
     }
-
+    public function adminInfo()
+    {
+        $admin = auth()->user();
+        $company = Subscriber::where('id',$admin->subscriber_id)->first();
+        return response()->json([
+            'admin' => $admin,
+            'company' => $company
+        ]);
+    }
 
     public function registerTechnical(Request $request)
     {

@@ -16,6 +16,7 @@ Route::post('/register-company', [UserController::class, 'registerCompany']);
 
 
 Route::middleware(['auth:admin', 'admin.role'])->group(function () {
+    Route::get('admin-info', [UserController::class,'adminInfo']);
     Route::get('logout', [UserController::class, 'logout']);
     Route::get('get-doctors',[DoctorController::class,'getDoctors']);
     Route::get('get-technicals',[UserController::class,'getTechnical']);
