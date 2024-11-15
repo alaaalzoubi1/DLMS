@@ -4,6 +4,7 @@
 use App\Http\Controllers\Api\RegisterController;
 
 use App\Http\Controllers\Api\LoginController;
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DoctorController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SpecializationController;
@@ -17,12 +18,15 @@ Route::post('/register-company', [UserController::class, 'registerCompany']);
 
 Route::middleware(['auth:admin', 'admin.role'])->group(function () {
     Route::get('admin-info', [UserController::class,'adminInfo']);
+    Route::post('add-category',[CategoryController::class,'store']);
+    Route::get('show-categories', [CategoryController::class,'show']);
+    Route::get('delete-category/{id}',[CategoryController::class,'delete']);
+    Route::post('add-product',[ProductController::class,'store']);
+    Route::get('showProductsByCategory/{category_id}',[ProductController::class,'showByCategory']);
+    Route::get('delete-product/{id}',[ProductController::class,'delete']);
+    Route::post('update-price',[ProductController::class,'updatePrice']);
     Route::get('logout', [UserController::class, 'logout']);
     Route::get('get-doctors',[DoctorController::class,'getDoctors']);
     Route::get('get-technicals',[UserController::class,'getTechnical']);
-    Route::post('add-product',[ProductController::class,'create']);
-    Route::get('get-products',[ProductController::class,'show']);
-    Route::post('edit-product',[ProductController::class,'update']);
-    Route::post('delete-product',[ProductController::class,'delete']);
     Route::post('add-specialization',[SpecializationController::class,'addSpecialization']);
 });

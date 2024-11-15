@@ -2,126 +2,119 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
 use App\Models\Product;
-use App\Http\Requests\StoreProductRequest;
-use App\Http\Requests\UpdateProductRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class ProductController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Store a newly created product in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function index()
+    public function store(Request $request)
     {
-        //
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create(Request $request)
-    {
+        // Validate the request data
         $validatedData = $request->validate([
-            'name' => 'required|string|max:50',
+            'category_id' => 'required|exists:categories,id',
+            'name' => 'required|string|max:255',
+            'price' => 'required|numeric',
         ]);
-        $user = Auth::user();
-        $product = Product::create([
-           'subscriber_id' => $user->subscriber_id,
-           'name' =>  $validatedData['name'],
-        ]);
-        return response()->json(
-        [$product],201);
-    }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(StoreProductRequest $request)
-    {
-        //
-    }
+        // Try to find the product by name and category_id
+        $product = Product::where('name', $validatedData['name'])
+            ->where('category_id', $validatedData['category_id'])
+            ->first();
 
-    /**
-     * Display the specified resource.
-     */
-    public function show()
-    {
-        $user = Auth::user();
-        $products = Product::where('subscriber_id','=',$user->subscriber_id)->get();
-        if ($products==null){
-            return response()->json([
-                'message'=>'you don\'t have products to show'
+        if ($product) {
+            // If the product exists and is_deleted is true, update it
+            if ($product->is_deleted) {
+                $product->price = $validatedData['price'];
+                $product->is_deleted = false;
+                $product->save();
+                $message = 'Product restored and updated successfully';
+            } else {
+                $message = 'Product already exists';
+            }
+        } else {
+            // Create the product if it doesn't exist
+            $product = Product::create([
+                'category_id' => $validatedData['category_id'],
+                'name' => $validatedData['name'],
+                'price' => $validatedData['price'],
             ]);
+            $message = 'Product created successfully';
         }
+
         return response()->json([
-            'products' => $products
-        ]);
+            'message' => $message,
+        ], 201);
     }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Product $product)
+    public function showByCategory($category_id)
     {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request)
-    {
-        try {
-
-            $product = Product::find($request->id);
-
-            if (!$product) {
-                throw new \Exception("Product not found");
-            }
-            $product->name = $request->newName;
-
-            if ($product->save()) {
-                return response()->json(["message" => "name updated successfully"]);
-            } else {
-                throw new \Exception("Failed to update product");
-            }
-        } catch (\Exception $e) {
-            return response()->json(["message" => $e->getMessage()]);
-        }
-    }
-    public function delete(Request $request)
-    {
-        try {
-            $product = Product::find($request->id);
-
-            if (!$product) {
-                throw new \Exception("Product not found");
-            }
-
-            if ($product->delete()) {
-                return response()->json([
-                    "message" => "Product deleted successfully",
-                    "deleted_id" => $product->id,
-                ]);
-            } else {
-                throw new \Exception("Failed to delete product");
-            }
-        } catch (\Exception $e) {
+        if (!is_numeric($category_id) || $category_id <= 0) {
             return response()->json([
-                "message" => $e->getMessage(),
-                "error_code" => 500,
-            ], 500);
+                'message' => 'Invalid ID format',
+            ], 400);
         }
+        // Check if the category_id exists
+        if (!Category::where('id', $category_id)->exists()) {
+            return response()->json([
+                'message' => 'Category not found'
+            ], 404);
+        }
+
+        $products = Product::where('category_id', $category_id)
+            ->where('is_deleted', false)
+            ->select('name','price','id')
+            ->get();
+
+        return response()->json([
+            'products' => $products,
+        ], 200);
     }
-
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Product $product)
+    public function delete($id)
     {
-        //
+        if (!is_numeric($id) || $id <= 0) {
+            return response()->json([
+                'message' => 'Invalid ID format',
+            ], 400);
+        }
+
+        $product = Product::find($id);
+
+        if (!$product) {
+            return response()->json([
+                'message' => 'Product not found',
+            ], 404);
+        }
+
+        $product->is_deleted = true;
+        $product->save();
+
+        return response()->json([
+            'message' => 'Product deleted successfully',
+        ], 200);
     }
+
+    public function updatePrice(Request $request) {
+        $validatedData = $request->validate
+        ([ 'price' => 'required|numeric',
+            ]);
+        $id = $request->id;
+        if (!is_numeric($id) || $id <= 0) {
+            return response()->json([
+                'message' => 'Invalid ID format',
+            ], 400);
+        }
+        $product = Product::find($request->id);
+        if (!$product) {
+            return response()->json([ 'message' => 'Product not found' ], 404);
+        }
+        $product->price = $validatedData['price'];
+        $product->save();
+        return response()->json([ 'message' => 'Product price updated successfully', 'product' => $product, ], 200); }
 }
