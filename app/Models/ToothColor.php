@@ -8,4 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 class ToothColor extends Model
 {
     use HasFactory;
+    protected $fillable = [
+        'color',
+        'subscriber_id',
+    ];
 }

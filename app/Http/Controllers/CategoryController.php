@@ -71,6 +71,6 @@ class CategoryController extends Controller
         $category->save();
         return response()->json([
             'message' => 'Category deleted successfully',
-        ]);
+        ],200);
     }
 }

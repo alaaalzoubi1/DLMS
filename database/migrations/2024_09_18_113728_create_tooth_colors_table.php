@@ -16,6 +16,7 @@ return new class extends Migration
             $table->unsignedBigInteger('subscriber_id');
             $table->foreign('subscriber_id')->references('id')->on('subscribers')->onDelete('cascade');
             $table->string('color');
+            $table->boolean('is_deleted')->default(false);
             $table->timestamps();
         });
     }
