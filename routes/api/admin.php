@@ -24,6 +24,7 @@ Route::middleware(['auth:admin', 'admin.role'])->group(function () {
     Route::get('delete-category/{id}',[CategoryController::class,'delete']);
     Route::post('add-product',[ProductController::class,'store']);
     Route::get('showProductsByCategory/{category_id}',[ProductController::class,'showByCategory']);
+    Route::post('edit-category',[CategoryController::class,'update']);
     Route::get('delete-product/{id}',[ProductController::class,'delete']);
     Route::post('update-price',[ProductController::class,'updatePrice']);
     Route::post('add-toothColor',[ToothColorController::class,'add']);

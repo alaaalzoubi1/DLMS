@@ -73,4 +73,27 @@ class CategoryController extends Controller
             'message' => 'Category deleted successfully',
         ],200);
     }
+    public function update(Request $request)
+    {
+        $validatedData = $request->validate([
+            'name' => 'required|string|max:255',
+        ]);
+        if (!is_numeric($request->id) || $request->id <= 0) {
+            return response()->json([
+                'message' => 'Invalid ID format',
+            ], 400);
+        }
+        $category = Category::find($request->id);
+        if (!$category) {
+            return response()->json([
+                'message' => 'Category not found'
+            ],404);
+        }
+        $category->name = $validatedData['name'];
+        $category->save();
+        return response()->json([
+            'message' => 'Category updated successfully',
+            'category' => $category, ], 200);
+
+}
 }
