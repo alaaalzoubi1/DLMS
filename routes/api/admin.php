@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\RegisterController;
 
 use App\Http\Controllers\Api\LoginController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\ClinicController;
 use App\Http\Controllers\DoctorController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SpecializationController;
@@ -34,4 +35,9 @@ Route::middleware(['auth:admin', 'admin.role'])->group(function () {
     Route::get('get-doctors',[DoctorController::class,'getDoctors']);
     Route::get('get-technicals',[UserController::class,'getTechnical']);
     Route::post('add-specialization',[SpecializationController::class,'addSpecialization']);
+    Route::post('clinics', [ClinicController::class, 'store']);
+    Route::get('clinics', [ClinicController::class, 'show']);
+    Route::put('clinics/{id}', [ClinicController::class, 'edit']);
+    Route::delete('/clinics/{id}', [ClinicController::class, 'destroy']);
+
 });
