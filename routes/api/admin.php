@@ -39,5 +39,12 @@ Route::middleware(['auth:admin', 'admin.role'])->group(function () {
     Route::get('clinics', [ClinicController::class, 'show']);
     Route::put('clinics/{id}', [ClinicController::class, 'edit']);
     Route::delete('/clinics/{id}', [ClinicController::class, 'destroy']);
+    Route::post('doctors', [DoctorController::class, 'store']);
+    Route::get('doctors/{id}', [DoctorController::class, 'show']);
+    Route::delete('doctors/{id}', [DoctorController::class, 'destroy']);
+    Route::post('specializations', [SpecializationController::class, 'store']);
+    Route::get('specializations', [SpecializationController::class, 'getSpecializationsBySubscriber']);
+    Route::delete('specializations/{id}',[SpecializationController::class,'delete']);
+
 
 });

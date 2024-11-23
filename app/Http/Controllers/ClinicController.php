@@ -45,7 +45,7 @@ class ClinicController extends Controller
         }
 
         // Fetch all clinics associated with the subscriber_id
-        $clinics = Clinic::whereHas('subscribers', function ($query) use ($subscriberId) {
+        $clinics = Clinic::with('doctors')->whereHas('subscribers', function ($query) use ($subscriberId) {
             $query->where('subscriber_id', $subscriberId);
         })->get();
 
