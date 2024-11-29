@@ -53,7 +53,18 @@ class DoctorController extends Controller
             'doctor' => $doctor,
         ], 200);
     }
-
+    public function doctorsByClinic($id)
+    {
+        if (!is_numeric($id) || $id <= 0) {
+            return response()->json([
+                'message' => 'Invalid ID format',
+            ], 400);
+        }
+        $doctors = Doctor::where('clinic_id',$id)->get();
+        return response()->json([
+            'doctors' =>$doctors
+        ]);
+    }
     /**
      * Remove the specified doctor from storage.
      *

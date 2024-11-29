@@ -41,10 +41,10 @@ Route::middleware(['auth:admin', 'admin.role'])->group(function () {
     Route::delete('/clinics/{id}', [ClinicController::class, 'destroy']);
     Route::post('doctors', [DoctorController::class, 'store']);
     Route::get('doctors/{id}', [DoctorController::class, 'show']);
+    Route::get('doctorsByClinic/{id}', [DoctorController::class, 'doctorsByClinic']);
     Route::delete('doctors/{id}', [DoctorController::class, 'destroy']);
     Route::post('specializations', [SpecializationController::class, 'store']);
     Route::get('specializations', [SpecializationController::class, 'getSpecializationsBySubscriber']);
     Route::delete('specializations/{id}',[SpecializationController::class,'delete']);
-
 
 });
