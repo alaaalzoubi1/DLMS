@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Clinic;
+use App\Models\ClinicProduct;
 use App\Models\ClinicSubscriber;
+use App\Models\Product;
 use Illuminate\Http\Request;
 
 class ClinicController extends Controller
@@ -61,9 +63,20 @@ class ClinicController extends Controller
             'tax_number' => 'nullable|string|unique:clinics,tax_number',
         ]);
 
-        $clinic = Clinic::findOrFail($id);
+        $clinic = Clinic::find($id);
+        if (!$clinic) {
+            return response()->json([
+                'message' => 'Clinic not found'
+            ],404);
+        }
 
-        $clinic->update($validated);
+        if ($request->exists('name'))
+            $clinic->name = $validated['name'];
+        if ($request->exists('has_special_price'))
+            $clinic->has_special_price = $validated['has_special_price'];
+        if ($request->exists('tax_number')) {
+            $clinic->tax_number = $validated['tax_number'];
+        }
 
         return response()->json([
             'message' => 'Clinic updated successfully!',
@@ -96,6 +109,75 @@ class ClinicController extends Controller
             ], 500);
         }
     }
+    public function addSpecialPrice(Request $request)
+    {
+        $validatedData = $request->validate([
+            'clinic_id' => 'required|exists:clinics,id',
+            'product_id' => 'required|exists:products,id',
+            'price' => 'required|numeric|min:0',
+        ]);
+
+        // Use updateOrCreate to handle clinic-product pricing
+        $clinicProduct = ClinicProduct::updateOrCreate(
+            [
+                'clinic_id' => $validatedData['clinic_id'],
+                'product_id' => $validatedData['product_id'],
+            ],
+            [
+                'price' => $validatedData['price'],
+            ]
+        );
+
+        // Update the clinic's has_special_price flag if not already true
+        Clinic::where('id', $validatedData['clinic_id'])
+            ->where('has_special_price', false)
+            ->update(['has_special_price' => true]);
+
+        return response()->json([
+            'message' => 'Special price added successfully',
+            'clinic_product' => $clinicProduct,
+        ]);
+    }
+    public function deleteSpecialPrice(Request $request)
+    {
+        $validatedData = $request->validate([
+            'clinic_id' => 'required',
+            'product_id' => 'required',
+        ]);
+        if (!is_numeric($validatedData['clinic_id']) || $validatedData['clinic_id'] <= 0) {
+            return response()->json([
+                'message' => 'Invalid clinic_id format',
+            ], 400);
+        }
+        if (!is_numeric($validatedData['product_id']) || $validatedData['product_id'] <= 0) {
+            return response()->json([
+                'message' => 'Invalid product_id format',
+            ], 400);
+        }
+        $deleted = ClinicProduct::where('clinic_id', $validatedData['clinic_id'])
+            ->where('product_id', $validatedData['product_id'])
+            ->delete();
+        $remainingSpecialPrices = ClinicProduct::where('clinic_id', $validatedData['clinic_id'])->exists();
+
+        if (!$remainingSpecialPrices) {
+            Clinic::where('id', $validatedData['clinic_id'])->update(['has_special_price' => false]);
+        }
+
+        // Check if the record was deleted
+        if ($deleted) {
+            return response()->json([
+                'message' => 'Special price deleted successfully',
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'No special price found for the specified clinic and product',
+        ], 404);
+    }
+
+
+
+
 
 
 }

@@ -46,5 +46,9 @@ Route::middleware(['auth:admin', 'admin.role'])->group(function () {
     Route::post('specializations', [SpecializationController::class, 'store']);
     Route::get('specializations', [SpecializationController::class, 'getSpecializationsBySubscriber']);
     Route::delete('specializations/{id}',[SpecializationController::class,'delete']);
+    Route::post('add-special-price', [ClinicController::class, 'addSpecialPrice']);
+    Route::delete('delete-special-price', [ClinicController::class, 'deleteSpecialPrice']);
+    Route::patch('availability/{id}', [UserController::class, 'setAvailability']);
+
 
 });

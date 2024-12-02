@@ -175,5 +175,30 @@ class UserController extends Controller
         return response()->json($technicals);
     }
 
+    public function setAvailability($userId)
+    {
+        if (!is_numeric($userId) || $userId <= 0) {
+            return response()->json([
+                'message' => 'Invalid ID format',
+            ], 400);
+        }
+
+        // Find the user by ID
+        $user = User::find($userId);
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'User not found',
+            ], 404);
+        }
+
+        $user->is_available = !$user->is_available;
+        $user->save();
+
+        return response()->json([
+            'message' => 'User availability updated successfully',
+            'is_available' => $user->is_available,
+        ]);
+    }
 
 }

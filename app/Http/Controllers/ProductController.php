@@ -78,11 +78,11 @@ class ProductController extends Controller
     }
     public function delete($id)
     {
-        if (!is_numeric($id) || $id <= 0) {
-            return response()->json([
-                'message' => 'Invalid ID format',
-            ], 400);
-        }
+            if (!is_numeric($id) || $id <= 0) {
+                return response()->json([
+                    'message' => 'Invalid ID format',
+                ], 400);
+            }
 
         $product = Product::find($id);
 
