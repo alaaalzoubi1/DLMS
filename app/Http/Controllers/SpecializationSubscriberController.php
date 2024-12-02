@@ -63,4 +63,25 @@ class SpecializationSubscriberController extends Controller
     {
         //
     }
+
+
+    public function getSubscriberSpecializations()
+    {
+        $subscriberId = auth('admin')->user()->subscriber_id;
+        $specializations = Specialization_Subscriber::with('specialization')
+            ->where('subscriber_id', $subscriberId)
+            ->get();
+
+        if ($specializations->isEmpty()) {
+            return response()->json([
+                'message' => 'No specializations found for this subscriber',
+            ], 404);
+        }
+
+        return response()->json([
+            'message' => 'Specializations retrieved successfully',
+            'specializations' => $specializations,
+        ]);
+    }
+
 }

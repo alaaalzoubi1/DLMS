@@ -12,8 +12,14 @@ class Specialization_User extends Model
         'user_id',
         'subscriber_specializations_id',
     ];
-//    public function users(){
-//        return $this->hasMany(User::class);
-//    }
+    public function specializationSubscriber()
+    {
+        return $this->belongsTo(Specialization_Subscriber::class, 'subscriber_specializations_id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
 
 }
