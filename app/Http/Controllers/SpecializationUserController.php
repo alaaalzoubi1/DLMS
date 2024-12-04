@@ -31,7 +31,6 @@ class SpecializationUserController extends Controller
             'subscriber_specializations_id' => $validatedData['subscriber_specializations_id'],
         ]);
 
-        // Check if it was newly created or already existed
         $message = $specializationUser->wasRecentlyCreated
             ? 'Specialization added successfully'
             : 'User already has this specialization';

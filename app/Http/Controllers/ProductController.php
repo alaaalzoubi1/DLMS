@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\ClinicProduct;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -116,5 +117,14 @@ class ProductController extends Controller
         }
         $product->price = $validatedData['price'];
         $product->save();
-        return response()->json([ 'message' => 'Product price updated successfully', 'product' => $product, ], 200); }
+        return response()->json([ 'message' => 'Product price updated successfully', 'product' => $product, ], 200);
+    }
+
+    public function get_clinics_with_the_special_price($id)
+    {
+        $clinics = ClinicProduct::with('clinic')->where('product_id',$id)->get();
+        return response()->json([
+            'clinics' => $clinics
+        ]);
+    }
 }

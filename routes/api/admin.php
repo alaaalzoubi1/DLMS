@@ -49,6 +49,7 @@ Route::middleware(['auth:admin', 'admin.role'])->group(function () {
     Route::post('add-special-price', [ClinicController::class, 'addSpecialPrice']);
     Route::delete('delete-special-price', [ClinicController::class, 'deleteSpecialPrice']);
     Route::patch('availability/{id}', [UserController::class, 'setAvailability']);
-
-
+    Route::get('clinics_with_special_price',[ClinicController::class,'clinics_with_special_price']);
 });
+
+Route::get('get_clinics_with_the_special_price/{id}',[ProductController::class,'get_clinics_with_the_special_price']);
