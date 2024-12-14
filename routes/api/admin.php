@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\LoginController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ClinicController;
 use App\Http\Controllers\DoctorController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SpecializationController;
 use App\Http\Controllers\ToothColorController;
@@ -51,6 +52,7 @@ Route::middleware(['auth:admin', 'admin.role'])->group(function () {
     Route::patch('availability/{id}', [UserController::class, 'setAvailability']);
     Route::get('clinics_with_special_price/{$subscriberId}',[ClinicController::class,'clinics_with_special_price']);
     Route::get('get_clinics_with_the_special_price/{id}',[ProductController::class,'get_clinics_with_the_special_price']);
+    Route::post('create-order',[OrderController::class,'createOrder']);
 
 });
 

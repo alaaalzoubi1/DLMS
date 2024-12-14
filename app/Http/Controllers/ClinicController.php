@@ -109,35 +109,43 @@ class ClinicController extends Controller
             ], 500);
         }
     }
+    
     public function addSpecialPrice(Request $request)
     {
         $validatedData = $request->validate([
-            'clinic_id' => 'required|exists:clinics,id',
+            'clinic_ids' => 'required|array|min:1',
+            'clinic_ids.*' => 'required|exists:clinics,id',
             'product_id' => 'required|exists:products,id',
             'price' => 'required|numeric|min:0',
         ]);
 
-        // Use updateOrCreate to handle clinic-product pricing
-        $clinicProduct = ClinicProduct::updateOrCreate(
-            [
-                'clinic_id' => $validatedData['clinic_id'],
-                'product_id' => $validatedData['product_id'],
-            ],
-            [
-                'price' => $validatedData['price'],
-            ]
-        );
+        $clinicProducts = [];
+        foreach ($validatedData['clinic_ids'] as $clinicId) {
+            // Use updateOrCreate to handle clinic-product pricing
+            $clinicProduct = ClinicProduct::updateOrCreate(
+                [
+                    'clinic_id' => $clinicId,
+                    'product_id' => $validatedData['product_id'],
+                ],
+                [
+                    'price' => $validatedData['price'],
+                ]
+            );
 
-        // Update the clinic's has_special_price flag if not already true
-        Clinic::where('id', $validatedData['clinic_id'])
-            ->where('has_special_price', false)
-            ->update(['has_special_price' => true]);
+            $clinicProducts[] = $clinicProduct;
+
+            // Update the clinic's has_special_price flag if not already true
+            Clinic::where('id', $clinicId)
+                ->where('has_special_price', false)
+                ->update(['has_special_price' => true]);
+        }
 
         return response()->json([
-            'message' => 'Special price added successfully',
-            'clinic_product' => $clinicProduct,
+            'message' => 'Special prices added successfully',
+            'clinic_products' => $clinicProducts,
         ]);
     }
+
     public function deleteSpecialPrice(Request $request)
     {
         $validatedData = $request->validate([

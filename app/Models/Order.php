@@ -18,6 +18,9 @@ class Order extends Model
         'order_date',
         'patient_id',
         'sub_spec_id',
+        'specialization_users_id',
+        'receive',
+        'specialization',
     ];
 
     public function doctor()
