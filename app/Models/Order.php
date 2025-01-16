@@ -21,6 +21,8 @@ class Order extends Model
         'specialization_users_id',
         'receive',
         'specialization',
+        'subscriber_id',
+        'type'
     ];
 
     public function doctor()
@@ -32,9 +34,31 @@ class Order extends Model
     {
         return $this->belongsTo(User::class);
     }
+    public function subscriber()
+    {
+        return $this->belongsTo(Subscriber::class);
+    }
+    public function products()
+    {
+        return $this->hasMany(OrderProduct::class)->with('product');
+    }
+    public function specializationUser()
+    {
+        return $this->belongsTo(Specialization_User::class, 'specialization_users_id');
+    }
 
     public function specialization()
     {
-        return $this->belongsTo(Specialization::class, 'sub_spec_id');
+        return $this->hasOneThrough(
+            Specialization::class, // Final model we want to reach
+            Specialization_User::class, // Intermediate model
+            'id', // Foreign key on SpecializationSubscribers (matches SpecializationUser's `subscriber_specializations_id`)
+            'id', // Foreign key on Specializations
+            'specialization_users_id', // Local key on Orders
+            'specializations_id' // Local key on SpecializationSubscribers
+        );
     }
+
+
+
 }

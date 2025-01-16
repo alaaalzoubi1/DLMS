@@ -14,6 +14,7 @@ class Subscriber extends Model
         'trial_start_at',
         'trial_end_at',
         'tax_number',
+
         ];
     public function doctors()
     {
@@ -34,5 +35,9 @@ class Subscriber extends Model
     public function users()
     {
         return $this->hasMany(User::class);
+    }
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
     }
 }

@@ -21,5 +21,17 @@ class Specialization_User extends Model
     {
         return $this->belongsTo(User::class, 'user_id');
     }
+    public function specialization()
+    {
+        return $this->hasOneThrough(
+            Specialization::class, // Final model we want to reach
+            Specialization_Subscriber::class, // Intermediate model
+            'id', // Foreign key on SpecializationSubscribers (matches SpecializationUser's `subscriber_specializations_id`)
+            'id', // Foreign key on Specializations
+            'subscriber_specializations_id', // Local key on Orders
+            'specializations_id' // Local key on SpecializationSubscribers
+        );
+    }
+
 
 }

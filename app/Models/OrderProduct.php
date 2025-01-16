@@ -14,4 +14,8 @@ class OrderProduct extends Model
         'tooth_color_id',
         'tooth_number',
     ];
+    public function product()
+    {
+        return $this->belongsTo(Product::class);
+    }
 }

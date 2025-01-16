@@ -9,6 +9,8 @@ use App\Models\Product;
 use App\Models\OrderProduct;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use function Symfony\Component\String\s;
+
 class OrderController extends Controller
 {
     private function validateOrderRequest($data)
@@ -109,6 +111,7 @@ class OrderController extends Controller
             $order = Order::create([
                 'doctor_id' => $data['doctor_id'],
                 'specialization_users_id' => $user->specialization_users_id,
+                'subscriber_id' =>  $data['subscriber_id'],
                 'status' => $data['status'],
                 'type' => $data['type'],
                 'invoiced' => $data['invoiced'],
@@ -129,5 +132,75 @@ class OrderController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+    public function listInvoices(Request $request)
+    {
+        $validated = $request->validate([
+            'type' => 'sometimes|string|in:futures,returned,test,new',
+        ]);
+
+        $subscriber_id = auth('admin')->user()->subscriber_id;
+
+        $query = Order::query()
+            ->where('subscriber_id', $subscriber_id)
+            ->with(['products', 'specializationUser.specialization']); // Include relationships
+
+        if (!empty($validated['type'])) {
+            $query->where('type', $validated['type']);
+        }
+
+        // Fetch orders with relationships
+        $orders = $query->paginate(10);
+
+        // Map orders to include the specialization name directly
+        $orders->getCollection()->transform(function ($order) {
+            $order->specialization = $order->specializationUser->specialization->name ?? null; // Extract specialization name
+            unset($order->specialization_user); // Optionally remove the nested specialization_user relationship
+            return $order;
+        });
+
+        return response()->json($orders, 200);
+    }
+
+
+    public function updateOrderSpecializationUser(Request $request)
+    {
+        $data = $request->only(['order_id', 'specialization_subscriber_id']);
+
+        $validator = Validator::make($data, [
+            'order_id' => 'required',
+            'specialization_subscriber_id' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Fetch the order
+            $order = Order::findOrFail($data['order_id']);
+            $user = $this->fetchUserWithSpecialization($data['specialization_subscriber_id'], $data['subscriber_id']);
+
+
+            if ($user) {
+                $this->incrementUserWorkingOn($user->id);
+            } else {
+                throw new Exception("New specialization user not found.");
+            }
+
+            // Update the order with the new specialization_users_id
+            $order->specialization_users_id = $user->specialization_users_id;
+            $order->save();
+
+            DB::commit();
+
+            return response()->json(['message' => 'Order updated successfully.', 'order' => $order], 200);
+        } catch (Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
 
 }

@@ -19,4 +19,5 @@ class Specialization_Subscriber extends Model
     {
         return $this->belongsTo(Specialization::class, 'specializations_id');
     }
+
 }
