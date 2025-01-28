@@ -13,8 +13,12 @@ return new class extends Migration
     {
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('subscriber_id');
+            $table->foreign('subscriber_id')
+                ->references('id')
+                ->on('subscribers')
+                ->onDelete('cascade');
             $table->unsignedBigInteger('doctor_id');
-            $table->unsignedBigInteger('specialization_users_id');
             $table->enum('status', ['pending', 'completed', 'cancelled']);
             $table->enum('type', ['futures', 'new', 'test','returned']);
             $table->boolean('invoiced')->default(true);
@@ -26,7 +30,6 @@ return new class extends Migration
             $table->string('patient_id');
             $table->string('specialization');
             $table->foreign('doctor_id')->references('id')->on('doctors')->onDelete('cascade');
-            $table->foreign('specialization_users_id')->references('id')->on('specialization__users')->onDelete('cascade');
             $table->timestamps();
         });
     }

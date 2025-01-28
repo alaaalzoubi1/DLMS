@@ -16,7 +16,6 @@ class OrderController extends Controller
     private function validateOrderRequest($data)
     {
         return Validator::make($data, [
-            'specialization_subscriber_id' => 'required|integer|exists:specialization__subscribers,id',
             'subscriber_id' => 'required|integer|exists:subscribers,id',
             'doctor_id' => 'required|integer|exists:doctors,id',
             'status' => 'required|in:pending,completed,cancelled',
@@ -32,6 +31,8 @@ class OrderController extends Controller
             'products.*.product_id' => 'required|integer|exists:products,id',
             'products.*.tooth_color_id' => 'required|integer|exists:tooth_colors,id',
             'products.*.tooth_number' => 'required|string|max:255',
+            'products.*.specialization_subscriber_id' => 'required|integer|exists:specialization__subscribers,id',
+            'products.*.note' => 'nullable|string',
         ]);
     }
 
@@ -76,18 +77,25 @@ class OrderController extends Controller
         $user->increment('working_on');
     }
 
-    private function createOrderProducts($products, $orderId)
+    private function createOrderProducts($products, $orderId, $subscriber_id)
     {
         foreach ($products as $product) {
+            $user = $this->fetchUserWithSpecialization($product['specialization_subscriber_id'], $subscriber_id);
+            if (!$user) {
+                throw new Exception("No user found with the required specialization for subscriber ID {$subscriber_id}.");
+            }
+            $this->incrementUserWorkingOn($user->id);
+
             OrderProduct::create([
                 'product_id' => $product['product_id'],
                 'order_id' => $orderId,
                 'tooth_color_id' => $product['tooth_color_id'],
                 'tooth_number' => $product['tooth_number'],
+                'specialization_users_id' => $user->specialization_users_id,
+                'note' => $product['note']
             ]);
         }
     }
-
     public function createOrder(Request $request)
     {
         $data = $request->all();
@@ -98,19 +106,9 @@ class OrderController extends Controller
         }
 
         try {
-            $user = $this->fetchUserWithSpecialization($data['specialization_subscriber_id'], $data['subscriber_id']);
-
-            if (!$user) {
-                return response()->json(['error' => 'No user found for the given specialization and subscriber.'], 404);
-            }
-
-            $this->incrementUserWorkingOn($user->id);
-
-            // Calculate total cost with clinic-specific prices derived from doctor_id
             $totalCost = $this->calculateTotalCost($data['products'], $data['doctor_id']);
             $order = Order::create([
                 'doctor_id' => $data['doctor_id'],
-                'specialization_users_id' => $user->specialization_users_id,
                 'subscriber_id' =>  $data['subscriber_id'],
                 'status' => $data['status'],
                 'type' => $data['type'],
@@ -124,7 +122,7 @@ class OrderController extends Controller
                 'specialization' => $data['specialization'],
             ]);
 //            $products = Product::whereIn('id', $data['products'])->get();
-            $this->createOrderProducts($data['products'], $order->id);
+            $this->createOrderProducts($data['products'], $order->id,$data['subscriber_id']);
 
             return response()->json(['message' => 'Order created successfully.', 'order' => $order], 201);
 
@@ -142,7 +140,7 @@ class OrderController extends Controller
 
         $query = Order::query()
             ->where('subscriber_id', $subscriber_id)
-            ->with(['products', 'specializationUser.specialization']); // Include relationships
+            ->with(['products.specializationUser.specialization']); // Include nested relationships
 
         if (!empty($validated['type'])) {
             $query->where('type', $validated['type']);
@@ -151,10 +149,12 @@ class OrderController extends Controller
         // Fetch orders with relationships
         $orders = $query->paginate(10);
 
-        // Map orders to include the specialization name directly
+        // Transform each order to include specialization names for products
         $orders->getCollection()->transform(function ($order) {
-            $order->specialization = $order->specializationUser->specialization->name ?? null; // Extract specialization name
-            unset($order->specialization_user); // Optionally remove the nested specialization_user relationship
+            $order->products->transform(function ($product) {
+                $product->specialization = $product->specializationUser->specialization->name ?? null;
+                return $product;
+            });
             return $order;
         });
 
@@ -162,13 +162,14 @@ class OrderController extends Controller
     }
 
 
+
     public function updateOrderSpecializationUser(Request $request)
     {
         $data = $request->only(['order_id', 'specialization_subscriber_id']);
 
         $validator = Validator::make($data, [
-            'order_id' => 'required',
-            'specialization_subscriber_id' => 'required',
+            'order_id' => 'required|exists:orders,id',
+            'specialization_subscriber_id' => 'required|exists:specialization__subscribers,id',
         ]);
 
         if ($validator->fails()) {
@@ -180,27 +181,35 @@ class OrderController extends Controller
 
             // Fetch the order
             $order = Order::findOrFail($data['order_id']);
-            $user = $this->fetchUserWithSpecialization($data['specialization_subscriber_id'], $data['subscriber_id']);
 
+            // Fetch the products associated with the order
+            $orderProducts = $order->products;
 
-            if ($user) {
-                $this->incrementUserWorkingOn($user->id);
-            } else {
-                throw new Exception("New specialization user not found.");
+            // Check if the specialization_subscriber_id exists
+            $user = $this->fetchUserWithSpecialization($data['specialization_subscriber_id'], $order->subscriber_id);
+
+            if (!$user) {
+                throw new Exception("No user found for the provided specialization_subscriber_id and subscriber_id.");
             }
 
-            // Update the order with the new specialization_users_id
-            $order->specialization_users_id = $user->specialization_users_id;
-            $order->save();
+            // Update each order_product with the new specialization_users_id
+            foreach ($orderProducts as $orderProduct) {
+                $orderProduct->specialization_users_id = $user->specialization_users_id;
+                $orderProduct->save();
+            }
+
+            // Increment the user's working_on count
+            $this->incrementUserWorkingOn($user->id);
 
             DB::commit();
 
-            return response()->json(['message' => 'Order updated successfully.', 'order' => $order], 200);
+            return response()->json(['message' => 'Order products updated successfully.', 'order' => $order], 200);
         } catch (Exception $e) {
             DB::rollBack();
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+
 
 
 }

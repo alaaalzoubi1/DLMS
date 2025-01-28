@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('order_products', function (Blueprint $table) {
             $table->id();
+            $table->text('note')->nullable();
             $table->string('tooth_number')->nullable();
             $table->unsignedBigInteger('product_id');
             $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
@@ -20,6 +21,8 @@ return new class extends Migration
             $table->foreign('order_id')->references('id')->on('orders')->onDelete('cascade');
             $table->unsignedBigInteger('tooth_color_id');
             $table->foreign('tooth_color_id')->references('id')->on('tooth_colors')->onDelete('cascade');
+            $table->unsignedBigInteger('specialization_users_id');
+            $table->foreign('specialization_users_id')->references('id')->on('specialization__users')->onDelete('cascade');
             $table->timestamps();
         });
     }

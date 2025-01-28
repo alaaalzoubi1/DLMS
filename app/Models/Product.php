@@ -12,6 +12,9 @@ class Product extends Model
         'name',
         'category_id',
         'price',
+        'tooth_color_id',
+        'tooth_number',
+        'specialization_users_id'
     ];
 
     public function category()
@@ -22,4 +25,5 @@ class Product extends Model
     {
         return $this->hasMany(ClinicProduct::class);
     }
+
 }
