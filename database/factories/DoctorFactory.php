@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Clinic;
 use App\Models\Doctor;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -22,7 +23,9 @@ class DoctorFactory extends Factory
         return [
             'first_name' => $this->faker->firstName,
             'last_name' => $this->faker->lastName,
-            'clinic_name' => $this->faker->company,
+            'clinic_id' => Clinic::inRandomOrder()->first()->id ?? Clinic::factory(),
+            'created_at' => now(),
+            'updated_at' => now(),
         ];
     }
 }

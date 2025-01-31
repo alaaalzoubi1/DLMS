@@ -2,6 +2,9 @@
 
 namespace Database\Factories;
 
+use App\Models\Doctor;
+use App\Models\Order;
+use App\Models\Subscriber;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -14,10 +17,23 @@ class OrderFactory extends Factory
      *
      * @return array<string, mixed>
      */
-    public function definition(): array
+    protected $model = Order::class;
+
+    public function definition()
     {
         return [
-            //
+            'subscriber_id' => Subscriber::factory(),
+            'doctor_id' => Doctor::factory(),
+            'status' => $this->faker->randomElement(['pending', 'completed', 'cancelled']),
+            'type' => $this->faker->randomElement(['futures', 'new', 'test', 'returned']),
+            'invoiced' => $this->faker->boolean,
+            'paid' => $this->faker->numberBetween(0, 1), // 0 = unpaid, 1 = paid
+            'cost' => $this->faker->numberBetween(100, 5000),
+            'patient_name' => $this->faker->name,
+            'receive' => $this->faker->date,
+            'delivery' => $this->faker->optional()->date,
+            'patient_id' => $this->faker->uuid,
+            'specialization' => $this->faker->word,
         ];
     }
 }

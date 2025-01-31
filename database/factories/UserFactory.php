@@ -28,19 +28,18 @@ class UserFactory extends Factory
     public function definition()
     {
         return [
-            'subscriber_id' => function () {
-                return Subscriber::factory()->create()->id;
-            },
+            'subscriber_id' => Subscriber::inRandomOrder()->first()->id ?? Subscriber::factory(),
             'email' => $this->faker->unique()->safeEmail,
-            'password' => bcrypt('secret'),
-            'FCM_token' => null,
-            'is_available' => true,
+            'password' => Hash::make('password'),
+            'FCM_token' => $this->faker->optional()->sha256,
+            'is_available' => $this->faker->boolean(90),
             'first_name' => $this->faker->firstName,
             'last_name' => $this->faker->lastName,
-            'working_on' => rand(0, 100),
+            'working_on' => $this->faker->numberBetween(0, 5),
+            'created_at' => now(),
+            'updated_at' => now(),
         ];
     }
-
     /**
      * Indicate that the model's email address should be unverified.
      */
