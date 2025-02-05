@@ -27,7 +27,7 @@ class OrderFactory extends Factory
             'status' => $this->faker->randomElement(['pending', 'completed', 'cancelled']),
             'type' => $this->faker->randomElement(['futures', 'new', 'test', 'returned']),
             'invoiced' => $this->faker->boolean,
-            'paid' => $this->faker->numberBetween(0, 1), // 0 = unpaid, 1 = paid
+            'paid' => $this->faker->numberBetween(40, 1500),
             'cost' => $this->faker->numberBetween(100, 5000),
             'patient_name' => $this->faker->name,
             'receive' => $this->faker->date,

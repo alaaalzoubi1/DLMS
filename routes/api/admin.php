@@ -53,8 +53,9 @@ Route::middleware(['auth:admin', 'admin.role'])->group(function () {
     Route::get('clinics_with_special_price/{$subscriberId}',[ClinicController::class,'clinics_with_special_price']);
     Route::get('get_clinics_with_the_special_price/{id}',[ProductController::class,'get_clinics_with_the_special_price']);
     Route::post('create-order',[OrderController::class,'createOrder']);
-    Route::get('orders',[OrderController::class,'listInvoices']);
-
+    Route::get('orders/{type}',[OrderController::class,'listInvoices']);
+    Route::post('doctor-orders',[OrderController::class,'listDoctorInvoices']);
+    Route::post('from-to-orders',[OrderController::class,'listFromToInvoices']);
 });
 
- 
+

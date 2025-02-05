@@ -1,23 +1,21 @@
 <?php
 
 namespace Database\Factories;
-
 use Illuminate\Database\Eloquent\Factories\Factory;
+use App\Models\Specialization_User;
+use App\Models\Specialization_Subscriber;
+use App\Models\User;
 
-/**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Specialization_User>
- */
+
 class Specialization_UserFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
-    public function definition(): array
+    protected $model = Specialization_User::class;
+
+    public function definition()
     {
         return [
-            //
+            'subscriber_specializations_id' => Specialization_Subscriber::factory(),
+            'user_id' => User::factory(),
         ];
     }
 }

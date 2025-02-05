@@ -130,35 +130,41 @@ class OrderController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
-    public function listInvoices(Request $request)
+    public function listInvoices($type)
     {
-        $validated = $request->validate([
-            'type' => 'sometimes|string|in:futures,returned,test,new',
-        ]);
+//        $data['type'] = $type;
+//        $validated = $data->validate([
+//            'type' => 'sometimes|string|in:futures,returned,test,new',
+//        ]);
+        if ($type == 'futures'||'returned'|| 'test'||'new' || 'all')
+        {
+            $subscriber_id = auth('admin')->user()->subscriber_id;
 
-        $subscriber_id = auth('admin')->user()->subscriber_id;
+            $query = Order::query()
+                ->where('subscriber_id', $subscriber_id)
+                ->with(['products.specializationUser.specialization']);
 
-        $query = Order::query()
-            ->where('subscriber_id', $subscriber_id)
-            ->with(['products.specializationUser.specialization']); // Include nested relationships
+            if ($type != 'all') {
+                $query->where('type', $type);
+            }
 
-        if (!empty($validated['type'])) {
-            $query->where('type', $validated['type']);
-        }
+            // Fetch orders with relationships
+            $orders = $query->paginate(10);
 
-        // Fetch orders with relationships
-        $orders = $query->paginate(10);
-
-        // Transform each order to include specialization names for products
-        $orders->getCollection()->transform(function ($order) {
-            $order->products->transform(function ($product) {
-                $product->specialization = $product->specializationUser->specialization->name ?? null;
-                return $product;
+            // Transform each order to include specialization names for products
+            $orders->getCollection()->transform(function ($order) {
+                $order->products->transform(function ($product) {
+                    $product->specialization = $product->specializationUser->specialization->name ?? null;
+                    return $product;
+                });
+                return $order;
             });
-            return $order;
-        });
 
-        return response()->json($orders, 200);
+            return response()->json($orders, 200);}
+        else
+            return response()->json([
+                'message' => 'invalid type'
+            ]);
     }
 
 
@@ -209,7 +215,76 @@ class OrderController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+    public function listDoctorInvoices(Request $request)
+    {
+        $validated = $request->validate([
+            'doctor_id' => 'required|exists:doctors,id',
+            'from_date' => 'nullable|date',
+            'to_date' => 'nullable|date|after_or_equal:from_date',
+        ]);
 
+        $subscriber_id = auth()->user()->subscriber_id;
+
+        $query = Order::where('doctor_id', $validated['doctor_id'])
+            ->where('subscriber_id', $subscriber_id)
+//            ->where('invoiced', true)
+            ->with(['doctor', 'products.specializationUser.specialization']);
+
+        if (!empty($validated['from_date']) && !empty($validated['to_date'])) {
+            $query->whereBetween('receive', [$validated['from_date'], $validated['to_date']]);
+        } elseif (!empty($validated['from_date'])) {
+            $query->where('receive', '>=', $validated['from_date']);
+        } elseif (!empty($validated['to_date'])) {
+            $query->where('receive', '<=', $validated['to_date']);
+        }
+
+        $orders = $query->paginate(10);
+
+        $totalCost = $query->sum('cost');
+        $paid = $query->sum('paid');
+        $left = $totalCost - $paid;
+        return response()->json([
+            'doctor_id' => $validated['doctor_id'],
+            'total_cost' => $totalCost,
+            'paid' => $paid,
+            'left' => $left,
+            'orders' => $orders
+        ], 200);
+    }
+    public function listFromToInvoices(Request $request)
+    {
+        $validated = $request->validate([
+            'from_date' => 'nullable|date',
+            'to_date' => 'nullable|date|after_or_equal:from_date',
+        ]);
+
+        $subscriber_id = auth()->user()->subscriber_id;
+
+        $query = Order::
+        where('subscriber_id', $subscriber_id)
+//            ->where('invoiced', true)
+            ->with(['doctor', 'products.specializationUser.specialization']);
+
+        if (!empty($validated['from_date']) && !empty($validated['to_date'])) {
+            $query->whereBetween('receive', [$validated['from_date'], $validated['to_date']]);
+        } elseif (!empty($validated['from_date'])) {
+            $query->where('receive', '>=', $validated['from_date']);
+        } elseif (!empty($validated['to_date'])) {
+            $query->where('receive', '<=', $validated['to_date']);
+        }
+
+        $orders = $query->paginate(10);
+
+        $totalCost = $query->sum('cost');
+        $paid = $query->sum('paid');
+        $left = $totalCost - $paid;
+        return response()->json([
+            'total_cost' => $totalCost,
+            'paid' => $paid,
+            'left' => $left,
+            'orders' => $orders
+        ], 200);
+    }
 
 
 }

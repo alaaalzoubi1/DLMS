@@ -14,6 +14,7 @@ use App\Models\OrderProduct;
 use App\Models\Product;
 use App\Models\Specialization;
 use App\Models\Specialization_Subscriber;
+use App\Models\Specialization_User;
 use App\Models\Subscriber;
 use App\Models\Subscriber_Doctor;
 use App\Models\ToothColor;
@@ -67,18 +68,16 @@ class DatabaseSeeder extends Seeder
             ]);
 
             foreach ($technicals as $technical) {
-                $technical->assignRole('technical');
+                $specializationSubscriber = Specialization_Subscriber::where('subscriber_id', $subscriber->id)->inRandomOrder()->first();
 
-                DB::table('specialization__users')->insert(
-                    $specializationSubscribers->map(function ($specializationSubscriber) use ($technical) {
-                        return [
-                            'subscriber_specializations_id' => $specializationSubscriber->id,
-                            'user_id' => $technical->id,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ];
-                    })->toArray()
-                );
+                if ($specializationSubscriber) {
+                    Specialization_User::factory()->create([
+                        'user_id' => $technical->id,
+                        'subscriber_specializations_id' => $specializationSubscriber->id,
+                    ]);
+                }
+
+                $technical->assignRole('technical');
             }
         }
         foreach ($clinics as $clinic) {

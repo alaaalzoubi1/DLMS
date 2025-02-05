@@ -30,7 +30,7 @@ class UserFactory extends Factory
         return [
             'subscriber_id' => Subscriber::inRandomOrder()->first()->id ?? Subscriber::factory(),
             'email' => $this->faker->unique()->safeEmail,
-            'password' => Hash::make('password'),
+            'password' => 12345678,
             'FCM_token' => $this->faker->optional()->sha256,
             'is_available' => $this->faker->boolean(90),
             'first_name' => $this->faker->firstName,
