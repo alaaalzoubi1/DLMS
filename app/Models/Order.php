@@ -9,21 +9,14 @@ class Order extends Model
 {
     use HasFactory;
     protected $fillable = [
-        'doctor_id',
-        'user_id',
-        'status',
-        'paid',
-        'cost',
-        'patient_name',
-        'order_date',
-        'patient_id',
-        'sub_spec_id',
-        'specialization_users_id',
-        'receive',
-        'specialization',
-        'subscriber_id',
-        'type'
+        'doctor_id', 'subscriber_id', 'type_id', 'status', 'invoiced',
+        'paid', 'cost', 'patient_name', 'receive', 'delivery', 'patient_id', 'specialization'
     ];
+
+    public function type()
+    {
+        return $this->belongsTo(Type::class);
+    }
 
     public function doctor()
     {

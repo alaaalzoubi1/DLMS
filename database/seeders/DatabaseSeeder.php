@@ -18,6 +18,7 @@ use App\Models\Specialization_User;
 use App\Models\Subscriber;
 use App\Models\Subscriber_Doctor;
 use App\Models\ToothColor;
+use App\Models\Type;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -100,6 +101,9 @@ class DatabaseSeeder extends Seeder
 
         foreach ($subscribers as $subscriber) {
             ToothColor::factory()->count(rand(3, 6))->create([
+                'subscriber_id' => $subscriber->id,
+            ]);
+            Type::factory()->count(4)->create([
                 'subscriber_id' => $subscriber->id,
             ]);
         }

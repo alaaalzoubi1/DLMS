@@ -5,6 +5,7 @@ namespace Database\Factories;
 use App\Models\Doctor;
 use App\Models\Order;
 use App\Models\Subscriber;
+use App\Models\Type;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -21,19 +22,20 @@ class OrderFactory extends Factory
 
     public function definition()
     {
+        $type = Type::inRandomOrder()->first() ?? Type::factory()->create();
+
         return [
-            'subscriber_id' => Subscriber::factory(),
-            'doctor_id' => Doctor::factory(),
+            'doctor_id' => Doctor::inRandomOrder()->first()->id ?? Doctor::factory(),
+            'subscriber_id' => $type->subscriber_id,
+            'type_id' => $type->id,
             'status' => $this->faker->randomElement(['pending', 'completed', 'cancelled']),
-            'type' => $this->faker->randomElement(['futures', 'new', 'test', 'returned']),
-            'invoiced' => $this->faker->boolean,
-            'paid' => $this->faker->numberBetween(40, 1500),
-            'cost' => $this->faker->numberBetween(100, 5000),
-            'patient_name' => $this->faker->name,
-            'receive' => $this->faker->date,
-            'delivery' => $this->faker->optional()->date,
-            'patient_id' => $this->faker->uuid,
-            'specialization' => $this->faker->word,
+            'paid' => $this->faker->numberBetween(0, 5000),
+            'cost' => $this->faker->numberBetween(500, 10000),
+            'patient_name' => $this->faker->name(),
+            'receive' => $this->faker->date(),
+            'delivery' => $this->faker->optional()->date(),
+            'patient_id' => $this->faker->uuid(),
+            'specialization' => $this->faker->randomElement(['Orthodontics', 'Periodontics', 'Endodontics']),
         ];
     }
 }

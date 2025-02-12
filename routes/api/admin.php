@@ -11,6 +11,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SpecializationController;
 use App\Http\Controllers\ToothColorController;
+use App\Http\Controllers\TypeController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -52,10 +53,14 @@ Route::middleware(['auth:admin', 'admin.role'])->group(function () {
     Route::patch('availability/{id}', [UserController::class, 'setAvailability']);
     Route::get('clinics_with_special_price/{$subscriberId}',[ClinicController::class,'clinics_with_special_price']);
     Route::get('get_clinics_with_the_special_price/{id}',[ProductController::class,'get_clinics_with_the_special_price']);
-    Route::post('create-order',[OrderController::class,'createOrder']);
+    Route::post('orders',[OrderController::class,'createOrder']);
+    Route::put('orders/{id}',[OrderController::class,'updateOrder']);
     Route::get('orders/{type}',[OrderController::class,'listInvoices']);
     Route::post('doctor-orders',[OrderController::class,'listDoctorInvoices']);
     Route::post('from-to-orders',[OrderController::class,'listFromToInvoices']);
+    Route::post('/types',[TypeController::class,'createType']);
+    Route::get('/types', [TypeController::class, 'listTypes']);
+    Route::put('/types/{id}', [TypeController::class, 'updateType']);
 });
 
 

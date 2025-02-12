@@ -1,12 +1,14 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Models\Type;
 use Exception;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\OrderProduct;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use function Symfony\Component\String\s;
@@ -16,11 +18,9 @@ class OrderController extends Controller
     private function validateOrderRequest($data)
     {
         return Validator::make($data, [
-            'subscriber_id' => 'required|integer|exists:subscribers,id',
             'doctor_id' => 'required|integer|exists:doctors,id',
             'status' => 'required|in:pending,completed,cancelled',
-            'type' => 'required|in:futures,new,test,returned',
-            'invoiced' => 'nullable|boolean',
+            'type_id' => 'required|exists:types,id',
             'paid' => 'nullable|integer|min:0',
             'patient_name' => 'required|string|max:255',
             'receive' => 'required|date',
@@ -98,6 +98,7 @@ class OrderController extends Controller
     }
     public function createOrder(Request $request)
     {
+        $subscriber_id = Auth::guard('admin')->user()->subscriber_id;
         $data = $request->all();
         $validator = $this->validateOrderRequest($data);
 
@@ -107,12 +108,13 @@ class OrderController extends Controller
 
         try {
             $totalCost = $this->calculateTotalCost($data['products'], $data['doctor_id']);
+            $invoiced = Type::find($data['type_id'])->invoiced;
             $order = Order::create([
                 'doctor_id' => $data['doctor_id'],
-                'subscriber_id' =>  $data['subscriber_id'],
+                'subscriber_id' =>  $subscriber_id,
                 'status' => $data['status'],
-                'type' => $data['type'],
-                'invoiced' => $data['invoiced'],
+                'type_id' => $data['type_id'],
+                'invoiced' => $invoiced,
                 'paid' => $data['paid'],
                 'cost' => $totalCost,
                 'patient_name' => $data['patient_name'],
@@ -122,7 +124,7 @@ class OrderController extends Controller
                 'specialization' => $data['specialization'],
             ]);
 //            $products = Product::whereIn('id', $data['products'])->get();
-            $this->createOrderProducts($data['products'], $order->id,$data['subscriber_id']);
+            $this->createOrderProducts($data['products'], $order->id,$subscriber_id);
 
             return response()->json(['message' => 'Order created successfully.', 'order' => $order], 201);
 
@@ -227,7 +229,7 @@ class OrderController extends Controller
 
         $query = Order::where('doctor_id', $validated['doctor_id'])
             ->where('subscriber_id', $subscriber_id)
-//            ->where('invoiced', true)
+            ->where('invoiced', true)
             ->with(['doctor', 'products.specializationUser.specialization']);
 
         if (!empty($validated['from_date']) && !empty($validated['to_date'])) {
@@ -262,7 +264,7 @@ class OrderController extends Controller
 
         $query = Order::
         where('subscriber_id', $subscriber_id)
-//            ->where('invoiced', true)
+            ->where('invoiced', true)
             ->with(['doctor', 'products.specializationUser.specialization']);
 
         if (!empty($validated['from_date']) && !empty($validated['to_date'])) {
@@ -286,5 +288,32 @@ class OrderController extends Controller
         ], 200);
     }
 
+    public function updateOrder(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'status' => 'sometimes|in:pending,completed,cancelled',
+            'type_id' => 'sometimes|exists:types,id',
+            'invoiced' => 'sometimes|boolean',
+            'paid' => 'sometimes|integer|min:0',
+            'cost' => 'sometimes|integer|min:0',
+            'patient_name' => 'sometimes|string|max:255',
+            'receive' => 'sometimes|date',
+            'delivery' => 'sometimes|date|after_or_equal:receive',
+            'specialization' => 'sometimes|string|max:255'
+        ]);
+
+        $subscriber_id = auth()->user()->subscriber_id;
+
+        // Find the order and ensure it belongs to the authenticated user's subscriber
+        $order = Order::where('id', $id)->where('subscriber_id', $subscriber_id)->first();
+
+        if (!$order) {
+            return response()->json(['error' => 'Order not found or access denied.'], 404);
+        }
+
+        $order->update($validated);
+
+        return response()->json(['message' => 'Order updated successfully.', 'order' => $order], 200);
+    }
 
 }
