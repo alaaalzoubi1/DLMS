@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\ClinicProduct;
+use App\Models\OrderProduct;
 use App\Models\Product;
+use App\Models\Specialization_User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -127,4 +129,29 @@ class ProductController extends Controller
             'clinics' => $clinics
         ]);
     }
+    public function getProductsWithSpecializations()
+    {
+        $userId = auth('admin')->id();
+
+        $specializationUsers = Specialization_User::where('user_id', $userId)->get();
+
+        if ($specializationUsers->isEmpty()) {
+            return response()->json(['error' => 'No specializations found for this user.'], 404);
+        }
+        $specializationUsersIds = $specializationUsers->pluck('id');
+        $products = OrderProduct::whereIn('specialization_users_id', $specializationUsersIds)
+            ->with([
+                'product:name,id',
+                'toothColor:color,id',
+                'specializationUser.specialization:name'
+            ])
+            ->orderBy('updated_at', 'desc')
+            ->get();
+        $products->transform(function ($product) {
+            $product->specialization = $product->specializationUser->specialization->name ?? null;
+            return $product;
+        });
+        return response()->json($products);
+    }
+
 }

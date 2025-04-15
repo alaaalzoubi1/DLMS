@@ -21,7 +21,7 @@ class Specialization_User extends Model
     {
         return $this->belongsTo(User::class, 'user_id');
     }
-    public function specialization()
+    public function specialization(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
     {
         return $this->hasOneThrough(
             Specialization::class, // Final model we want to reach

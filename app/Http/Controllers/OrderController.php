@@ -11,7 +11,6 @@ use App\Models\OrderProduct;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use function Symfony\Component\String\s;
 
 class OrderController extends Controller
 {
@@ -76,7 +75,11 @@ class OrderController extends Controller
         $user = User::findOrFail($userId);
         $user->increment('working_on');
     }
-
+    private function decrementUserWorkingOn($userId)
+    {
+        $user = User::findOrFail($userId);
+        $user->decrement('working_on');
+    }
     private function createOrderProducts($products, $orderId, $subscriber_id)
     {
         foreach ($products as $product) {
@@ -132,51 +135,46 @@ class OrderController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
-    public function listInvoices($type)
+
+    public function listInvoices($type): \Illuminate\Http\JsonResponse
     {
-//        $data['type'] = $type;
-//        $validated = $data->validate([
-//            'type' => 'sometimes|string|in:futures,returned,test,new',
-//        ]);
-        if ($type == 'futures'||'returned'|| 'test'||'new' || 'all')
-        {
-            $subscriber_id = auth('admin')->user()->subscriber_id;
+        $validTypes = ['futures', 'returned', 'test', 'new', 'all'];
 
-            $query = Order::query()
-                ->where('subscriber_id', $subscriber_id)
-                ->with(['products.specializationUser.specialization']);
+        if (!in_array($type, $validTypes)) {
+            return response()->json(['message' => 'Invalid type'], 400);
+        }
 
-            if ($type != 'all') {
-                $query->where('type', $type);
-            }
+        $subscriber_id = auth('admin')->user()->subscriber_id;
 
-            // Fetch orders with relationships
-            $orders = $query->paginate(10);
+        $query = Order::query()
+            ->where('orders.subscriber_id', $subscriber_id)
+            ->join('types', 'orders.type_id', '=', 'types.id')
+            ->with(['products.specializationUser.specialization', 'type']) // 'type' is the relation on Order
+            ->select('orders.*'); // Avoid selecting everything from 'types'
 
-            // Transform each order to include specialization names for products
-            $orders->getCollection()->transform(function ($order) {
-                $order->products->transform(function ($product) {
-                    $product->specialization = $product->specializationUser->specialization->name ?? null;
-                    return $product;
-                });
-                return $order;
+        if ($type !== 'all') {
+            $query->where('types.type', $type);
+        }
+        $query->orderBy('created_at','desc');
+        $orders = $query->paginate(10);
+
+        $orders->getCollection()->transform(function ($order) {
+            $order->products->transform(function ($product) {
+                $product->specialization = $product->specializationUser->specialization->name ?? null;
+                return $product;
             });
+            return $order;
+        });
 
-            return response()->json($orders, 200);}
-        else
-            return response()->json([
-                'message' => 'invalid type'
-            ]);
+        return response()->json($orders, 200);
     }
 
-
-
-    public function updateOrderSpecializationUser(Request $request)
+    public function updateOrderProductSpecializationUser(Request $request)
     {
-        $data = $request->only(['order_id', 'specialization_subscriber_id']);
+        $data = $request->only(['order_product_id', 'specialization_subscriber_id']);
 
         $validator = Validator::make($data, [
-            'order_id' => 'required|exists:orders,id',
+            'order_product_id' => 'required|exists:order_products,id',
             'specialization_subscriber_id' => 'required|exists:specialization__subscribers,id',
         ]);
 
@@ -187,36 +185,32 @@ class OrderController extends Controller
         try {
             DB::beginTransaction();
 
-            // Fetch the order
-            $order = Order::findOrFail($data['order_id']);
+            // Fetch the order product
+            $orderProduct = OrderProduct::findOrFail($data['order_product_id']);
 
-            // Fetch the products associated with the order
-            $orderProducts = $order->products;
+            $currentUser = auth('admin')->user();
+            $this->decrementUserWorkingOn($currentUser->getAuthIdentifier());
 
-            // Check if the specialization_subscriber_id exists
-            $user = $this->fetchUserWithSpecialization($data['specialization_subscriber_id'], $order->subscriber_id);
+            $newUser = $this->fetchUserWithSpecialization($data['specialization_subscriber_id'], $orderProduct->order->subscriber_id);
 
-            if (!$user) {
+            if (!$newUser) {
                 throw new Exception("No user found for the provided specialization_subscriber_id and subscriber_id.");
             }
 
-            // Update each order_product with the new specialization_users_id
-            foreach ($orderProducts as $orderProduct) {
-                $orderProduct->specialization_users_id = $user->specialization_users_id;
-                $orderProduct->save();
-            }
+            $orderProduct->specialization_users_id = $newUser->specialization_users_id;
+            $orderProduct->save();
 
-            // Increment the user's working_on count
-            $this->incrementUserWorkingOn($user->id);
+            $this->incrementUserWorkingOn($newUser->id);
 
             DB::commit();
 
-            return response()->json(['message' => 'Order products updated successfully.', 'order' => $order], 200);
+            return response()->json(['message' => 'Order product updated successfully.'], 200);
         } catch (Exception $e) {
             DB::rollBack();
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+
     public function listDoctorInvoices(Request $request)
     {
         $validated = $request->validate([

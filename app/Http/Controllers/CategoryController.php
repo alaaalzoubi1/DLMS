@@ -6,7 +6,30 @@ use App\Http\Requests\CategoryRequest;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-
+/**
+ * @OA\Get(
+ *     path="/api/admin/show-categories",
+ *     summary="Get categories for the authenticated admin's subscriber",
+ *     tags={"Categories"},
+ *     security={{"bearerAuth":{}}},
+ *     @OA\Response(
+ *         response=200,
+ *         description="List of categories",
+ *         @OA\JsonContent(
+ *             type="object",
+ *             @OA\Property(
+ *                 property="categories",
+ *                 type="array",
+ *                 @OA\Items(
+ *                     type="object",
+ *                     @OA\Property(property="id", type="integer", example=1),
+ *                     @OA\Property(property="name", type="string", example="Prosthetics")
+ *                 )
+ *             )
+ *         )
+ *     )
+ * )
+ */
 class CategoryController extends Controller
 {
     public function store(CategoryRequest $request)

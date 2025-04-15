@@ -35,4 +35,13 @@ class OrderProduct extends Model
             'specializations_id' // Local key on SpecializationSubscribers
         );
     }
+    public function toothColor(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(ToothColor::class);
+    }
+    public function order(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Order::class);
+    }
+
 }
