@@ -56,6 +56,7 @@ Route::middleware(['auth:admin', 'admin.role'])->group(function () {
     Route::post('orders',[OrderController::class,'createOrder']);
     Route::put('orders/{id}',[OrderController::class,'updateOrder']);
     Route::get('orders/{type}',[OrderController::class,'listInvoices']);
+    Route::get('listOrdersByStatus/{status}',[OrderController::class,'listOrdersByStatus']);
     Route::post('doctor-orders',[OrderController::class,'listDoctorInvoices']);
     Route::post('from-to-orders',[OrderController::class,'listFromToInvoices']);
     Route::post('/types',[TypeController::class,'createType']);

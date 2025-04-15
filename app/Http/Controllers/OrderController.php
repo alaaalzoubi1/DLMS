@@ -168,6 +168,38 @@ class OrderController extends Controller
 
         return response()->json($orders, 200);
     }
+    public function listOrdersByStatus($status): \Illuminate\Http\JsonResponse
+    {
+        $validStatuses = ['pending', 'completed', 'cancelled'];
+
+        if (!in_array($status, $validStatuses)) {
+            return response()->json(['message' => 'Invalid status'], 400);
+        }
+
+        $subscriber_id = auth('admin')->user()->subscriber_id;
+
+        // Query to fetch orders by status
+        $orders = Order::query()
+            ->where('orders.subscriber_id', $subscriber_id)
+            ->where('orders.status', $status) // Filter orders by status
+            ->with(['products.specializationUser.specialization', 'type','doctor']) // Relations
+            ->join('types', 'orders.type_id', '=', 'types.id') // Join with the types table
+            ->select('orders.*') // Select only the necessary columns from orders
+                ->orderByDesc('updated_at')
+            ->paginate(10); // Paginate results
+
+        // Transform each order to include specialization names for products
+        $orders->getCollection()->transform(function ($order) {
+            $order->products->transform(function ($product) {
+                $product->specialization = $product->specializationUser->specialization->name ?? null;
+                return $product;
+            });
+            return $order;
+        });
+
+        return response()->json($orders, 200);
+    }
+
 
     public function updateOrderProductSpecializationUser(Request $request)
     {
