@@ -17,6 +17,8 @@ Route::middleware(['auth:admin'])->group(function () {
     Route::get('logout', [UserController::class, 'logout']);
     Route::post('updateOrderProductSpecializationUser',[OrderController::class,'updateOrderProductSpecializationUser']);
     Route::get('products', [ProductController::class, 'getProductsWithSpecializations']);
-
+    Route::get('finishing-order_product/{order_product_id}',[ProductController::class , 'finishOrderProduct']);
+    Route::get('availability', [UserController::class, 'getAvailability']);
+    Route::patch('availability', [UserController::class, 'toggleAvailability']);
 
 });

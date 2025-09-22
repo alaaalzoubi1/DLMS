@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Subscriber;
 use App\Models\Subscriber_Doctor;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
@@ -200,5 +201,29 @@ class UserController extends Controller
             'is_available' => $user->is_available,
         ]);
     }
+    public function getAvailability(): JsonResponse
+    {
+        $user = auth('admin')->user();
+
+        return response()->json([
+            'id' => $user->id,
+            'is_available' => $user->is_available,
+        ]);
+    }
+    public function toggleAvailability(): JsonResponse
+    {
+        $user = auth()->user();
+
+        // اعكس القيمة (لو true تصير false والعكس)
+        $user->is_available = !$user->is_available;
+        $user->save();
+
+        return response()->json([
+            'message' => 'Availability updated successfully',
+            'id' => $user->id,
+            'is_available' => $user->is_available,
+        ]);
+    }
+
 
 }

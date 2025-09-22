@@ -13,7 +13,8 @@ class OrderProduct extends Model
         'order_id',
         'tooth_color_id',
         'tooth_number',
-        'specialization_users_id'
+        'specialization_users_id',
+        'note'
     ];
     public function product()
     {
@@ -42,6 +43,10 @@ class OrderProduct extends Model
     public function order(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Order::class);
+    }
+    public function scopeWorkingOn($query)
+    {
+        return $query->where('status','working');
     }
 
 }

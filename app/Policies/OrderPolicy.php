@@ -63,4 +63,9 @@ class OrderPolicy
     {
         //
     }
+
+    public function updateStatus(User $user, Order $order)
+    {
+        return $user->subscriber_id === $order->subscriber_id;
+    }
 }

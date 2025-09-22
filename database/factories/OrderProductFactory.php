@@ -21,6 +21,7 @@ class OrderProductFactory extends Factory
             'order_id' => Order::factory(),
             'tooth_color_id' => ToothColor::factory(),
             'specialization_users_id' => Specialization_User::factory(),
+            'status' => $this->faker->randomElement(['working', 'finished'])
         ];
     }
 }

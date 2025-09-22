@@ -201,7 +201,7 @@ class OrderController extends Controller
     }
 
 
-    public function updateOrderProductSpecializationUser(Request $request)
+    public function updateOrderProductSpecializationUser(Request $request): \Illuminate\Http\JsonResponse
     {
         $data = $request->only(['order_product_id', 'specialization_subscriber_id']);
 

@@ -140,6 +140,7 @@ class ProductController extends Controller
         }
         $specializationUsersIds = $specializationUsers->pluck('id');
         $products = OrderProduct::whereIn('specialization_users_id', $specializationUsersIds)
+            ->WorkingOn()
             ->with([
                 'product:name,id',
                 'toothColor:color,id',
@@ -153,5 +154,30 @@ class ProductController extends Controller
         });
         return response()->json($products);
     }
+
+    public function finishOrderProduct($id)
+    {
+        $orderProduct = OrderProduct::findOrFail($id);
+        $order = $orderProduct->order;
+
+        $this->authorize('updateStatus', $order);
+
+        $orderProduct->status = 'finished';
+        $orderProduct->save();
+
+        $allFinished = $order->products()->where('status', '!=', 'finished')->count() === 0;
+
+        if ($allFinished) {
+            $order->update(['status' => 'completed']);
+        }
+
+        return response()->json([
+            'message' => 'Order product status updated successfully',
+            'order_product' => $orderProduct,
+            'order_status' => $order->status,
+        ]);
+    }
+
+
 
 }

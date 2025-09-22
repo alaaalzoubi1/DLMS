@@ -23,6 +23,7 @@ return new class extends Migration
             $table->foreign('tooth_color_id')->references('id')->on('tooth_colors')->onDelete('cascade');
             $table->unsignedBigInteger('specialization_users_id');
             $table->foreign('specialization_users_id')->references('id')->on('specialization__users')->onDelete('cascade');
+            $table->enum('status', ['working', 'finished'])->default('working');
             $table->timestamps();
         });
     }
