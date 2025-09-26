@@ -13,8 +13,14 @@ class Specialization extends Model
     ];
     public function subscribers()
     {
-        return $this->belongsToMany(Subscriber::class)->withTimestamps();
+        return $this->belongsToMany(
+            Subscriber::class,
+            'specialization__subscribers',
+            'specializations_id',
+            'subscriber_id'
+        )->withTimestamps();
     }
+
     public function users()
     {
         return $this->belongsToMany(User::class)->withTimestamps();

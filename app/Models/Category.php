@@ -17,4 +17,9 @@ class Category extends Model
     {
         return $this->hasMany(Product::class);
     }
+    public function productsWithClinicPrice($clinicId)
+    {
+        return $this->hasMany(Product::class)
+            ->withClinicPrice($clinicId);
+    }
 }

@@ -7,6 +7,7 @@ use App\Models\ClinicProduct;
 use App\Models\ClinicSubscriber;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class ClinicController extends Controller
 {
@@ -17,6 +18,7 @@ class ClinicController extends Controller
             'has_special_price' => 'boolean',
             'tax_number' => 'nullable|string|unique:clinics,tax_number',
         ]);
+        $validated['clinic_code'] = Str::uuid();
 
         // Create the clinic
         $clinic = Clinic::create($validated);
@@ -109,7 +111,7 @@ class ClinicController extends Controller
             ], 500);
         }
     }
-    
+
     public function addSpecialPrice(Request $request)
     {
         $validatedData = $request->validate([

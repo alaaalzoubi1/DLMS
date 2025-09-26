@@ -16,6 +16,11 @@ class Subscriber extends Model
         'tax_number',
 
         ];
+    public function clinics()
+    {
+        return $this->belongsToMany(Clinic::class, 'clinic_subscribers');
+    }
+
     public function doctors()
     {
         return $this->belongsToMany(Doctor::class)->withTimestamps();
@@ -30,11 +35,21 @@ class Subscriber extends Model
     }
     public function specializations()
     {
-        return $this->belongsToMany(Specialization::class)->withTimestamps();
+        return $this->belongsToMany(
+            Specialization::class,
+            'specialization__subscribers',
+            'subscriber_id',
+            'specializations_id'
+        )->withTimestamps();
     }
+
     public function users()
     {
         return $this->hasMany(User::class);
+    }
+    public function categories()
+    {
+        return $this->hasMany(Category::class);
     }
     public function orders()
     {

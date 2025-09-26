@@ -2,8 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\DoctorRegisterRequest;
+use App\Models\Clinic;
 use App\Models\Doctor;
+use App\Models\Doctor_Account;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class DoctorController extends Controller
 {
@@ -89,5 +96,68 @@ class DoctorController extends Controller
         return response()->json([
             'message' => 'Doctor deleted successfully',
         ], 200);
+    }
+
+
+    public function doctorRegister(DoctorRegisterRequest $request): JsonResponse
+    {
+        try {
+            DB::beginTransaction();
+            $clinic = Clinic::where('clinic_code', $request->clinic_code)->firstOrFail();
+
+            $doctor = Doctor::create([
+                'first_name' => $request->first_name,
+                'last_name'  => $request->last_name,
+                'clinic_id'  => $clinic->id,
+            ]);
+
+            // 3. إنشاء حساب الدكتور
+            $doctorAccount = Doctor_Account::create([
+                'doctor_id' => $doctor->id,
+                'email'     => $request->email,
+                'password'  => Hash::make($request->password),
+            ]);
+
+            $token = auth('api')->attempt(['email' => $request->email,'password' =>$request->password]);
+            DB::commit();
+            return response()->json([
+                'message' => 'Doctor registered successfully',
+                'doctor' => [
+                    'id' => $doctor->id,
+                    'first_name' => $doctor->first_name,
+                    'last_name' => $doctor->last_name,
+                    'clinic' => $clinic->name,
+                ],
+                'account' => [
+                    'email' => $doctorAccount->email,
+                ],
+                'token' => $token,
+            ], 201);
+        } catch (\Exception $e) {
+            // Rollback transaction in case of failure
+            DB::rollBack();
+            // Return error response
+            return response()->json([
+                'message' => 'Registration failed. Please try again later.',
+            ], 500);
+        }
+    }
+    public function doctorLogin(Request $request): JsonResponse
+    {
+        $credentials = $request->only(['email', 'password']);
+
+        if (!$token = auth('api')->attempt($credentials)) {
+            return response()->json(['error' => 'Invalid credentials'], 401);
+        }
+
+        return response()->json([
+            'token' => $token,
+            'user' => auth()->user()->doctor,
+        ]);
+    }
+    public function logout(): JsonResponse
+    {
+        auth('api')->logout();
+        return response()->json(['message' => 'Successfully logged out']);
     }
 }

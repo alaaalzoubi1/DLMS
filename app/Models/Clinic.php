@@ -8,12 +8,13 @@ class Clinic extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'has_special_price', 'tax_number'];
+    protected $fillable = ['name', 'has_special_price', 'tax_number','clinic_code'];
 
     public function subscribers()
     {
-        return $this->belongsToMany(Subscriber::class, 'clinic_subscribers', 'clinic_id', 'subscriber_id');
+        return $this->belongsToMany(Subscriber::class, 'clinic_subscribers');
     }
+
     public function doctors(){
         return $this->hasMany(Doctor::class);
     }

@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('name');
             $table->boolean('has_special_price')->default(0);
             $table->string('tax_number')->nullable()->unique();
+            $table->uuid('clinic_code')->unique();
             $table->timestamps();
         });
     }

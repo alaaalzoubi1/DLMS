@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Subscriber;
 use App\Http\Requests\StoreSubscriberRequest;
 use App\Http\Requests\UpdateSubscriberRequest;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class SubscriberController extends Controller
@@ -45,10 +46,17 @@ class SubscriberController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Subscriber $subscriber)
+    public function show($id): JsonResponse
     {
-        //
+        $subscriber = Subscriber::with(['categories.products', 'specializations'])
+            ->findOrFail($id);
+
+        return response()->json([
+            'data' => $subscriber
+        ]);
     }
+
+
 
     /**
      * Show the form for editing the specified resource.
