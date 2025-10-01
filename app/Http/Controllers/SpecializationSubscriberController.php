@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Specialization_Subscriber;
 use App\Http\Requests\StoreSpecialization_SubscriberRequest;
 use App\Http\Requests\UpdateSpecialization_SubscriberRequest;
+use App\Models\Subscriber;
 
 class SpecializationSubscriberController extends Controller
 {
@@ -82,6 +83,17 @@ class SpecializationSubscriberController extends Controller
             'message' => 'Specializations retrieved successfully',
             'specializations' => $specializations,
         ]);
+    }
+    public function doctorShow($subscriber_id)
+    {
+        $subscriber = Subscriber::with('specialization_subscriber.specialization')->findOrFail($subscriber_id);
+
+        // تحقق عبر Policy
+        $this->authorize('view', $subscriber);
+
+        $specialization_subscriber = $subscriber->specialization_subscriber;
+
+        return response()->json(['$specialization_subscriber' => $specialization_subscriber], 200);
     }
 
 }

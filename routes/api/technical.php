@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('/register-technical', [UserController::class, 'registerTechnical']);
 Route::post('/login-technical', [UserController::class, 'loginTechnical']);
-Route::middleware(['auth:admin'])->group(function () {
+Route::middleware(['auth:admin','technical.role','check.subscriber'])->group(function () {
     Route::post('add-specialization', [SpecializationUserController::class, 'addUserSpecialization']);
     Route::get('subscriber-specializations', [SpecializationSubscriberController::class, 'getSubscriberSpecializations']);
     Route::get('user-specializations', [SpecializationUserController::class, 'getUserSpecializations']);
@@ -20,5 +20,4 @@ Route::middleware(['auth:admin'])->group(function () {
     Route::get('finishing-order_product/{order_product_id}',[ProductController::class , 'finishOrderProduct']);
     Route::get('availability', [UserController::class, 'getAvailability']);
     Route::patch('availability', [UserController::class, 'toggleAvailability']);
-
 });

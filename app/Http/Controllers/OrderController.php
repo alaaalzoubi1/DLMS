@@ -1,8 +1,13 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Http\Requests\DoctorOrdersRequest;
+use App\Http\Requests\StoreOrderRequest;
+use App\Models\Category;
+use App\Models\Subscriber;
 use App\Models\Type;
 use Exception;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Order;
@@ -341,5 +346,213 @@ class OrderController extends Controller
 
         return response()->json(['message' => 'Order updated successfully.', 'order' => $order], 200);
     }
+
+    public function doctorCreateOrder(StoreOrderRequest $request)
+    {
+        $doctor = auth('api')->user()->doctor;
+        if (!$doctor) {
+            return response()->json(['error' => 'Only doctors can create orders.'], 403);
+        }
+
+        $subscriber = Subscriber::findOrFail($request->subscriber_id);
+
+        // تحقق عبر Policy
+        $this->authorize('view', $subscriber);
+
+        $data = $request->validated();
+
+        try {
+            DB::beginTransaction();
+
+            // 1) تحقق أن type_id تابع للـ subscriber
+            $type = Type::where('id', $data['type_id'])
+                ->where('subscriber_id', $data['subscriber_id'])
+                ->firstOrFail();
+
+            $invoiced = $type->invoiced;
+
+            // 2) جلب كل الـ products مع category و final_price دفعة واحدة
+            $productIds = collect($data['products'])->pluck('product_id')->toArray();
+
+            // جلب الـ categories الخاصة بالـ subscriber
+            $categories = Category::where('subscriber_id', $subscriber->id)
+                ->pluck('id');
+
+            // جلب المنتجات مع التحقق أنها ضمن الـ categories الخاصة بالـ subscriber
+            $products = Product::whereIn('id', $productIds)
+                ->whereIn('category_id', $categories)
+                ->get()
+                ->keyBy('id');
+
+            if (count($products) !== count($productIds)) {
+                throw new \Exception("Some products do not belong to subscriber {$subscriber->id}");
+            }
+
+            // جلب أسعار العيادة الخاصة دفعة واحدة
+            $clinicId = $doctor->clinic_id;
+            $specialPrices = DB::table('clinic_products')
+                ->where('clinic_id', $clinicId)
+                ->whereIn('product_id', $productIds)
+                ->pluck('price', 'product_id');
+
+            // 3) حساب التكلفة
+            $totalCost = 0;
+            foreach ($data['products'] as $prod) {
+                $product = $products[$prod['product_id']];
+                $price = $specialPrices->get($product->id, $product->price);
+                $totalCost += $price;
+            }
+
+            // 4) إنشاء الأوردر
+            $order = Order::create([
+                'doctor_id'     => $doctor->id,
+                'subscriber_id' => $subscriber->id,
+                'type_id'       => $type->id,
+                'invoiced'      => $invoiced,
+                'status' => 'pending',
+                'paid'          => $data['paid'],
+                'cost'          => $totalCost,
+                'patient_name'  => $data['patient_name'],
+                'receive'       => $data['receive'],
+                'delivery'      => $data['delivery'],
+                'patient_id'    => $data['patient_id'],
+                'specialization'=> $data['specialization'],
+            ]);
+
+            // 5) إضافة المنتجات للأوردر + اختيار العامل المناسب
+            foreach ($data['products'] as $prod) {
+
+                $user = $this->fetchUserWithSpecialization(
+                    $prod['specialization_subscriber_id'],
+                    $subscriber->id
+                );
+
+                if (!$user) {
+                    throw new \Exception(
+                        "No user found with specialization_subscriber_id={$prod['specialization_subscriber_id']} for subscriber_id={$subscriber->id}."
+                    );
+                }
+
+                $this->incrementUserWorkingOn($user->id);
+
+                OrderProduct::create([
+                    'product_id'             => $prod['product_id'],
+                    'order_id'               => $order->id,
+                    'tooth_color_id'         => $prod['tooth_color_id'],
+                    'tooth_number'           => $prod['tooth_number'] ?? null,
+                    'specialization_users_id'=> $user->specialization_users_id,
+                    'note'                   => $prod['note'] ?? null,
+                ]);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Order created successfully.',
+                'order'   => $order->load('products')
+            ], 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function doctorOrders(DoctorOrdersRequest $request): JsonResponse
+    {
+        $doctor = auth('api')->user()->doctor;
+
+        $query = Order::where('doctor_id', $doctor->id);
+
+        if ($request->filled('from')) {
+            $query->whereDate('created_at', '>=', $request->from);
+        }
+
+        if ($request->filled('to')) {
+            $query->whereDate('created_at', '<=', $request->to);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('invoiced')) {
+            $query->where('invoiced', (bool) $request->invoiced);
+        }
+
+        if ($request->filled('type_id')) {
+            $query->where('type_id', $request->type_id);
+        }
+
+        if ($request->filled('subscriber_id')) {
+            $query->where('subscriber_id', $request->subscriber_id);
+        }
+
+        $orders = $query->with(['type:id,type', 'subscriber:id,company_name', 'products'])->latest()->paginate(15);
+        return response()->json($orders, 200);
+    }
+    public function adminAddPayment(Request $request)
+    {
+        $request->validate([
+            'doctor_id'   => 'required|exists:doctors,id',
+            'amount'      => 'required|numeric|min:1',
+            'patient_id'  => 'nullable|string', // اختياري
+        ]);
+        $subscriberId = auth('admin')->user()->subscriber_id;
+        $doctorId = $request->doctor_id;
+        $amount = $request->amount;
+        $patientId = $request->patient_id;
+
+        try {
+            DB::beginTransaction();
+
+            // جلب الأوردرات المستحقة الدفع
+            $ordersQuery = Order::where('doctor_id', $doctorId)
+                ->where('subscriber_id',$subscriberId)
+                ->whereColumn('paid', '<', 'cost')
+                ->orderBy('receive', 'asc');
+
+            if ($patientId) {
+                $ordersQuery->where('patient_id', $patientId);
+            }
+
+            $orders = $ordersQuery->lockForUpdate()->get(); // lock لتجنب مشاكل التوازي
+
+            $remainingAmount = $amount;
+
+            foreach ($orders as $order) {
+                $toPay = $order->cost - $order->paid;
+
+                if ($remainingAmount >= $toPay) {
+                    $order->paid += $toPay;
+                    $remainingAmount -= $toPay;
+                } else {
+                    $order->paid += $remainingAmount;
+                    $remainingAmount = 0;
+                }
+
+                $order->save();
+
+                if ($remainingAmount <= 0) break;
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'message'          => 'Payment applied successfully',
+                'remaining_amount' => $remainingAmount,
+            ], 200);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'error'   => 'Payment failed',
+                'details' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+
+
 
 }

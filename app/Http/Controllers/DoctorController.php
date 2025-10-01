@@ -6,6 +6,7 @@ use App\Http\Requests\DoctorRegisterRequest;
 use App\Models\Clinic;
 use App\Models\Doctor;
 use App\Models\Doctor_Account;
+use App\Models\Order;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -160,4 +161,21 @@ class DoctorController extends Controller
         auth('api')->logout();
         return response()->json(['message' => 'Successfully logged out']);
     }
+
+    public function doctorPatients(Request $request): JsonResponse
+    {
+        $doctor = auth('api')->user()->doctor;
+
+        if (!$doctor) {
+            return response()->json(['error' => 'Only doctors can access patients.'], 403);
+        }
+
+        $patients = Order::where('doctor_id', $doctor->id)
+            ->select('patient_id', 'patient_name')
+            ->distinct()
+            ->paginate(15);
+
+        return response()->json($patients, 200);
+    }
+
 }

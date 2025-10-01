@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreign('subscriber_id')->references('id')->on('subscribers')->onDelete('cascade');
             $table->string('color');
             $table->boolean('is_deleted')->default(false);
+            $table->index(['id', 'subscriber_id']);
             $table->timestamps();
         });
     }

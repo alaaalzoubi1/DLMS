@@ -24,7 +24,10 @@ class Product extends Model
 
     public function getFinalPriceAttribute()
     {
-        $clinicId = auth('api')->user()->doctor->clinic_id;
+        $clinicId = null;
+        if (auth('api')->check() && auth('api')->user()->doctor) {
+            $clinicId = auth('api')->user()->doctor->clinic_id;
+        }
 
 
 
@@ -47,6 +50,10 @@ class Product extends Model
     public function clinics()
     {
         return $this->hasMany(ClinicProduct::class);
+    }
+    public function specializationUser()
+    {
+        return $this->belongsTo(Specialization_User::class);
     }
 
     public function scopeWithClinicPrice(Builder $query, $clinicId)

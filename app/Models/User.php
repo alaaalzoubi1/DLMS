@@ -78,7 +78,7 @@ class User extends Authenticatable  implements ShouldQueue , JWTSubject
     }
     public function subscribers()
     {
-        return $this->belongsTo(Subscriber::class);
+        return $this->belongsTo(Subscriber::class,'subscriber_id');
     }
     public function specializationSubscribers()
     {

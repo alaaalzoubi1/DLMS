@@ -88,5 +88,15 @@ class ToothColorController extends Controller
             'tooth_colors' => $toothColors,
         ], 200);
     }
+    public function doctorShow($subscriber_id)
+    {
+        $subscriber = Subscriber::findOrFail($subscriber_id);
 
+        // تحقق عبر Policy
+        $this->authorize('view', $subscriber);
+
+        $toothcolors = $subscriber->toothcolors()->NotDeleted()->get();
+
+        return response()->json(['tooth-colors' => $toothcolors], 200);
+    }
 }

@@ -35,6 +35,9 @@ class DatabaseSeeder extends Seeder
 
         Role::create(['name' => 'admin', 'guard_name' => 'admin']);
         Role::create(['name' => 'technical', 'guard_name' => 'admin']);
+        Role::create(['name' => 'super_admin', 'guard_name' => 'admin']);
+        $superAdmin = User::factory()->create();
+        $superAdmin->assignRole('super_admin');
         $clinics = Clinic::factory()->count(10)->create();
         $specializations = Specialization::factory()->count(20)->create();
         $subscribers = Subscriber::factory()->count(5)->create();

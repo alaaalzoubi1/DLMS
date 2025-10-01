@@ -4,7 +4,9 @@ namespace App\Providers;
 
 // use Illuminate\Support\Facades\Gate;
 use App\Models\Order;
+use App\Models\Subscriber;
 use App\Policies\OrderPolicy;
+use App\Policies\SubscriberPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
 class AuthServiceProvider extends ServiceProvider
@@ -16,6 +18,7 @@ class AuthServiceProvider extends ServiceProvider
      */
     protected $policies = [
         Order::class => OrderPolicy::class,
+        Subscriber::class => SubscriberPolicy::class,
     ];
 
     /**

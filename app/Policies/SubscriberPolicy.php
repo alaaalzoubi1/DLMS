@@ -2,9 +2,12 @@
 
 namespace App\Policies;
 
+use App\Models\Doctor;
+use App\Models\Doctor_Account;
 use App\Models\Subscriber;
 use App\Models\User;
 use Illuminate\Auth\Access\Response;
+use Illuminate\Support\Facades\DB;
 
 class SubscriberPolicy
 {
@@ -19,9 +22,13 @@ class SubscriberPolicy
     /**
      * Determine whether the user can view the model.
      */
-    public function view(User $user, Subscriber $subscriber): bool
+    public function view(Doctor_Account $doctorAccount, Subscriber $subscriber): bool
     {
-        //
+        return DB::table('clinic_subscribers')
+            ->join('doctors', 'clinic_subscribers.clinic_id', '=', 'doctors.clinic_id')
+            ->where('doctors.id', $doctorAccount->doctor_id)
+            ->where('clinic_subscribers.subscriber_id', $subscriber->id)
+            ->exists();
     }
 
     /**

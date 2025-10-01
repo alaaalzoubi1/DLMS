@@ -10,6 +10,8 @@ use App\Http\Controllers\DoctorController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SpecializationController;
+use App\Http\Controllers\SubscriberController;
+use App\Http\Controllers\SubscriptionPlanController;
 use App\Http\Controllers\ToothColorController;
 use App\Http\Controllers\TypeController;
 use App\Http\Controllers\UserController;
@@ -20,7 +22,7 @@ Route::post('/login-admin', [UserController::class, 'loginAdmin']);
 Route::post('/register-company', [UserController::class, 'registerCompany']);
 
 
-Route::middleware(['auth:admin', 'admin.role'])->group(function () {
+Route::middleware(['auth:admin', 'admin.role','check.subscriber'])->group(function () {
     Route::get('admin-info', [UserController::class,'adminInfo']);
     Route::post('add-category',[CategoryController::class,'store']);
     Route::get('show-categories', [CategoryController::class,'show']);
@@ -62,6 +64,15 @@ Route::middleware(['auth:admin', 'admin.role'])->group(function () {
     Route::post('/types',[TypeController::class,'createType']);
     Route::get('/types', [TypeController::class, 'listTypes']);
     Route::put('/types/{id}', [TypeController::class, 'updateType']);
+    Route::get('cancel-subscription',[SubscriberController::class,'cancelSubscription']);
+    Route::get('add-payment',[OrderController::class,'adminAddPayment']);
 });
+
+Route::middleware(['auth:admin', 'admin.role'])->group(function () {
+    Route::post('subscribe',[SubscriberController::class,'subscribeToPlan']);
+    Route::get('plans', [SubscriptionPlanController::class, 'index']);
+    Route::get('remaining-days',[SubscriberController::class,'remainingDays']);
+});
+
 
 

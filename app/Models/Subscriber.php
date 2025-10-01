@@ -16,6 +16,9 @@ class Subscriber extends Model
         'tax_number',
 
         ];
+    protected $casts = [
+        'trial_end_at' => 'datetime',
+    ];
     public function clinics()
     {
         return $this->belongsToMany(Clinic::class, 'clinic_subscribers');
@@ -42,7 +45,10 @@ class Subscriber extends Model
             'specializations_id'
         )->withTimestamps();
     }
-
+    public function specialization_subscriber()
+    {
+        return $this->hasMany(Specialization_Subscriber::class);
+    }
     public function users()
     {
         return $this->hasMany(User::class);
@@ -54,5 +60,14 @@ class Subscriber extends Model
     public function orders()
     {
         return $this->hasMany(Order::class);
+    }
+
+    public function types()
+    {
+        return $this->hasMany(Type::class);
+    }
+    public function toothcolors()
+    {
+        return $this->hasMany(ToothColor::class);
     }
 }

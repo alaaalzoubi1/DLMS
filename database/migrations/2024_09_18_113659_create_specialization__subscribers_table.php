@@ -18,7 +18,7 @@ return new class extends Migration
 
             $table->foreign('specializations_id')->references('id')->on('specializations')->onDelete('cascade');
             $table->foreign('subscriber_id')->references('id')->on('subscribers')->onDelete('cascade');
-
+            $table->index(['id', 'subscriber_id']);
             $table->timestamps();
         });
     }

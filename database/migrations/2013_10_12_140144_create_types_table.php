@@ -17,6 +17,7 @@ return new class extends Migration
             $table->enum('type', ['futures', 'new', 'test', 'returned']);
             $table->boolean('invoiced')->default(true);
             $table->foreign('subscriber_id')->references('id')->on('subscribers')->onDelete('cascade');
+            $table->index(['id', 'subscriber_id']);
             $table->timestamps();
         });
     }

@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Subscriber;
 use App\Models\Type;
 use App\Http\Requests\StoreTypeRequest;
 use App\Http\Requests\UpdateTypeRequest;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -60,7 +62,7 @@ class TypeController extends Controller
     /**
      * Display the specified resource.
      */
-    public function listTypes()
+    public function listTypes(): JsonResponse
     {
         $subscriber_id = Auth::guard('admin')->user()->subscriber_id;
 
@@ -68,7 +70,17 @@ class TypeController extends Controller
 
         return response()->json(['types' => $types], 200);
     }
+    public function doctorListTypes($subscriber_id): JsonResponse
+    {
+        $subscriber = Subscriber::findOrFail($subscriber_id);
 
+        // تحقق عبر Policy
+        $this->authorize('view', $subscriber);
+
+        $types = $subscriber->types()->get();
+
+        return response()->json(['types' => $types], 200);
+    }
     /**
      * Show the form for editing the specified resource.
      */

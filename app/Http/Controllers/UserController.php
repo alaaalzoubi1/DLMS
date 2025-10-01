@@ -33,7 +33,7 @@ class UserController extends Controller
 
         $companyCode = Str::slug($validatedData['company_name']) . Str::random(3);
         $trial_start_at = now();
-        $trial_end_at = Carbon::now()->addDays(7);
+        $trial_end_at = Carbon::now()->addDays(14);
 
         $subscriber = Subscriber::create([
             'company_name' => $validatedData['company_name'],

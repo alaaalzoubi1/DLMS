@@ -12,4 +12,8 @@ class ToothColor extends Model
         'color',
         'subscriber_id',
     ];
+    public function scopeNotDeleted($query)
+    {
+        return $query->where('is_deleted',false);
+    }
 }
