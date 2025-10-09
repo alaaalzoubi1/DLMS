@@ -355,7 +355,11 @@ class OrderController extends Controller
         }
 
         $subscriber = Subscriber::findOrFail($request->subscriber_id);
-
+        if ($subscriber->trial_end_at < now()) {
+            return response()->json([
+                'error' => 'Cannot create order. Subscriber subscription has expired.'
+            ], 403);
+        }
         // تحقق عبر Policy
         $this->authorize('view', $subscriber);
 
