@@ -20,4 +20,5 @@ Route::middleware(['auth:admin','technical.role','check.subscriber'])->group(fun
     Route::get('finishing-order_product/{order_product_id}',[ProductController::class , 'finishOrderProduct']);
     Route::get('availability', [UserController::class, 'getAvailability']);
     Route::patch('availability', [UserController::class, 'toggleAvailability']);
+    Route::get('profile',[UserController::class,'technicalProfile']);
 });

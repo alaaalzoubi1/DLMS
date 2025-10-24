@@ -22,4 +22,5 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('orders',[OrderController::class,'doctorOrders']);
     Route::get('patients',[DoctorController::class,'doctorPatients']);
     Route::get('/logout', [DoctorController::class, 'logout']);
+    Route::get('profile',[DoctorController::class,'doctorProfile']);
 });

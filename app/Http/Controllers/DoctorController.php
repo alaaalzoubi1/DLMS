@@ -162,6 +162,16 @@ class DoctorController extends Controller
         return response()->json(['message' => 'Successfully logged out']);
     }
 
+    public function doctorProfile(){
+        $doctor = auth('api')->user();
+        return response()->json([
+            'doctor' => [
+                'email' => $doctor->email,
+                'doctor'=> $doctor->doctor->only(['id','first_name','last_name']),
+                'clinic' => $doctor->doctor->clinic->only(['id','name','clinic_code'])
+        ]]);
+    }
+
     public function doctorPatients(Request $request): JsonResponse
     {
         $doctor = auth('api')->user()->doctor;

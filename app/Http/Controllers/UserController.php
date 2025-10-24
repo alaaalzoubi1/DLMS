@@ -133,7 +133,7 @@ class UserController extends Controller
             'token' => $token,
         ], 201);
     }
-    public function loginTechnical(Request $request)
+    public function loginTechnical(Request $request): JsonResponse
     {
         $credentials = $request->only('email', 'password');
         try {
@@ -156,7 +156,48 @@ class UserController extends Controller
             return response()->json(['success' => false, 'error' => 'Failed to login, please try again.'], 500);
         }
     }
-    public function logout(Request $request)
+    public function technicalProfile(): JsonResponse
+    {
+        $user = auth('admin')->user();
+
+        return response()->json([
+            'technical' => [
+                'id' => $user->id,
+                'email' => $user->email,
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
+                'is_available' => $user->is_available,
+                'role' => $user->roles->pluck('name')->first(), // اسم الدور فقط
+                'subscriber' => $user->subscribers ? [
+                    'id' => $user->subscribers->id,
+                    'name' => $user->subscribers->company_name,
+                    'company code' => $user->subscribers->company_code,
+                ] : null,
+            ],
+        ]);
+    }
+    public function adminProfile(): JsonResponse
+    {
+        $user = auth('admin')->user();
+
+        return response()->json([
+            'admin' => [
+                'id' => $user->id,
+                'email' => $user->email,
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
+                'is_available' => $user->is_available,
+                'role' => $user->roles->pluck('name')->first(), // اسم الدور فقط
+                'subscriber' => $user->subscribers ? [
+                    'id' => $user->subscribers->id,
+                    'name' => $user->subscribers->company_name,
+                    'company code' => $user->subscribers->company_code,
+                ] : null,
+            ],
+        ]);
+    }
+
+    public function logout(Request $request): JsonResponse
     {
         try {
             Auth::guard('admin')->logout();
