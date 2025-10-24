@@ -178,6 +178,12 @@ class ProductController extends Controller
         ]);
     }
 
-
+    public function categoryProducts(Request $request)
+    {
+        return response()->json([
+            'products' => Product::where('category_id',$request->category_id)
+            ->paginate(10)
+        ]);
+    }
 
 }

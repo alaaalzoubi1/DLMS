@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\CategoryRequest;
 use App\Models\Category;
+use App\Models\Subscriber;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 /**
@@ -118,5 +119,15 @@ class CategoryController extends Controller
             'message' => 'Category updated successfully',
             'category' => $category, ], 200);
 
-}
+    }
+    public function subscriberCategories($subscriberId)
+    {
+        $subscriber = Subscriber::findOrFail($subscriberId);
+        $this->authorize('view', $subscriber);
+        return response()->json([
+            'categories' => Category::NotDeleted()
+                ->where('subscriber_id',$subscriberId)
+                ->get()
+        ]);
+    }
 }

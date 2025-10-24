@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ClinicSubscriberController;
 use App\Http\Controllers\DoctorController;
 
@@ -23,4 +24,6 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('patients',[DoctorController::class,'doctorPatients']);
     Route::get('/logout', [DoctorController::class, 'logout']);
     Route::get('profile',[DoctorController::class,'doctorProfile']);
+    Route::get('categories/{subscriber_id}',[CategoryController::class,'subscriberCategories']);
+    Route::get('products',[\App\Http\Controllers\ProductController::class,'categoryProducts']);
 });

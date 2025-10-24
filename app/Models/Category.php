@@ -22,4 +22,8 @@ class Category extends Model
         return $this->hasMany(Product::class)
             ->withClinicPrice($clinicId);
     }
+    public function scopeNotDeleted($query)
+    {
+        return $query->where('is_deleted',false);
+    }
 }
