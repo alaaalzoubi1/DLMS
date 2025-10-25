@@ -21,7 +21,7 @@ class DoctorAccountFactory extends Factory
         return [
             'doctor_id' => Doctor::inRandomOrder()->first()->id ?? Doctor::factory(),
             'email' => $this->faker->unique()->safeEmail,
-            'password' => Hash::make('password'),
+            'password' => 12345678,
             'FCM_token' => $this->faker->optional()->sha256,
             'created_at' => now(),
             'updated_at' => now(),
