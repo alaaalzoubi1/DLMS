@@ -187,5 +187,61 @@ class DoctorController extends Controller
 
         return response()->json($patients, 200);
     }
+    public function updateProfile(Request $request)
+    {
+        $doctorAccount = auth('api')->user();
+        $doctor = $doctorAccount->doctor;
+
+        $validated = $request->validate([
+            'email' => 'sometimes|email|unique:doctor__accounts,email,' . $doctorAccount->id,
+            'first_name' => 'sometimes|string|max:255',
+            'last_name' => 'sometimes|string|max:255',
+        ]);
+
+        if ($request->has('email')) {
+            $doctorAccount->email = $request->email;
+            $doctorAccount->save();
+        }
+
+        if ($request->has('first_name')) {
+            $doctor->first_name = $request->first_name;
+        }
+
+        if ($request->has('last_name')) {
+            $doctor->last_name = $request->last_name;
+        }
+
+        $doctor->save();
+
+        return response()->json([
+            'doctor' => [
+                'email' => $doctorAccount->email,
+                'doctor' => [
+                    'id' => $doctor->id,
+                    'first_name' => $doctor->first_name,
+                    'last_name' => $doctor->last_name,
+                ],
+            ],
+        ]);
+    }
+
+    public function deleteAccount()
+    {
+        $doctorAccount = auth('api')->user();
+        if ($doctorAccount) {
+            if ($doctorAccount->doctor) {
+                $doctorAccount->doctor->delete();
+            }
+            $doctorAccount->delete();
+            auth('api')->logout();
+            return response()->json([
+                'message' => 'Account deleted successfully'
+            ]);
+        }
+        return response()->json([
+            'message' => 'No authenticated user found'
+        ], 404);
+    }
+
 
 }

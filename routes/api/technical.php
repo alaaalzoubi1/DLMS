@@ -21,4 +21,6 @@ Route::middleware(['auth:admin','technical.role','check.subscriber'])->group(fun
     Route::get('availability', [UserController::class, 'getAvailability']);
     Route::patch('availability', [UserController::class, 'toggleAvailability']);
     Route::get('profile',[UserController::class,'technicalProfile']);
+    Route::patch('profile',[UserController::class,'technicalUpdateProfile']);
+    Route::delete('profile',[UserController::class,'deleteAccount']);
 });

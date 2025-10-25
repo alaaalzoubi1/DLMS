@@ -26,4 +26,6 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('profile',[DoctorController::class,'doctorProfile']);
     Route::get('categories/{subscriber_id}',[CategoryController::class,'subscriberCategories']);
     Route::get('products',[\App\Http\Controllers\ProductController::class,'categoryProducts']);
+    Route::patch('profile',[DoctorController::class,'updateProfile']);
+    Route::delete('profile',[DoctorController::class,'deleteAccount']);
 });

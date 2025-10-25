@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\UpdateAdminProfileRequest;
+use App\Http\Requests\UpdateTechnicalProfileRequest;
 use App\Models\Subscriber;
 use App\Models\Subscriber_Doctor;
 use App\Models\User;
@@ -265,6 +267,87 @@ class UserController extends Controller
             'is_available' => $user->is_available,
         ]);
     }
+
+
+    public function technicalUpdateProfile(UpdateTechnicalProfileRequest $request): JsonResponse
+    {
+        $user = auth('admin')->user();
+
+        $data = $request->only([
+            'first_name',
+            'last_name',
+            'email',
+        ]);
+
+        $user->update($data);
+
+        return response()->json([
+            'message' => 'Profile updated successfully',
+            'technical' => [
+                'id' => $user->id,
+                'email' => $user->email,
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
+                'is_available' => $user->is_available,
+                'role' => $user->roles->pluck('name')->first(),
+                'subscriber' => $user->subscribers ? [
+                    'id' => $user->subscribers->id,
+                    'name' => $user->subscribers->name,
+                ] : null,
+            ],
+        ]);
+    }
+
+
+    public function adminUpdateProfile(UpdateAdminProfileRequest $request): JsonResponse
+    {
+        $admin = auth('admin')->user();
+
+        $admin->update($request->only([
+            'first_name',
+            'last_name',
+            'email',
+        ]));
+
+        if ($request->has('subscriber') && $admin->subscribers) {
+            $admin->subscribers->update([
+                'name' => $request->input('subscriber.name', $admin->subscribers->name),
+                'company_code' => $request->input('subscriber.company_code', $admin->subscribers->company_code),
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Profile updated successfully',
+            'admin' => [
+                'id' => $admin->id,
+                'email' => $admin->email,
+                'first_name' => $admin->first_name,
+                'last_name' => $admin->last_name,
+                'is_available' => $admin->is_available,
+                'role' => $admin->roles->pluck('name')->first(),
+                'subscriber' => $admin->subscribers ? [
+                    'id' => $admin->subscribers->id,
+                    'name' => $admin->subscribers->name,
+                    'company code' => $admin->subscribers->company_code,
+                ] : null,
+            ],
+        ]);
+    }
+
+    public function deleteAccount()
+    {
+        $account = auth('admin')->user();
+
+        if ($account->hasRole('admin')) {
+            $account->subscribers->delete();
+        }
+        $account->delete();
+        auth('admin')->logout();
+        return response()->json([
+            'message' => 'Account deleted successfully'
+        ]);
+    }
+
 
 
 }

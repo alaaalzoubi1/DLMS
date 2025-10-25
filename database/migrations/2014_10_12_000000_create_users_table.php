@@ -24,6 +24,7 @@ return new class extends Migration
             $table->integer('working_on')->default(0);
             $table->foreign('subscriber_id')->references('id')->on('subscribers')->onDelete('cascade');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

@@ -67,6 +67,9 @@ Route::middleware(['auth:admin', 'admin.role','check.subscriber'])->group(functi
     Route::get('cancel-subscription',[SubscriberController::class,'cancelSubscription']);
     Route::get('add-payment',[OrderController::class,'adminAddPayment']);
     Route::get('profile',[UserController::class,'adminProfile']);
+    Route::patch('profile',[UserController::class,'adminUpdateProfile']);
+    Route::delete('profile',[UserController::class,'deleteAccount']);
+
 });
 
 Route::middleware(['auth:admin', 'admin.role'])->group(function () {
