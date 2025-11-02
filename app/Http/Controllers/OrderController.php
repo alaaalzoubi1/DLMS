@@ -350,17 +350,19 @@ class OrderController extends Controller
     public function doctorCreateOrder(StoreOrderRequest $request)
     {
         $doctor = auth('api')->user()->doctor;
+
         if (!$doctor) {
             return response()->json(['error' => 'Only doctors can create orders.'], 403);
         }
 
         $subscriber = Subscriber::findOrFail($request->subscriber_id);
+
         if ($subscriber->trial_end_at < now()) {
             return response()->json([
                 'error' => 'Cannot create order. Subscriber subscription has expired.'
             ], 403);
         }
-        // تحقق عبر Policy
+
         $this->authorize('view', $subscriber);
 
         $data = $request->validated();
@@ -368,84 +370,51 @@ class OrderController extends Controller
         try {
             DB::beginTransaction();
 
-            // 1) تحقق أن type_id تابع للـ subscriber
             $type = Type::where('id', $data['type_id'])
                 ->where('subscriber_id', $data['subscriber_id'])
                 ->firstOrFail();
 
-            $invoiced = $type->invoiced;
-
-            // 2) جلب كل الـ products مع category و final_price دفعة واحدة
             $productIds = collect($data['products'])->pluck('product_id')->toArray();
 
-            // جلب الـ categories الخاصة بالـ subscriber
-            $categories = Category::where('subscriber_id', $subscriber->id)
-                ->pluck('id');
+            $categories = Category::where('subscriber_id', $subscriber->id)->pluck('id');
 
-            // جلب المنتجات مع التحقق أنها ضمن الـ categories الخاصة بالـ subscriber
             $products = Product::whereIn('id', $productIds)
                 ->whereIn('category_id', $categories)
                 ->get()
                 ->keyBy('id');
 
             if (count($products) !== count($productIds)) {
-                throw new \Exception("Some products do not belong to subscriber {$subscriber->id}");
+                throw new \Exception("Some products do not belong to subscriber");
             }
 
-            // جلب أسعار العيادة الخاصة دفعة واحدة
-            $clinicId = $doctor->clinic_id;
-            $specialPrices = DB::table('clinic_products')
-                ->where('clinic_id', $clinicId)
-                ->whereIn('product_id', $productIds)
-                ->pluck('price', 'product_id');
-
-            // 3) حساب التكلفة
             $totalCost = 0;
             foreach ($data['products'] as $prod) {
                 $product = $products[$prod['product_id']];
-                $price = $specialPrices->get($product->id, $product->price);
-                $totalCost += $price;
+                $totalCost += $product->final_price;
             }
 
-            // 4) إنشاء الأوردر
             $order = Order::create([
                 'doctor_id'     => $doctor->id,
                 'subscriber_id' => $subscriber->id,
                 'type_id'       => $type->id,
-                'invoiced'      => $invoiced,
-                'status' => 'pending',
-                'paid'          => $data['paid'],
+                'invoiced'      => $type->invoiced,
+                'status'        => 'pending',
+                'paid'          => 0,
                 'cost'          => $totalCost,
                 'patient_name'  => $data['patient_name'],
-                'receive'       => $data['receive'],
-                'delivery'      => $data['delivery'],
+                'receive'       => now(),
+                'delivery'      => null,
                 'patient_id'    => $data['patient_id'],
                 'specialization'=> $data['specialization'],
             ]);
 
-            // 5) إضافة المنتجات للأوردر + اختيار العامل المناسب
             foreach ($data['products'] as $prod) {
-
-                $user = $this->fetchUserWithSpecialization(
-                    $prod['specialization_subscriber_id'],
-                    $subscriber->id
-                );
-
-                if (!$user) {
-                    throw new \Exception(
-                        "No user found with specialization_subscriber_id={$prod['specialization_subscriber_id']} for subscriber_id={$subscriber->id}."
-                    );
-                }
-
-                $this->incrementUserWorkingOn($user->id);
-
                 OrderProduct::create([
-                    'product_id'             => $prod['product_id'],
-                    'order_id'               => $order->id,
-                    'tooth_color_id'         => $prod['tooth_color_id'],
-                    'tooth_number'           => $prod['tooth_number'] ?? null,
-                    'specialization_users_id'=> $user->specialization_users_id,
-                    'note'                   => $prod['note'] ?? null,
+                    'product_id'     => $prod['product_id'],
+                    'order_id'       => $order->id,
+                    'tooth_color_id' => $prod['tooth_color_id'],
+                    'tooth_number'   => $prod['tooth_number'] ?? null,
+                    'note'           => $prod['note'] ?? null,
                 ]);
             }
 
@@ -453,14 +422,18 @@ class OrderController extends Controller
 
             return response()->json([
                 'message' => 'Order created successfully.',
-                'order'   => $order->load('products')
+                'order'   => $order->load('products'),
             ], 201);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['error' => $e->getMessage()], 500);
+            return response()->json([
+                'error' => 'Failed to create order.',
+                'details' => $e->getMessage()
+            ], 500);
         }
     }
+
 
     public function doctorOrders(DoctorOrdersRequest $request): JsonResponse
     {
