@@ -529,6 +529,72 @@ class OrderController extends Controller
         }
     }
 
+    public function assignSpecialization(Request $request, $id)
+    {
+        $request->validate([
+            'specialization_subscriber_id' => 'required|exists:specialization__subscribers,id',
+        ]);
+
+        $orderProduct = OrderProduct::with('order')->find($id);
+
+        if (!$orderProduct) {
+            return response()->json(['error' => 'Order product not found.'], 404);
+        }
+
+        $order = $orderProduct->order;
+        if (!$order) {
+            return response()->json(['error' => 'Order not found for this product.'], 404);
+        }
+
+        $subscriberId = $order->subscriber_id;
+
+        $isValidSpecialization = DB::table('specialization__subscribers')
+            ->where('id', $request->specialization_subscriber_id)
+            ->where('subscriber_id', $subscriberId)
+            ->exists();
+
+        if (!$isValidSpecialization) {
+            return response()->json([
+                'error' => 'This specialization does not belong to the same subscriber.'
+            ], 403);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $user = $this->fetchUserWithSpecialization(
+                $request->specialization_subscriber_id,
+                $subscriberId
+            );
+
+            if (!$user) {
+                DB::rollBack();
+                return response()->json([
+                    'error' => 'No available technician found for this specialization and subscriber.'
+                ], 404);
+            }
+
+            $this->incrementUserWorkingOn($user->id);
+
+            $orderProduct->update([
+                'specialization_users_id' => $user->specialization_users_id,
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Technician assigned successfully.',
+                'order_product' => $orderProduct->load('product'),
+            ], 200);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'error' => 'Failed to assign technician',
+                'details' => $e->getMessage()
+            ], 500);
+        }
+    }
 
 
 

@@ -79,6 +79,29 @@ class ProductController extends Controller
             'products' => $products,
         ], 200);
     }
+    public function updateName(Request $request, $id)
+    {
+        // تحقق من المدخل
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+        ]);
+
+        // جلب المنتج
+        $product = Product::find($id);
+        if (!$product) {
+            return response()->json(['error' => 'Product not found.'], 404);
+        }
+
+        // تحديث الاسم
+        $product->name = $validated['name'];
+        $product->save();
+
+        return response()->json([
+            'message' => 'Product name updated successfully.',
+            'product' => $product,
+        ]);
+    }
+
     public function delete($id)
     {
             if (!is_numeric($id) || $id <= 0) {

@@ -65,16 +65,16 @@ class UserController extends Controller
     public function login(Request $request): JsonResponse
     {
         $credentials = $request->only('email', 'password');
-        try {
+//        try {
             $token = Auth::guard('admin')->attempt($credentials);
             if (!$token) {
                 return response()->json(['success' => false, 'error' => 'Invalid credentials'], 401);
             }
             return response()->json(['token' => $token
             ]);
-        } catch (\Exception $e) {
-            return response()->json(['success' => false, 'error' => 'Failed to login, please try again.'], 500);
-        }
+//        } catch (\Exception $e) {
+//            return response()->json(['success' => false, 'error' => 'Failed to login, please try again.'], 500);
+//        }
     }
     public function adminInfo()
     {

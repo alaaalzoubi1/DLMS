@@ -30,7 +30,8 @@ Route::middleware(['auth:admin', 'admin.role','check.subscriber'])->group(functi
     Route::post('add-product',[ProductController::class,'store']);
     Route::get('showProductsByCategory/{category_id}',[ProductController::class,'showByCategory']);
     Route::post('edit-category',[CategoryController::class,'update']);
-    Route::get('delete-product/{id}',[ProductController::class,'delete']);
+    Route::delete('delete-product/{id}',[ProductController::class,'delete']);
+    Route::patch('/products/{id}', [ProductController::class, 'updateName']);
     Route::post('update-price',[ProductController::class,'updatePrice']);
     Route::post('add-toothColor',[ToothColorController::class,'add']);
     Route::get('delete-toothColor/{id}',[ToothColorController::class,'delete']);
@@ -69,6 +70,7 @@ Route::middleware(['auth:admin', 'admin.role','check.subscriber'])->group(functi
     Route::get('profile',[UserController::class,'adminProfile']);
     Route::patch('profile',[UserController::class,'adminUpdateProfile']);
     Route::delete('profile',[UserController::class,'deleteAccount']);
+    Route::patch('order-products/{id}/assign-specialization', [OrderController::class, 'assignSpecialization']);
 
 });
 
@@ -76,6 +78,7 @@ Route::middleware(['auth:admin', 'admin.role'])->group(function () {
     Route::post('subscribe',[SubscriberController::class,'subscribeToPlan']);
     Route::get('plans', [SubscriptionPlanController::class, 'index']);
     Route::get('remaining-days',[SubscriberController::class,'remainingDays']);
+
 });
 
 

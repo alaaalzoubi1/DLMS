@@ -15,7 +15,6 @@ class ClinicController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'has_special_price' => 'boolean',
             'tax_number' => 'nullable|string|unique:clinics,tax_number',
         ]);
         $validated['clinic_code'] = Str::uuid();
@@ -185,8 +184,9 @@ class ClinicController extends Controller
         ], 404);
     }
 
-    public function clinics_with_special_price($subscriberId)
+    public function clinics_with_special_price()
     {
+        $subscriberId = auth('admin')->user()->subscriber_id;
         $clinics = Clinic::with('doctors')->whereHas('subscribers', function ($query) use ($subscriberId) {
             $query->where('subscriber_id', $subscriberId);
         })->where('has_special_price',true)->
