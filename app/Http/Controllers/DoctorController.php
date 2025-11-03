@@ -180,10 +180,14 @@ class DoctorController extends Controller
             return response()->json(['error' => 'Only doctors can access patients.'], 403);
         }
 
-        $patients = Order::where('doctor_id', $doctor->id)
-            ->select('patient_id', 'patient_name')
-            ->distinct()
+//        $patients = Order::where('doctor_id', $doctor->id)
+//            ->select('patient_id', 'patient_name')
+//            ->distinct()
+//            ->paginate(15);
+        $patients = Order::where('doctor_id',$doctor->id)
+            ->groupBy('patient_name')
             ->paginate(15);
+
 
         return response()->json($patients, 200);
     }
