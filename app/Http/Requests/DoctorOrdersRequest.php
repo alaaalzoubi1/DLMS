@@ -28,6 +28,8 @@ class DoctorOrdersRequest extends FormRequest
             'invoiced'      => ['nullable', 'boolean'],
             'type_id'       => ['nullable', 'integer', 'exists:types,id'],
             'subscriber_id' => ['nullable', 'integer', 'exists:subscribers,id'],
+            'patient_name'   => ['nullable', 'string', 'regex:/^[\p{L}\p{N}\s_-]+$/u', 'max:255'],
+            'patient_id'     => ['nullable', 'string', 'regex:/^[\p{L}\p{N}\s_-]+$/u', 'max:255'],
         ];
     }
 

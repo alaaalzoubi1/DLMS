@@ -441,6 +441,14 @@ class OrderController extends Controller
 
         $query = Order::where('doctor_id', $doctor->id);
 
+        if ($request->filled('patient_name')) {
+            $query->where('patient_name', 'like', "%{$request->patient_name}%");
+        }
+
+        if ($request->filled('patient_id')) {
+            $query->where('patient_id', 'like', "%{$request->patient_id}%");
+        }
+
         if ($request->filled('from')) {
             $query->whereDate('created_at', '>=', $request->from);
         }
@@ -465,9 +473,13 @@ class OrderController extends Controller
             $query->where('subscriber_id', $request->subscriber_id);
         }
 
-        $orders = $query->with(['type:id,type', 'subscriber:id,company_name', 'products'])->latest()->paginate(15);
+        $orders = $query->with(['type:id,type', 'subscriber:id,company_name', 'products'])
+            ->latest()
+            ->paginate(15);
+
         return response()->json($orders, 200);
     }
+
     public function adminAddPayment(Request $request)
     {
         $request->validate([
