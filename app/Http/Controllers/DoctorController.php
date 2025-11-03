@@ -180,17 +180,28 @@ class DoctorController extends Controller
             return response()->json(['error' => 'Only doctors can access patients.'], 403);
         }
 
-//        $patients = Order::where('doctor_id', $doctor->id)
-//            ->select('patient_id', 'patient_name')
-//            ->distinct()
-//            ->paginate(15);
-        $patients = Order::where('doctor_id',$doctor->id)
-            ->groupBy('patient_name')
-            ->paginate(15);
+        $search = $request->get('search');
+        if ($search && !preg_match('/^[\p{L}\p{N}\s_-]+$/u', $search)) {
+            return response()->json(['error' => 'Invalid search input.'], 422);
+        }
 
+        $query = Order::where('doctor_id', $doctor->id)
+            ->select('patient_id', 'patient_name')
+            ->distinct()
+            ->orderByDesc('created_at');
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('patient_name', 'like', "%{$search}%")
+                    ->orWhere('patient_id', 'like', "%{$search}%");
+            });
+        }
+
+        $patients = $query->paginate(15);
 
         return response()->json($patients, 200);
     }
+
     public function updateProfile(Request $request)
     {
         $doctorAccount = auth('api')->user();
