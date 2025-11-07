@@ -31,6 +31,7 @@ return new class extends Migration
             $table->foreign('doctor_id')->references('id')->on('doctors')->onDelete('cascade');
             $table->foreign('type_id')->references('id')->on('types')->onDelete('cascade');
             $table->enum('status', ['pending', 'completed', 'cancelled']);
+            $table->index(['doctor_id', 'patient_id', 'created_at']);
             $table->timestamps();
         });
     }

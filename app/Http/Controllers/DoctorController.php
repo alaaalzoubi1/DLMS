@@ -172,10 +172,51 @@ class DoctorController extends Controller
         ]]);
     }
 
+//    public function doctorPatients(Request $request): JsonResponse
+//    {
+//        $doctor = auth('api')->user()->doctor;
+//
+//        if (!$doctor) {
+//            return response()->json(['error' => 'Only doctors can access patients.'], 403);
+//        }
+//
+//        $search = $request->get('search');
+//        if ($search && !preg_match('/^[\p{L}\p{N}\s_-]+$/u', $search)) {
+//            return response()->json(['error' => 'Invalid search input.'], 422);
+//        }
+//
+//        $query = Order::where('doctor_id', $doctor->id)
+//            ->select('patient_id', 'patient_name', 'created_at');
+//
+//        if ($search) {
+//            $query->where(function ($q) use ($search) {
+//                $q->where('patient_name', 'like', "%{$search}%")
+//                    ->orWhere('patient_id', 'like', "{$search}%");
+//            });
+//        }
+//
+//        $patients = $query
+//            ->orderByDesc('created_at')
+//            ->get()
+//            ->unique('patient_id')
+//            ->values();
+//
+//        $perPage = 15;
+//        $page = $request->get('page', 1);
+//        $paginated = new \Illuminate\Pagination\LengthAwarePaginator(
+//            $patients->forPage($page, $perPage),
+//            $patients->count(),
+//            $perPage,
+//            $page,
+//            ['path' => url()->current(), 'query' => $request->query()]
+//        );
+//
+//        return response()->json($paginated, 200);
+//    }
+
     public function doctorPatients(Request $request): JsonResponse
     {
         $doctor = auth('api')->user()->doctor;
-
         if (!$doctor) {
             return response()->json(['error' => 'Only doctors can access patients.'], 403);
         }
@@ -185,10 +226,7 @@ class DoctorController extends Controller
             return response()->json(['error' => 'Invalid search input.'], 422);
         }
 
-        $query = Order::where('doctor_id', $doctor->id)
-            ->select('patient_id', 'patient_name')
-            ->distinct()
-            ->orderByDesc('created_at');
+        $query = Order::where('doctor_id', $doctor->id);
 
         if ($search) {
             $query->where(function ($q) use ($search) {
@@ -197,10 +235,19 @@ class DoctorController extends Controller
             });
         }
 
-        $patients = $query->paginate(15);
+        $patientsQuery = $query->select(
+            'patient_id',
+            'patient_name',
+            DB::raw('MAX(created_at) as last_order_at')
+        )
+            ->groupBy('patient_id', 'patient_name')
+            ->orderByDesc('last_order_at');
+
+        $patients = $patientsQuery->paginate(15);
 
         return response()->json($patients, 200);
     }
+
 
     public function updateProfile(Request $request)
     {

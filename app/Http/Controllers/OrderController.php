@@ -444,11 +444,9 @@ class OrderController extends Controller
         if ($request->filled('patient_name')) {
             $query->where('patient_name', 'like', "%{$request->patient_name}%");
         }
-
         if ($request->filled('patient_id')) {
             $query->where('patient_id', 'like', "%{$request->patient_id}%");
         }
-
         if ($request->filled('from')) {
             $query->whereDate('created_at', '>=', $request->from);
         }
