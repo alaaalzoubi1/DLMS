@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 
 class Order extends Model
 {
@@ -35,22 +36,7 @@ class Order extends Model
     {
         return $this->hasMany(OrderProduct::class)->with('product');
     }
-    public function specializationUser()
-    {
-        return $this->belongsTo(Specialization_User::class, 'specialization_users_id');
-    }
 
-    public function specialization()
-    {
-        return $this->hasOneThrough(
-            Specialization::class, // Final model we want to reach
-            Specialization_User::class, // Intermediate model
-            'id', // Foreign key on SpecializationSubscribers (matches SpecializationUser's `subscriber_specializations_id`)
-            'id', // Foreign key on Specializations
-            'specialization_users_id', // Local key on Orders
-            'specializations_id' // Local key on SpecializationSubscribers
-        );
-    }
 
 
 

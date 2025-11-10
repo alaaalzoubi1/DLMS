@@ -605,7 +605,43 @@ class OrderController extends Controller
             ], 500);
         }
     }
+    public function orderDetails(Request $request)
+    {
+        $order = Order::with([
+            'products' => function ($q) {
+                $q->select('id', 'order_id', 'note', 'tooth_number', 'status', 'product_id', 'specialization_users_id', 'tooth_color_id');
+            },
+            'products.product' => function ($q) {
+                $q->select('id', 'name','price');
+            },
+            'products.specializationUser.user' => function ($q) {
+                $q->select('id', 'first_name', 'last_name');
+            },
+            'products.toothColor' => function ($q) {
+                $q->select('id', 'color');
+            },
+            'subscriber' => function ($q) {
+                $q->select('id', 'company_name', 'tax_number');
+            },
+            'doctor' => function ($q) {
+                $q->select('id', 'first_name', 'last_name', 'clinic_id');
+            },
+            'doctor.clinic' => function ($q) {
+                $q->select('id', 'name', 'tax_number');
+            },
+            'type' => function ($q) {
+                $q->select('id', 'type');
+            },
+        ])
+            ->select('id', 'paid', 'invoiced', 'cost', 'patient_name', 'receive', 'delivery', 'patient_id', 'specialization', 'status', 'created_at', 'updated_at', 'subscriber_id', 'doctor_id', 'type_id')
+            ->where('id', $request->order_id)
+            ->first();
 
+        if (!$order) {
+            return response()->json(['error' => 'Order not found'], 404);
+        }
 
+        return response()->json(['order' => $order], 200);
+    }
 
 }

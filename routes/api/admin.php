@@ -71,6 +71,7 @@ Route::middleware(['auth:admin', 'admin.role','check.subscriber'])->group(functi
     Route::patch('profile',[UserController::class,'adminUpdateProfile']);
     Route::delete('profile',[UserController::class,'deleteAccount']);
     Route::patch('order-products/{id}/assign-specialization', [OrderController::class, 'assignSpecialization']);
+    Route::get('order-details',[OrderController::class,'orderDetails']);
 
 });
 
