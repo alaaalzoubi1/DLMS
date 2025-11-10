@@ -473,7 +473,7 @@ class OrderController extends Controller
 
         $orders = $query->with(['type:id,type', 'subscriber:id,company_name,tax_number', 'products','doctor:id,clinic_id,first_name,last_name','doctor.clinic:id,tax_number,name'])
             ->latest()
-            ->paginate(15);
+            ->get();
 
         return response()->json($orders, 200);
     }
