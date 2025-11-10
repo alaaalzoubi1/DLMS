@@ -34,7 +34,7 @@ class Order extends Model
     }
     public function products()
     {
-        return $this->hasMany(OrderProduct::class)->with('product');
+        return $this->hasMany(OrderProduct::class)->with(['product:name,id,price','toothColor:id,color']);
     }
 
 
