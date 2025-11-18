@@ -12,9 +12,12 @@ class OrderProduct extends Model
         'product_id',
         'order_id',
         'tooth_color_id',
-        'tooth_number',
+        'tooth_numbers',
         'specialization_users_id',
         'note'
+    ];
+    protected $casts = [
+        'tooth_numbers' => 'array'
     ];
     public function product()
     {

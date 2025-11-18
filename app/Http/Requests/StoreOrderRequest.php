@@ -28,11 +28,17 @@ class StoreOrderRequest extends FormRequest
             'patient_id'      => 'required|string|max:50',
 
             'products'                        => 'required|array|min:1',
+
             'products.*.product_id'           => 'required|exists:products,id',
             'products.*.tooth_color_id'       => 'required|exists:tooth_colors,id',
-            'products.*.tooth_number'         => 'required|string|max:2',
+
+            'products.*.tooth_numbers'        => 'required|array|min:1',
+
+            'products.*.tooth_numbers.*'      => 'required|string|max:2',
+
             'products.*.note'                 => 'nullable|string',
         ];
+
     }
 
 }

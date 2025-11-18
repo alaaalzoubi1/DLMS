@@ -22,20 +22,21 @@ class OrderController extends Controller
     private function validateOrderRequest($data)
     {
         return Validator::make($data, [
-            'doctor_id' => 'required|integer|exists:doctors,id',
-            'status' => 'required|in:pending,completed,cancelled',
-            'type_id' => 'required|exists:types,id',
-            'paid' => 'nullable|integer|min:0',
-            'patient_name' => 'required|string|max:255',
-            'receive' => 'required|date',
-            'delivery' => 'nullable|date',
-            'patient_id' => 'required|string|max:255',
-            'products' => 'required|array',
-            'products.*.product_id' => 'required|integer|exists:products,id',
-            'products.*.tooth_color_id' => 'required|integer|exists:tooth_colors,id',
-            'products.*.tooth_number' => 'required|string|max:255',
-            'products.*.specialization_subscriber_id' => 'required|integer|exists:specialization__subscribers,id',
-            'products.*.note' => 'nullable|string',
+            'doctor_id'     => 'required|integer|exists:doctors,id',
+            'status'        => 'required|in:pending,completed,cancelled',
+            'type_id'       => 'required|exists:types,id',
+            'paid'          => 'nullable|integer|min:0',
+            'patient_name'  => 'required|string|max:255',
+            'receive'       => 'required|date',
+            'delivery'      => 'nullable|date',
+            'patient_id'    => 'required|string|max:255',
+            'products'                                      => 'required|array',
+            'products.*.product_id'                         => 'required|integer|exists:products,id',
+            'products.*.tooth_color_id'                     => 'required|integer|exists:tooth_colors,id',
+            'products.*.tooth_numbers'                      => 'required|array|min:1',
+            'products.*.tooth_numbers.*'                    => 'required|string|max:2',
+            'products.*.specialization_subscriber_id'       => 'required|integer|exists:specialization__subscribers,id',
+            'products.*.note'                               => 'nullable|string',
         ]);
     }
 
@@ -61,16 +62,27 @@ class OrderController extends Controller
             ->where('clinic_id', $clinicId)
             ->pluck('price', 'product_id');
 
-        $productPrices = Product::whereIn('id', $productIds)->get();
+        $productPrices = Product::whereIn('id', $productIds)->get()->keyBy('id');
 
         $totalCost = 0;
-        foreach ($productPrices as $product) {
-            $price = $specialPrices->get($product->id, $product->price);
-            $totalCost += $price;
+
+        foreach ($products as $prod) {
+
+            $productId = $prod['product_id'];
+
+            $basePrice = $specialPrices[$productId]
+                ?? $productPrices[$productId]->price;
+
+            $teethCount = is_array($prod['tooth_numbers'])
+                ? count($prod['tooth_numbers'])
+                : 1;
+
+            $totalCost += ($basePrice * $teethCount);
         }
 
         return $totalCost;
     }
+
 
 
 
@@ -84,25 +96,38 @@ class OrderController extends Controller
         $user = User::findOrFail($userId);
         $user->decrement('working_on');
     }
+
+    /**
+     * @throws Exception
+     */
     private function createOrderProducts($products, $orderId, $subscriber_id)
     {
         foreach ($products as $product) {
-            $user = $this->fetchUserWithSpecialization($product['specialization_subscriber_id'], $subscriber_id);
+
+            $user = $this->fetchUserWithSpecialization(
+                $product['specialization_subscriber_id'],
+                $subscriber_id
+            );
+
             if (!$user) {
                 throw new Exception("No user found with the required specialization for subscriber ID {$subscriber_id}.");
             }
+
             $this->incrementUserWorkingOn($user->id);
 
             OrderProduct::create([
-                'product_id' => $product['product_id'],
-                'order_id' => $orderId,
-                'tooth_color_id' => $product['tooth_color_id'],
-                'tooth_number' => $product['tooth_number'],
-                'specialization_users_id' => $user->specialization_users_id,
-                'note' => $product['note']
+                'product_id'               => $product['product_id'],
+                'order_id'                 => $orderId,
+                'tooth_color_id'           => $product['tooth_color_id'],
+
+                'tooth_numbers'             => json_encode($product['tooth_numbers']),
+
+                'specialization_users_id'  => $user->specialization_users_id,
+                'note'                     => $product['note'] ?? null,
             ]);
         }
     }
+
     public function createOrder(Request $request)
     {
         $subscriber_id = Auth::guard('admin')->user()->subscriber_id;
@@ -328,7 +353,6 @@ class OrderController extends Controller
             'patient_name' => 'sometimes|string|max:255',
             'receive' => 'sometimes|date',
             'delivery' => 'sometimes|date|after_or_equal:receive',
-            'specialization' => 'sometimes|string|max:255'
         ]);
 
         $subscriber_id = auth()->user()->subscriber_id;
@@ -372,9 +396,12 @@ class OrderController extends Controller
                 ->where('subscriber_id', $data['subscriber_id'])
                 ->firstOrFail();
 
-            $productIds = collect($data['products'])->pluck('product_id')->toArray();
+            $productIds = collect($data['products'])
+                ->pluck('product_id')
+                ->toArray();
 
-            $categories = Category::where('subscriber_id', $subscriber->id)->pluck('id');
+            $categories = Category::where('subscriber_id', $subscriber->id)
+                ->pluck('id');
 
             $products = Product::whereIn('id', $productIds)
                 ->whereIn('category_id', $categories)
@@ -386,9 +413,14 @@ class OrderController extends Controller
             }
 
             $totalCost = 0;
+
             foreach ($data['products'] as $prod) {
-                $product = $products[$prod['product_id']];
-                $totalCost += $product->final_price;
+
+                $product  = $products[$prod['product_id']];
+                $teeth    = $prod['tooth_numbers'];
+                $count    = count($teeth);
+
+                $totalCost += ($product->final_price * $count);
             }
 
             $order = Order::create([
@@ -406,12 +438,13 @@ class OrderController extends Controller
             ]);
 
             foreach ($data['products'] as $prod) {
+
                 OrderProduct::create([
-                    'product_id'     => $prod['product_id'],
-                    'order_id'       => $order->id,
-                    'tooth_color_id' => $prod['tooth_color_id'],
-                    'tooth_number'   => $prod['tooth_number'] ?? null,
-                    'note'           => $prod['note'] ?? null,
+                    'product_id'        => $prod['product_id'],
+                    'order_id'          => $order->id,
+                    'tooth_color_id'    => $prod['tooth_color_id'],
+                    'tooth_numbers'     => json_encode($prod['tooth_numbers']),
+                    'note'              => $prod['note'] ?? null,
                 ]);
             }
 
@@ -430,6 +463,7 @@ class OrderController extends Controller
             ], 500);
         }
     }
+
 
 
     public function doctorOrders(DoctorOrdersRequest $request): JsonResponse
@@ -490,7 +524,6 @@ class OrderController extends Controller
         try {
             DB::beginTransaction();
 
-            // جلب الأوردرات المستحقة الدفع
             $ordersQuery = Order::where('doctor_id', $doctorId)
                 ->where('subscriber_id',$subscriberId)
                 ->whereColumn('paid', '<', 'cost')
@@ -606,7 +639,7 @@ class OrderController extends Controller
     {
         $order = Order::with([
             'products' => function ($q) {
-                $q->select('id', 'order_id', 'note', 'tooth_number', 'status', 'product_id', 'specialization_users_id', 'tooth_color_id');
+                $q->select('id', 'order_id', 'note', 'tooth_numbers', 'status', 'product_id', 'specialization_users_id', 'tooth_color_id');
             },
             'products.product' => function ($q) {
                 $q->select('id', 'name','price');
@@ -630,7 +663,7 @@ class OrderController extends Controller
                 $q->select('id', 'type');
             },
         ])
-            ->select('id', 'paid', 'invoiced', 'cost', 'patient_name', 'receive', 'delivery', 'patient_id', 'specialization', 'status', 'created_at', 'updated_at', 'subscriber_id', 'doctor_id', 'type_id')
+            ->select('id', 'paid', 'invoiced', 'cost', 'patient_name', 'receive', 'delivery', 'patient_id', 'status', 'created_at', 'updated_at', 'subscriber_id', 'doctor_id', 'type_id')
             ->where('id', $request->order_id)
             ->first();
 
