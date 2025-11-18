@@ -26,7 +26,6 @@ class StoreOrderRequest extends FormRequest
             'type_id'         => 'required|exists:types,id',
             'patient_name'    => 'required|string|max:50',
             'patient_id'      => 'required|string|max:50',
-            'specialization'  => 'required|string|max:50',
 
             'products'                        => 'required|array|min:1',
             'products.*.product_id'           => 'required|exists:products,id',

@@ -30,7 +30,6 @@ class OrderController extends Controller
             'receive' => 'required|date',
             'delivery' => 'nullable|date',
             'patient_id' => 'required|string|max:255',
-            'specialization' => 'required|string|max:255',
             'products' => 'required|array',
             'products.*.product_id' => 'required|integer|exists:products,id',
             'products.*.tooth_color_id' => 'required|integer|exists:tooth_colors,id',
@@ -129,7 +128,6 @@ class OrderController extends Controller
                 'receive' => $data['receive'],
                 'delivery' => $data['delivery'],
                 'patient_id' => $data['patient_id'],
-                'specialization' => $data['specialization'],
             ]);
 //            $products = Product::whereIn('id', $data['products'])->get();
             $this->createOrderProducts($data['products'], $order->id,$subscriber_id);
@@ -405,7 +403,6 @@ class OrderController extends Controller
                 'receive'       => now(),
                 'delivery'      => null,
                 'patient_id'    => $data['patient_id'],
-                'specialization'=> $data['specialization'],
             ]);
 
             foreach ($data['products'] as $prod) {

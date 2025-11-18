@@ -11,7 +11,7 @@ class Order extends Model
     use HasFactory;
     protected $fillable = [
         'doctor_id', 'subscriber_id', 'type_id', 'status', 'invoiced',
-        'paid', 'cost', 'patient_name', 'receive', 'delivery', 'patient_id', 'specialization'
+        'paid', 'cost', 'patient_name', 'receive', 'delivery', 'patient_id'
     ];
 
     public function type()

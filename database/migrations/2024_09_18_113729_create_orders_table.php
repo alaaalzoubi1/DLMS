@@ -27,7 +27,6 @@ return new class extends Migration
             $table->date('receive');
             $table->date('delivery')->nullable();
             $table->string('patient_id');
-            $table->string('specialization');
             $table->foreign('doctor_id')->references('id')->on('doctors')->onDelete('cascade');
             $table->foreign('type_id')->references('id')->on('types')->onDelete('cascade');
             $table->enum('status', ['pending', 'completed', 'cancelled']);
