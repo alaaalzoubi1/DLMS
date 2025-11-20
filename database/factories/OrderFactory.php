@@ -35,7 +35,6 @@ class OrderFactory extends Factory
             'receive' => $this->faker->date(),
             'delivery' => $this->faker->optional()->date(),
             'patient_id' => $this->faker->uuid(),
-            'specialization' => $this->faker->randomElement(['Orthodontics', 'Periodontics', 'Endodontics']),
         ];
     }
 }

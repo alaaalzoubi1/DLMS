@@ -502,6 +502,7 @@ class OrderController extends Controller
             $query->where('subscriber_id', $request->subscriber_id);
         }
 
+
         $orders = $query->with(['type:id,type', 'subscriber:id,company_name,tax_number', 'products','doctor:id,clinic_id,first_name,last_name','doctor.clinic:id,tax_number,name'])
             ->latest()
             ->get();

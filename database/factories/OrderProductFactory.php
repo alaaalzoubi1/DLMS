@@ -16,12 +16,19 @@ class OrderProductFactory extends Factory
     {
         return [
             'note' => $this->faker->optional()->sentence(),
-            'tooth_number' => $this->faker->optional()->randomElement(['A1', 'B2', 'C3', 'D4']), // Example tooth numbers
-            'product_id' => Product::factory(),
-            'order_id' => Order::factory(),
-            'tooth_color_id' => ToothColor::factory(),
-            'specialization_users_id' => Specialization_User::factory(),
-            'status' => $this->faker->randomElement(['working', 'finished'])
+
+            'tooth_numbers' => $this->faker->randomElements(
+                ['A1', 'B2', 'C3', 'D4', 'E5', 'F6'],
+                rand(1, 4)
+            ),
+
+            'product_id' => Product::inRandomOrder()->value('id') ?? Product::factory(),
+            'order_id' => Order::inRandomOrder()->value('id') ?? Order::factory(),
+            'tooth_color_id' => ToothColor::inRandomOrder()->value('id') ?? ToothColor::factory(),
+            'specialization_users_id' => Specialization_User::inRandomOrder()->value('id') ?? Specialization_User::factory(),
+
+            'status' => $this->faker->randomElement(['working', 'finished']),
         ];
     }
+
 }
