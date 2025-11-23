@@ -64,8 +64,13 @@ class OrderPolicy
         //
     }
 
-    public function updateStatus(User $user, Order $order)
+    public function updateStatus(User $user, Order $order): bool
     {
         return $user->subscriber_id === $order->subscriber_id;
     }
+    public function DiscountManaging(User $user, Order $order): bool
+    {
+        return $user->subscriber_id === $order->subscriber_id;
+    }
+
 }

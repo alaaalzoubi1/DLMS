@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 use App\Http\Requests\DoctorOrdersRequest;
+use App\Http\Requests\StoreOrderDiscountRequest;
 use App\Http\Requests\StoreOrderRequest;
+use App\Http\Requests\UpdateDiscountRequest;
 use App\Models\Category;
+use App\Models\OrderDiscount;
 use App\Models\Subscriber;
 use App\Models\Type;
 use Exception;
@@ -182,8 +185,8 @@ class OrderController extends Controller
         $query = Order::query()
             ->where('orders.subscriber_id', $subscriber_id)
             ->join('types', 'orders.type_id', '=', 'types.id')
-            ->with(['products.specializationUser.specialization', 'type']) // 'type' is the relation on Order
-            ->select('orders.*'); // Avoid selecting everything from 'types'
+            ->with(['products.specializationUser.specialization', 'type','discount'])
+            ->select('orders.*');
 
         if ($type !== 'all') {
             $query->where('types.type', $type);
@@ -215,7 +218,7 @@ class OrderController extends Controller
         $orders = Order::query()
             ->where('orders.subscriber_id', $subscriber_id)
             ->where('orders.status', $status) // Filter orders by status
-            ->with(['products.specializationUser.specialization', 'type','doctor']) // Relations
+            ->with(['products.specializationUser.specialization', 'type','doctor','discount']) // Relations
             ->join('types', 'orders.type_id', '=', 'types.id') // Join with the types table
             ->select('orders.*') // Select only the necessary columns from orders
                 ->orderByDesc('updated_at')
@@ -508,7 +511,7 @@ class OrderController extends Controller
         }
 
 
-        $orders = $query->with(['type:id,type', 'subscriber:id,company_name,tax_number', 'products','doctor:id,clinic_id,first_name,last_name','doctor.clinic:id,tax_number,name'])
+        $orders = $query->with(['type:id,type', 'subscriber:id,company_name,tax_number', 'products','doctor:id,clinic_id,first_name,last_name','doctor.clinic:id,tax_number,name','discount'])
             ->latest()
             ->get();
 
@@ -668,6 +671,9 @@ class OrderController extends Controller
             'type' => function ($q) {
                 $q->select('id', 'type');
             },
+            'discount' => function($q){
+            $q->select('id','type','amount','order_id');
+            }
         ])
             ->select('id', 'paid', 'invoiced', 'cost', 'patient_name', 'receive', 'delivery', 'patient_id', 'status', 'created_at', 'updated_at', 'subscriber_id', 'doctor_id', 'type_id')
             ->where('id', $request->order_id)
@@ -679,5 +685,119 @@ class OrderController extends Controller
 
         return response()->json(['order' => $order], 200);
     }
+    public function applyDiscount(StoreOrderDiscountRequest $request)
+    {
+        $order = Order::with('discount')->findOrFail($request->order_id);
+
+        $this->authorize('DiscountManaging', $order);
+        if ($order->discount) {
+            return response()->json([
+                'error' => 'This order already has a discount.'
+            ], 422);
+        }
+        $discount = OrderDiscount::create([
+            'order_id'      => $order->id,
+            'type'          => $request->type,
+            'amount'        => $request->amount,
+        ]);
+
+        $newCost = $order->cost;
+
+        if ($discount->type === 'percentage') {
+            $newCost = $newCost - ($newCost * ($discount->amount / 100));
+        } elseif ($discount->type === 'fixed'){
+            $newCost = $newCost - $discount->amount;
+        }
+
+        $order->cost = $newCost;
+        $order->save();
+
+        return response()->json([
+            'message' => 'Discount applied successfully',
+            'order'   => $order,
+            'discount'=> $discount
+        ], 201);
+    }
+    public function updateDiscount(UpdateDiscountRequest $request)
+    {
+        $order = Order::with('discount', 'products.product')->findOrFail($request->order_id);
+
+        $this->authorize('DiscountManaging', $order);
+
+        $discount = $order->discount;
+
+        $discount->update([
+            'type' => $request->type,
+            'amount' => $request->amount,
+        ]);
+
+        $order->cost = $this->applyDiscountCalculation($order, $discount);
+        $order->save();
+
+        return response()->json([
+            'message' => 'Discount updated successfully.',
+            'discount' => $discount,
+            'order' => $order
+        ]);
+    }
+
+
+    public function removeDiscount($id)
+    {
+        $discount = OrderDiscount::findOrFail($id);
+
+        $order = $discount->order;
+        $this->authorize('DiscountManaging', $order);
+
+        $discount->delete();
+
+        $order->cost = $this->calculateOrderOriginalCost($order);
+        $order->save();
+
+        return response()->json([
+            'message' => 'Discount removed successfully.',
+            'order' => $order
+        ]);
+    }
+
+
+    private function applyDiscountCalculation($order, $discount)
+    {
+        $originalCost = $this->calculateOrderOriginalCost($order);
+
+        if ($discount->type === 'percentage') {
+            return $originalCost - ($originalCost * ($discount->amount / 100));
+        }
+
+        if ($discount->type === 'fixed') {
+            return $originalCost - $discount->amount;
+        }
+
+        return $originalCost;
+    }
+
+
+    private function calculateOrderOriginalCost($order)
+    {
+        $total = 0;
+
+        foreach ($order->products as $prod) {
+            $teeth = is_array($prod->tooth_numbers)
+                ? $prod->tooth_numbers
+                : json_decode($prod->tooth_numbers, true);
+
+            $count = count($teeth);
+
+            $total += $prod->product->final_price * $count;
+        }
+
+        return $total;
+    }
+
+
+
+
+
+
 
 }

@@ -72,6 +72,9 @@ Route::middleware(['auth:admin', 'admin.role','check.subscriber'])->group(functi
     Route::delete('profile',[UserController::class,'deleteAccount']);
     Route::patch('order-products/{id}/assign-specialization', [OrderController::class, 'assignSpecialization']);
     Route::get('order-details',[OrderController::class,'orderDetails']);
+    Route::post('apply-discount',[OrderController::class,'applyDiscount']);
+    Route::put('update-discount',[OrderController::class,'updateDiscount']);
+    Route::delete('remove-discount/{discount_id}',[OrderController::class,'removeDiscount']);
 
 });
 
