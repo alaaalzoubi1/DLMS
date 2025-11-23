@@ -25,7 +25,7 @@ class StoreOrderRequest extends FormRequest
             'subscriber_id'   => 'required|exists:subscribers,id',
             'type_id'         => 'required|exists:types,id',
             'patient_name'    => 'required|string|max:50',
-            'patient_id'      => 'required|string|max:50',
+            'patient_id'      => 'nullable|string|max:50',
 
             'products'                        => 'required|array|min:1',
 

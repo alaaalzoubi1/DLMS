@@ -16,6 +16,7 @@ use App\Models\OrderProduct;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class OrderController extends Controller
 {
@@ -29,7 +30,7 @@ class OrderController extends Controller
             'patient_name'  => 'required|string|max:255',
             'receive'       => 'required|date',
             'delivery'      => 'nullable|date',
-            'patient_id'    => 'required|string|max:255',
+            'patient_id'    => 'nullable|string|max:255',
             'products'                                      => 'required|array',
             'products.*.product_id'                         => 'required|integer|exists:products,id',
             'products.*.tooth_color_id'                     => 'required|integer|exists:tooth_colors,id',
@@ -139,23 +140,26 @@ class OrderController extends Controller
         }
 
         try {
+            $patientId = $data['patient_id'] ?? strtoupper(Str::random(9));
+
             $totalCost = $this->calculateTotalCost($data['products'], $data['doctor_id']);
             $invoiced = Type::find($data['type_id'])->invoiced;
+
             $order = Order::create([
-                'doctor_id' => $data['doctor_id'],
-                'subscriber_id' =>  $subscriber_id,
-                'status' => $data['status'],
-                'type_id' => $data['type_id'],
-                'invoiced' => $invoiced,
-                'paid' => $data['paid'],
-                'cost' => $totalCost,
-                'patient_name' => $data['patient_name'],
-                'receive' => $data['receive'],
-                'delivery' => $data['delivery'],
-                'patient_id' => $data['patient_id'],
+                'doctor_id'     => $data['doctor_id'],
+                'subscriber_id' => $subscriber_id,
+                'status'        => $data['status'],
+                'type_id'       => $data['type_id'],
+                'invoiced'      => $invoiced,
+                'paid'          => $data['paid'],
+                'cost'          => $totalCost,
+                'patient_name'  => $data['patient_name'],
+                'receive'       => $data['receive'],
+                'delivery'      => $data['delivery'],
+                'patient_id'    => $patientId
             ]);
-//            $products = Product::whereIn('id', $data['products'])->get();
-            $this->createOrderProducts($data['products'], $order->id,$subscriber_id);
+
+            $this->createOrderProducts($data['products'], $order->id, $subscriber_id);
 
             return response()->json(['message' => 'Order created successfully.', 'order' => $order], 201);
 
@@ -163,6 +167,7 @@ class OrderController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+
 
     public function listInvoices($type): \Illuminate\Http\JsonResponse
     {
@@ -434,7 +439,7 @@ class OrderController extends Controller
                 'patient_name'  => $data['patient_name'],
                 'receive'       => now(),
                 'delivery'      => null,
-                'patient_id'    => $data['patient_id'],
+                'patient_id'    => $data['patient_id'] ?? strtoupper(Str::random(9)),
             ]);
 
             foreach ($data['products'] as $prod) {
