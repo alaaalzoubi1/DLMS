@@ -27,6 +27,7 @@ class DoctorRegisterRequest extends FormRequest
             'last_name'   => 'required|string|max:255',
             'email'       => 'required|email|unique:doctor__accounts,email',
             'password'    => 'required|string|min:8|confirmed',
+            'fcm_token'  => 'nullable|string|max:500',
         ];
     }
 }

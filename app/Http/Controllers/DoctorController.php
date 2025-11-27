@@ -112,11 +112,11 @@ class DoctorController extends Controller
                 'clinic_id'  => $clinic->id,
             ]);
 
-            // 3. إنشاء حساب الدكتور
             $doctorAccount = Doctor_Account::create([
                 'doctor_id' => $doctor->id,
                 'email'     => $request->email,
                 'password'  => Hash::make($request->password),
+                'FCM_token' => $request->fcm_token
             ]);
 
             $token = auth('api')->attempt(['email' => $request->email,'password' =>$request->password]);
@@ -145,17 +145,37 @@ class DoctorController extends Controller
     }
     public function doctorLogin(Request $request): JsonResponse
     {
+        // Validation
+        $request->validate([
+            'email'      => 'required|email',
+            'password'   => 'required|string',
+            'fcm_token'  => 'nullable|string|max:500',
+        ]);
+
         $credentials = $request->only(['email', 'password']);
 
         if (!$token = auth('api')->attempt($credentials)) {
             return response()->json(['error' => 'Invalid credentials'], 401);
         }
 
+        $user = auth('api')->user();
+
+        // Ensure user has a doctor relation
+        if (!$user->doctor) {
+            return response()->json(['error' => 'Only doctors can login here'], 403);
+        }
+
+        // Update FCM token if provided
+        if ($request->filled('fcm_token')) {
+            $user->update(['FCM_token' => $request->fcm_token]);
+        }
+
         return response()->json([
             'token' => $token,
-            'user' => auth()->user()->doctor,
+            'user'  => $user->doctor,
         ]);
     }
+
     public function logout(): JsonResponse
     {
         auth('api')->logout();

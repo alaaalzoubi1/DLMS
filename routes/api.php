@@ -21,17 +21,9 @@ use Illuminate\Support\Facades\Route;
 
 
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
-Route::post('/register', [RegisterController::class, 'register']);
-//Route::post('/login', [LoginController::class, 'login']);
 
-Route::middleware(['auth:api'])->group(function () {
-    Route::get('/alaa', function () {
-        return response()->json(['message' => 'This is a protected route']);
-    });
-});
+Route::post('/register', [RegisterController::class, 'register']);
+
 Route::post('/check_company_code',[SubscriberController::class,'check_company_code']);
 Route::post('/login', [UserController::class, 'login']);
 

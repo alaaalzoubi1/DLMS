@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SendFirebaseNotificationJob;
 use App\Models\Category;
 use App\Models\ClinicProduct;
 use App\Models\OrderProduct;
@@ -9,6 +10,7 @@ use App\Models\Product;
 use App\Models\Specialization_User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use function Symfony\Component\Translation\t;
 
 class ProductController extends Controller
 {
@@ -180,7 +182,7 @@ class ProductController extends Controller
 
     public function finishOrderProduct($id)
     {
-        $orderProduct = OrderProduct::findOrFail($id);
+        $orderProduct = OrderProduct::with('order.doctor.account')->findOrFail($id);
         $order = $orderProduct->order;
 
         $this->authorize('updateStatus', $order);
@@ -192,6 +194,11 @@ class ProductController extends Controller
 
         if ($allFinished) {
             $order->update(['status' => 'completed']);
+            $title = "التركيبة جاهزة";
+            $body = "الطلب رقم '{$order->id}' انتهى";
+            $token = $order->doctor->account->FCM_token;
+            if ($token)
+                SendFirebaseNotificationJob::dispatch($token, $title, $body);
         }
 
         return response()->json([

@@ -29,6 +29,7 @@ class User extends Authenticatable  implements ShouldQueue , JWTSubject
         'last_name',
         'first_name',
         'subscriber_id',
+        'FCM_token'
     ];
 
     /**

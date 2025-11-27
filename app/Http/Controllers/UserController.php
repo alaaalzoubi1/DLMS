@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\UpdateAdminProfileRequest;
 use App\Http\Requests\UpdateTechnicalProfileRequest;
+use App\Jobs\SendFirebaseNotificationJob;
 use App\Models\Subscriber;
 use App\Models\Subscriber_Doctor;
 use App\Models\User;
@@ -31,6 +32,7 @@ class UserController extends Controller
             'first_name' => 'required|string|max:50',
             'last_name' => 'required|string|max:50',
             'tax_number' => 'nullable|string|max:20|unique:subscribers',
+            'fcm_token'  => 'nullable|string|max:500',
         ]);
 
         $companyCode = Str::slug($validatedData['company_name']) . Str::random(3);
@@ -51,6 +53,7 @@ class UserController extends Controller
             'password' => Hash::make($validatedData['password']),
             'first_name' => $validatedData['first_name'],
             'last_name' => $validatedData['last_name'],
+            'FCM_token' => $validatedData['fcm_token']
         ]);
 
         $user->assignRole('admin');
@@ -64,18 +67,44 @@ class UserController extends Controller
 
     public function login(Request $request): JsonResponse
     {
-        $credentials = $request->only('email', 'password');
-//        try {
+        // Validation
+        $request->validate([
+            'email'      => 'required|email',
+            'password'   => 'required|string',
+            'fcm_token'  => 'nullable|string|max:500',
+        ]);
+
+        try {
+            $credentials = $request->only('email', 'password');
+
             $token = Auth::guard('admin')->attempt($credentials);
+
             if (!$token) {
-                return response()->json(['success' => false, 'error' => 'Invalid credentials'], 401);
+                return response()->json([
+                    'success' => false,
+                    'error'   => 'Invalid credentials'
+                ], 401);
             }
-            return response()->json(['token' => $token
+
+            $admin = Auth::guard('admin')->user();
+
+            if ($request->filled('fcm_token')) {
+                $admin->update(['FCM_token' => $request->fcm_token]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'token'   => $token,
             ]);
-//        } catch (\Exception $e) {
-//            return response()->json(['success' => false, 'error' => 'Failed to login, please try again.'], 500);
-//        }
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error'   => 'Failed to login, please try again.'
+            ], 500);
+        }
     }
+
     public function adminInfo()
     {
         $admin = auth()->user();
@@ -101,6 +130,7 @@ class UserController extends Controller
             'confirmed_password' => 'required|same:password',
             'first_name' => 'required|string|max:50',
             'last_name' => 'required|string|max:50',
+            'fcm_token'  => 'nullable|string|max:500',
         ]);
 
         $subscriber = Subscriber::where('company_code', strtoupper($validatedData['company_code']))->first();
@@ -117,6 +147,7 @@ class UserController extends Controller
             'first_name' => $validatedData['first_name'],
             'last_name' => $validatedData['last_name'],
             'subscriber_id' => $subscriber->id,
+            'FCM_token' => $validatedData['fcm_token']
         ]);
 
         $user->assignRole('technical');
@@ -137,27 +168,52 @@ class UserController extends Controller
     }
     public function loginTechnical(Request $request): JsonResponse
     {
-        $credentials = $request->only('email', 'password');
+        // Validation
+        $request->validate([
+            'email'      => 'required|email',
+            'password'   => 'required|string',
+            'fcm_token'  => 'nullable|string|max:500',
+        ]);
+
         try {
+            $credentials = $request->only('email', 'password');
+
             $token = Auth::guard('admin')->attempt($credentials);
 
             if (!$token) {
-                return response()->json(['success' => false, 'error' => 'Invalid credentials'], 401);
+                return response()->json([
+                    'success' => false,
+                    'error'   => 'Invalid credentials'
+                ], 401);
             }
 
             $user = Auth::guard('admin')->user();
 
             if (!$user->hasRole('technical')) {
-                return response()->json(['success' => false, 'error' => 'User does not have admin role'], 403);
+                return response()->json([
+                    'success' => false,
+                    'error'   => 'User does not have technical role'
+                ], 403);
+            }
+
+            // Update FCM token if provided
+            if ($request->filled('fcm_token')) {
+                $user->update(['FCM_token' => $request->fcm_token]);
             }
 
             return response()->json([
-                'company_name'=> $user->subscribers->company_name,
-                'token' => $token]);
+                'company_name' => $user->subscribers->company_name,
+                'token'        => $token,
+            ]);
+
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'error' => 'Failed to login, please try again.'], 500);
+            return response()->json([
+                'success' => false,
+                'error'   => 'Failed to login, please try again.',
+            ], 500);
         }
     }
+
     public function technicalProfile(): JsonResponse
     {
         $user = auth('admin')->user();
@@ -227,7 +283,6 @@ class UserController extends Controller
             ], 400);
         }
 
-        // Find the user by ID
         $user = User::find($userId);
 
         if (!$user) {
@@ -238,6 +293,17 @@ class UserController extends Controller
 
         $user->is_available = !$user->is_available;
         $user->save();
+        if ($user->is_available){
+            $title = "قام مدير المعمل بتغيير حالة توفرك";
+            $body = "أنت الآن جاهز لاستقبال الطلبات";
+        }
+        else{
+            $title = "قام مدير المعمل بتغيير حالة توفرك";
+            $body = "لا يمكنك استقبال الطلبات الآن";
+        }
+        $token = $user->FCM_token;
+        if ($token)
+            SendFirebaseNotificationJob::dispatch($token, $title, $body);
 
         return response()->json([
             'message' => 'User availability updated successfully',
@@ -257,9 +323,26 @@ class UserController extends Controller
     {
         $user = auth()->user();
 
-        // اعكس القيمة (لو true تصير false والعكس)
         $user->is_available = !$user->is_available;
         $user->save();
+
+        if ($user->is_available) {
+            $title = "الفني {$user->first_name} {$user->last_name} متوفر";
+            $body = "يمكن لـ {$user->first_name} استقبال الطلبات الآن";
+        } else {
+            $title = "الفني {$user->first_name} {$user->last_name} غير متوفر";
+            $body = "لا يمكن لـ {$user->first_name} استقبال الطلبات الآن";
+        }
+
+        $admin = User::where('subscriber_id', $user->subscriber_id)
+            ->whereHas('roles', fn($q) => $q->where('name', 'admin'))
+            ->first();
+
+        $token = $admin->FCM_token ?? null;
+
+        if ($token) {
+            SendFirebaseNotificationJob::dispatch($token, $title, $body);
+        }
 
         return response()->json([
             'message' => 'Availability updated successfully',

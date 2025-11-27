@@ -5,6 +5,7 @@ use App\Http\Requests\DoctorOrdersRequest;
 use App\Http\Requests\StoreOrderDiscountRequest;
 use App\Http\Requests\StoreOrderRequest;
 use App\Http\Requests\UpdateDiscountRequest;
+use App\Jobs\SendFirebaseNotificationJob;
 use App\Models\Category;
 use App\Models\OrderDiscount;
 use App\Models\Subscriber;
@@ -254,7 +255,7 @@ class OrderController extends Controller
             DB::beginTransaction();
 
             // Fetch the order product
-            $orderProduct = OrderProduct::findOrFail($data['order_product_id']);
+            $orderProduct = OrderProduct::with('product.category')->findOrFail($data['order_product_id']);
 
             $currentUser = auth('admin')->user();
             $this->decrementUserWorkingOn($currentUser->getAuthIdentifier());
@@ -271,6 +272,12 @@ class OrderController extends Controller
             $this->incrementUserWorkingOn($newUser->id);
 
             DB::commit();
+            // Variables: $categoryName, $techName
+            $title = "طلب '{$orderProduct->product->category->name}' جديد";
+            $body = "وصلتك حالة جديدة يا '{$newUser->first_name}'!";
+            $token = $newUser->FCM_token;
+            if ($token)
+                SendFirebaseNotificationJob::dispatch($token, $title, $body);
 
             return response()->json(['message' => 'Order product updated successfully.'], 200);
         } catch (Exception $e) {
@@ -385,7 +392,9 @@ class OrderController extends Controller
             return response()->json(['error' => 'Only doctors can create orders.'], 403);
         }
 
-        $subscriber = Subscriber::findOrFail($request->subscriber_id);
+        $subscriber = Subscriber::with(['users' => function ($query) {
+            $query->role('admin')->select('id', 'FCM_token');
+        }])->findOrFail($request->subscriber_id);
 
         if ($subscriber->trial_end_at < now()) {
             return response()->json([
@@ -457,6 +466,17 @@ class OrderController extends Controller
             }
 
             DB::commit();
+            $categoryList = $products->pluck('category.name')
+                ->unique()
+                ->filter()
+                ->implode('، ');
+            $admin = $subscriber->users->first();
+            $token = $admin->FCM_token ?? null;
+            $title = "طلب جديد من الدكتور '{$doctor->first_name} {$doctor->last_name}'";
+
+            $body = "طلب '{$categoryList}' التي اختارها الدكتور، قم بتحويلها للفني المختص";
+            if ($token)
+                SendFirebaseNotificationJob::dispatch($token, $title, $body);
 
             return response()->json([
                 'message' => 'Order created successfully.',
@@ -533,7 +553,8 @@ class OrderController extends Controller
         try {
             DB::beginTransaction();
 
-            $ordersQuery = Order::where('doctor_id', $doctorId)
+            $ordersQuery = Order::with('doctor.account')
+                ->where('doctor_id', $doctorId)
                 ->where('subscriber_id',$subscriberId)
                 ->whereColumn('paid', '<', 'cost')
                 ->orderBy('receive', 'asc');
@@ -563,6 +584,12 @@ class OrderController extends Controller
             }
 
             DB::commit();
+            $actualAppliedAmount = $amount - $remainingAmount;
+            $title = "دفعة مالية";
+            $body = "تم إيداع '{$actualAppliedAmount}' في الفواتير";
+            $token = $orders->first()->doctor->account->FCM_token;
+            if ($token)
+                SendFirebaseNotificationJob::dispatch($token, $title, $body);
 
             return response()->json([
                 'message'          => 'Payment applied successfully',
@@ -584,7 +611,7 @@ class OrderController extends Controller
             'specialization_subscriber_id' => 'required|exists:specialization__subscribers,id',
         ]);
 
-        $orderProduct = OrderProduct::with('order')->find($id);
+        $orderProduct = OrderProduct::with('order','product.category')->find($id);
 
         if (!$orderProduct) {
             return response()->json(['error' => 'Order product not found.'], 404);
@@ -616,6 +643,7 @@ class OrderController extends Controller
                 $subscriberId
             );
 
+
             if (!$user) {
                 DB::rollBack();
                 return response()->json([
@@ -630,6 +658,11 @@ class OrderController extends Controller
             ]);
 
             DB::commit();
+            $title = "طلب '{$orderProduct->product->category->name}' جديد";
+            $body = "وصلتك حالة جديدة يا '{$user->first_name} '!";
+            $token = $user->FCM_token;
+            if ($token)
+                SendFirebaseNotificationJob::dispatch($token, $title, $body);
 
             return response()->json([
                 'message' => 'Technician assigned successfully.',
@@ -687,7 +720,7 @@ class OrderController extends Controller
     }
     public function applyDiscount(StoreOrderDiscountRequest $request)
     {
-        $order = Order::with('discount')->findOrFail($request->order_id);
+        $order = Order::with('discount','doctor.account')->findOrFail($request->order_id);
 
         $this->authorize('DiscountManaging', $order);
         if ($order->discount) {
@@ -711,6 +744,12 @@ class OrderController extends Controller
 
         $order->cost = $newCost;
         $order->save();
+
+        $title = "أضيف خصم لفاتورتك";
+        $body = "تم إضافة خصم {$discount->amount}% لفاتورتك رقم {$order->id}";
+        $token = $order->doctor->account->FCM_token;
+        if ($token)
+            SendFirebaseNotificationJob::dispatch($token, $title, $body);
 
         return response()->json([
             'message' => 'Discount applied successfully',

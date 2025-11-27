@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SendFirebaseNotificationJob;
 use App\Models\SubscriptionPlan;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -25,6 +27,16 @@ class SubscriptionPlanController extends Controller
         ]);
 
         $plan = SubscriptionPlan::create($validated);
+        $title = "خطة اشتراك جديدة متوفرة الآن";
+        $body = "انقر للاطلاع عليها";
+        $admins = User::role('admin')->select('id','FCM_token')->get();
+        foreach ($admins as $admin)
+        {
+            $token = $admin->FCM_token;
+            if($token)
+                SendFirebaseNotificationJob::dispatch($token, $title, $body);
+        }
+
 
         return response()->json(['message' => 'Plan created successfully', 'plan' => $plan], 201);
     }
