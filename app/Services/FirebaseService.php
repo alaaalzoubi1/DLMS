@@ -17,12 +17,12 @@ class FirebaseService
      */
     public function __construct()
     {
-        if (!file_exists(storage_path('firebase/sahtee-9cd53-firebase-adminsdk-fbsvc-b7608db178.json'))) {
+        if (!file_exists(storage_path('firebase/dlms-604e0-firebase-adminsdk-t4ils-ca01a50a1e.json'))) {
             throw new Exception('Firebase credentials file not found!');
         }
 
         $factory = (new Factory)->withServiceAccount(
-            storage_path('firebase/sahtee-9cd53-firebase-adminsdk-fbsvc-b7608db178.json')
+            storage_path('firebase/dlms-604e0-firebase-adminsdk-t4ils-ca01a50a1e.json')
         );
 
         $this->messaging = $factory->createMessaging();
