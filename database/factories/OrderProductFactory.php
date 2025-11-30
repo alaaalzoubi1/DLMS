@@ -23,6 +23,8 @@ class OrderProductFactory extends Factory
             ),
 
             'product_id' => Product::inRandomOrder()->value('id') ?? Product::factory(),
+            'unit_price' => Product::inRandomOrder()->value('price'),
+            'product_name' => Product::inRandomOrder()->value('name'),
             'order_id' => Order::inRandomOrder()->value('id') ?? Order::factory(),
             'tooth_color_id' => ToothColor::inRandomOrder()->value('id') ?? ToothColor::factory(),
             'specialization_users_id' => Specialization_User::inRandomOrder()->value('id') ?? Specialization_User::factory(),

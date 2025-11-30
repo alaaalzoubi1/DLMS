@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 use App\Http\Requests\DoctorOrdersRequest;
+use App\Http\Requests\OrdersWithFilters;
 use App\Http\Requests\StoreOrderDiscountRequest;
 use App\Http\Requests\StoreOrderRequest;
 use App\Http\Requests\UpdateDiscountRequest;
@@ -117,6 +118,7 @@ class OrderController extends Controller
             if (!$user) {
                 throw new Exception("No user found with the required specialization for subscriber ID {$subscriber_id}.");
             }
+            $originalProduct = Product::find($product['product_id']);
 
             $this->incrementUserWorkingOn($user->id);
 
@@ -124,11 +126,11 @@ class OrderController extends Controller
                 'product_id'               => $product['product_id'],
                 'order_id'                 => $orderId,
                 'tooth_color_id'           => $product['tooth_color_id'],
-
                 'tooth_numbers'             => json_encode($product['tooth_numbers']),
-
                 'specialization_users_id'  => $user->specialization_users_id,
                 'note'                     => $product['note'] ?? null,
+                'unit_price' => $originalProduct->price,
+                'product_name' => $originalProduct->name
             ]);
         }
     }
@@ -406,7 +408,7 @@ class OrderController extends Controller
 
         $data = $request->validated();
 
-        try {
+//        try {
             DB::beginTransaction();
 
             $type = Type::where('id', $data['type_id'])
@@ -453,15 +455,17 @@ class OrderController extends Controller
                 'delivery'      => null,
                 'patient_id'    => $data['patient_id'] ?? strtoupper(Str::random(9)),
             ]);
-
             foreach ($data['products'] as $prod) {
+                $product  = $products[$prod['product_id']];
 
                 OrderProduct::create([
                     'product_id'        => $prod['product_id'],
                     'order_id'          => $order->id,
                     'tooth_color_id'    => $prod['tooth_color_id'],
                     'tooth_numbers'     => json_encode($prod['tooth_numbers']),
+                    'product_name' =>  $product->name,
                     'note'              => $prod['note'] ?? null,
+                    'unit_price' => $product->final_price
                 ]);
             }
 
@@ -483,13 +487,13 @@ class OrderController extends Controller
                 'order'   => $order->load('products'),
             ], 201);
 
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json([
-                'error' => 'Failed to create order.',
-                'details' => $e->getMessage()
-            ], 500);
-        }
+//        } catch (\Exception $e) {
+//            DB::rollBack();
+//            return response()->json([
+//                'error' => 'Failed to create order.',
+//                'details' => $e->getMessage()
+//            ], 500);
+//        }
     }
 
 
@@ -500,6 +504,52 @@ class OrderController extends Controller
 
         $query = Order::where('doctor_id', $doctor->id);
 
+        if ($request->filled('patient_name')) {
+            $query->where('patient_name', 'like', "%{$request->patient_name}%");
+        }
+        if ($request->filled('patient_id')) {
+            $query->where('patient_id', 'like', "%{$request->patient_id}%");
+        }
+        if ($request->filled('from')) {
+            $query->whereDate('created_at', '>=', $request->from);
+        }
+
+        if ($request->filled('to')) {
+            $query->whereDate('created_at', '<=', $request->to);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('invoiced')) {
+            $query->where('invoiced', (bool) $request->invoiced);
+        }
+
+        if ($request->filled('type_id')) {
+            $query->where('type_id', $request->type_id);
+        }
+
+        if ($request->filled('subscriber_id')) {
+            $query->where('subscriber_id', $request->subscriber_id);
+        }
+
+
+        $orders = $query->with(['type:id,type', 'subscriber:id,company_name,tax_number', 'products','doctor:id,clinic_id,first_name,last_name','doctor.clinic:id,tax_number,name','discount'])
+            ->latest()
+            ->get();
+
+        return response()->json($orders, 200);
+    }
+    public function OrdersWithFilters(OrdersWithFilters $request): JsonResponse
+    {
+        $admin = auth('admin')->user();
+
+        $query = Order::where('subscriber_id',$admin->subscriber_id);
+
+        if ($request->filled('doctor_id')) {
+            $query->where('doctor_id', $request->doctor_id);
+        }
         if ($request->filled('patient_name')) {
             $query->where('patient_name', 'like', "%{$request->patient_name}%");
         }
@@ -681,10 +731,7 @@ class OrderController extends Controller
     {
         $order = Order::with([
             'products' => function ($q) {
-                $q->select('id', 'order_id', 'note', 'tooth_numbers', 'status', 'product_id', 'specialization_users_id', 'tooth_color_id');
-            },
-            'products.product' => function ($q) {
-                $q->select('id', 'name','price');
+                $q->select('id', 'order_id', 'note', 'tooth_numbers', 'status', 'product_id', 'specialization_users_id', 'tooth_color_id','unit_price','product_name');
             },
             'products.specializationUser.user' => function ($q) {
                 $q->select('id', 'first_name', 'last_name');

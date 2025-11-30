@@ -14,7 +14,9 @@ class OrderProduct extends Model
         'tooth_color_id',
         'tooth_numbers',
         'specialization_users_id',
-        'note'
+        'note',
+        'product_name',
+        'unit_price'
     ];
     protected $casts = [
         'tooth_numbers' => 'array'

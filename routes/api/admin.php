@@ -23,6 +23,7 @@ Route::post('/register-company', [UserController::class, 'registerCompany']);
 
 
 Route::middleware(['auth:admin', 'admin.role','check.subscriber'])->group(function () {
+    Route::get('orders/filters',[OrderController::class,'OrdersWithFilters']);
     Route::get('admin-info', [UserController::class,'adminInfo']);
     Route::post('add-category',[CategoryController::class,'store']);
     Route::get('show-categories', [CategoryController::class,'show']);
@@ -75,6 +76,7 @@ Route::middleware(['auth:admin', 'admin.role','check.subscriber'])->group(functi
     Route::post('apply-discount',[OrderController::class,'applyDiscount']);
     Route::put('update-discount',[OrderController::class,'updateDiscount']);
     Route::delete('remove-discount/{discount_id}',[OrderController::class,'removeDiscount']);
+
 
 });
 
