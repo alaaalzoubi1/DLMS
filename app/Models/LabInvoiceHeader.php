@@ -26,7 +26,7 @@ class LabInvoiceHeader extends Model
             return null;
         }
 
-        return env('APP_URL') . '/storage/' . $this->logo;
+        return env('APP_URL') . '/public/storage/' . $this->logo;
     }
     public function subscriber(): BelongsTo
     {
