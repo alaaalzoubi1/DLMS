@@ -23,11 +23,10 @@ class UpdateClinicHeaderRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name_ar' => 'sometimes|string|max:255',
-            'name_en' => 'sometimes|string|max:255',
+            'clinic_name_ar' => 'sometimes|string|max:255',
+            'clinic_name_en' => 'sometimes|string|max:255',
             'address_ar' => 'required|string|max:500',
             'address_en' => 'required|string|max:500',
-
             'logo' => 'sometimes|image|mimes:jpg,jpeg,png,webp|max:2048'
         ];
     }
