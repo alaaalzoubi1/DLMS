@@ -16,7 +16,18 @@ class LabInvoiceHeader extends Model
         'address',
         'logo'
     ];
+    protected $hidden = ['logo'];
 
+    protected $appends = ['logo_url'];
+
+    public function getLogoUrlAttribute()
+    {
+        if (!$this->logo) {
+            return null;
+        }
+
+        return env('APP_URL') . '/storage/' . $this->logo;
+    }
     public function subscriber(): BelongsTo
     {
         return $this->belongsTo(Subscriber::class);

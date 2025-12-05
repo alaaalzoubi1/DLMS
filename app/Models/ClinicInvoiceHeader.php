@@ -15,6 +15,18 @@ class ClinicInvoiceHeader extends Model
         'address',
         'logo'
     ];
+    protected $hidden = ['logo'];
+
+    protected $appends = ['logo_url'];
+
+    public function getLogoUrlAttribute(): ?string
+    {
+        if (!$this->logo) {
+            return null;
+        }
+
+        return env('APP_URL') . '/storage/' . $this->logo;
+    }
 
     public function clinic(): BelongsTo
     {
