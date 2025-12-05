@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\ClinicHeaderController;
 use App\Http\Controllers\ClinicSubscriberController;
 use App\Http\Controllers\DoctorController;
 
@@ -29,5 +30,9 @@ Route::middleware(['auth:api'])->group(function () {
     Route::patch('profile',[DoctorController::class,'updateProfile']);
     Route::delete('profile',[DoctorController::class,'deleteAccount']);
     Route::get('order-details',[OrderController::class,'orderDetails']);
+    Route::post('invoice-header',[ClinicHeaderController::class,'store']);
+    Route::post('invoice-header/update',[ClinicHeaderController::class,'update']);
+    Route::get('invoice-header',[ClinicHeaderController::class,'getHeader']);
+    Route::delete('invoice-header',[ClinicHeaderController::class,'delete']);
 
 });

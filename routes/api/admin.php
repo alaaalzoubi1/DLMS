@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\LoginController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ClinicController;
 use App\Http\Controllers\DoctorController;
+use App\Http\Controllers\LabHeaderController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SpecializationController;
@@ -76,6 +77,10 @@ Route::middleware(['auth:admin', 'admin.role','check.subscriber'])->group(functi
     Route::post('apply-discount',[OrderController::class,'applyDiscount']);
     Route::put('update-discount',[OrderController::class,'updateDiscount']);
     Route::delete('remove-discount/{discount_id}',[OrderController::class,'removeDiscount']);
+    Route::post('invoice-header',[LabHeaderController::class,'store']);
+    Route::post('invoice-header/update',[LabHeaderController::class,'update']);
+    Route::get('invoice-header',[LabHeaderController::class,'getHeader']);
+    Route::delete('invoice-header',[LabHeaderController::class,'delete']);
 
 
 });

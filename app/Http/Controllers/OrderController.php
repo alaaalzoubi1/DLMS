@@ -188,7 +188,7 @@ class OrderController extends Controller
         $query = Order::query()
             ->where('orders.subscriber_id', $subscriber_id)
             ->join('types', 'orders.type_id', '=', 'types.id')
-            ->with(['products.specializationUser.specialization', 'type','discount'])
+            ->with(['products.specializationUser.specialization','products.specializationUser.user:id,first_name,last_name', 'type','discount'])
             ->select('orders.*');
 
         if ($type !== 'all') {
@@ -221,7 +221,7 @@ class OrderController extends Controller
         $orders = Order::query()
             ->where('orders.subscriber_id', $subscriber_id)
             ->where('orders.status', $status) // Filter orders by status
-            ->with(['products.specializationUser.specialization', 'type','doctor','discount']) // Relations
+            ->with(['products.specializationUser.specialization','products.specializationUser.user:id,first_name,last_name', 'type','doctor','discount']) // Relations
             ->join('types', 'orders.type_id', '=', 'types.id') // Join with the types table
             ->select('orders.*') // Select only the necessary columns from orders
                 ->orderByDesc('updated_at')
@@ -301,7 +301,7 @@ class OrderController extends Controller
         $query = Order::where('doctor_id', $validated['doctor_id'])
             ->where('subscriber_id', $subscriber_id)
             ->where('invoiced', true)
-            ->with(['doctor', 'products.specializationUser.specialization']);
+            ->with(['doctor', 'products.specializationUser.specialization','products.specializationUser.user:id,first_name,last_name']);
 
         if (!empty($validated['from_date']) && !empty($validated['to_date'])) {
             $query->whereBetween('receive', [$validated['from_date'], $validated['to_date']]);
@@ -336,7 +336,7 @@ class OrderController extends Controller
         $query = Order::
         where('subscriber_id', $subscriber_id)
             ->where('invoiced', true)
-            ->with(['doctor', 'products.specializationUser.specialization']);
+            ->with(['doctor', 'products.specializationUser.specialization','products.specializationUser.user:id,first_name,last_name']);
 
         if (!empty($validated['from_date']) && !empty($validated['to_date'])) {
             $query->whereBetween('receive', [$validated['from_date'], $validated['to_date']]);
