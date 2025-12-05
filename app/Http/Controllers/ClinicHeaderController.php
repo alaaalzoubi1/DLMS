@@ -67,10 +67,12 @@ class ClinicHeaderController extends Controller
 
     public function getHeader()
     {
-        $clinic_id = auth('api')->user()->doctor->clinic_id;
+        $clinic = auth('api')->user()->doctor->clinic;
+        $header = ClinicInvoiceHeader::where('clinic_id', $clinic->id)->first();
+        $header['tax_number'] = $clinic->tax_number;
 
         return response()->json([
-            'header' => ClinicInvoiceHeader::where('clinic_id', $clinic_id)->first()
+            'header' => $header
         ]);
     }
 

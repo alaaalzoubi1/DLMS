@@ -25,7 +25,9 @@ class UpdateClinicHeaderRequest extends FormRequest
         return [
             'name_ar' => 'sometimes|string|max:255',
             'name_en' => 'sometimes|string|max:255',
-            'address' => 'sometimes|string|max:500',
+            'address_ar' => 'required|string|max:500',
+            'address_en' => 'required|string|max:500',
+
             'logo' => 'sometimes|image|mimes:jpg,jpeg,png,webp|max:2048'
         ];
     }

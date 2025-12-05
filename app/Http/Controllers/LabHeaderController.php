@@ -78,10 +78,11 @@ class LabHeaderController extends Controller
 
     public function getHeader()
     {
-        $subscriber_id = auth('admin')->user()->subscriber_id;
-
+        $subscriber = auth('admin')->user()->subscribers;
+        $header = LabInvoiceHeader::where('subscriber_id', $subscriber->id)->first();
+        $header['tax_number'] = $subscriber->tax_number;
         return response()->json([
-            'header' => LabInvoiceHeader::where('subscriber_id', $subscriber_id)->first()
+            'header' => $header
         ]);
     }
 

@@ -24,7 +24,8 @@ class ClinicHeaderRequest extends FormRequest
         return [
             'clinic_name_en' => 'required|string|max:255',
             'clinic_name_ar' => 'required|string|max:255',
-            'address' => 'required|string|max:500',
+            'address_ar' => 'required|string|max:500',
+            'address_en' => 'required|string|max:500',
             'logo'    => 'required|image|mimes:jpg,jpeg,png,webp|max:2048',
         ];
     }

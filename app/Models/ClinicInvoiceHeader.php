@@ -12,7 +12,8 @@ class ClinicInvoiceHeader extends Model
         'clinic_id',
         'clinic_name_ar',
         'clinic_name_en',
-        'address',
+        'address_ar',
+        'address_en',
         'logo'
     ];
     protected $hidden = ['logo'];

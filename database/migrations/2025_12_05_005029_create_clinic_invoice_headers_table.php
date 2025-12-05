@@ -16,7 +16,8 @@ return new class extends Migration
             $table->unsignedBigInteger('clinic_id')->unique();
             $table->string('clinic_name_ar');
             $table->string('clinic_name_en');
-            $table->string('address');
+            $table->string('address_ar');
+            $table->string('address_en');
             $table->string('logo');
             $table->timestamps();
 

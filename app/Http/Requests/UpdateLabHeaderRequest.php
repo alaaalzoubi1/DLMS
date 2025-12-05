@@ -24,7 +24,8 @@ class UpdateLabHeaderRequest extends FormRequest
         return [
             'lab_name_ar' => 'sometimes|string|max:255',
             'lab_name_en' => 'sometimes|string|max:255',
-            'address' => 'sometimes|string|max:500',
+            'address_ar' => 'sometimes|string|max:500',
+            'address_en' => 'sometimes|string|max:500',
             'logo' => 'sometimes|image|mimes:jpg,jpeg,png,webp|max:2048'
         ];
     }

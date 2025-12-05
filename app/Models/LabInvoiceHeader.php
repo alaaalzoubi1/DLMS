@@ -13,7 +13,8 @@ class LabInvoiceHeader extends Model
         'subscriber_id',
         'lab_name_ar',
         'lab_name_en',
-        'address',
+        'address_ar',
+        'address_en',
         'logo'
     ];
     protected $hidden = ['logo'];
