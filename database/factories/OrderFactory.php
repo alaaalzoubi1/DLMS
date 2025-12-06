@@ -32,8 +32,8 @@ class OrderFactory extends Factory
             'paid' => $this->faker->numberBetween(0, 5000),
             'cost' => $this->faker->numberBetween(500, 10000),
             'patient_name' => $this->faker->name(),
-            'receive' => $this->faker->date(),
-            'delivery' => $this->faker->optional()->date(),
+            'receive' => null,
+            'delivery' => null,
             'patient_id' => $this->faker->uuid(),
         ];
     }

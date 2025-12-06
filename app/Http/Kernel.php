@@ -69,5 +69,6 @@ class Kernel extends HttpKernel
         'super_admin.role' => \App\Http\Middleware\SuperAdminRoleMiddleware::class,
         'check.subscriber' => \App\Http\Middleware\CheckSubscriberActive::class,
         'technical.role' => \App\Http\Middleware\TechnicalRoleMiddleware::class,
+        'delegate.role' => \App\Http\Middleware\DelegateRoleMiddleware::class,
     ];
 }

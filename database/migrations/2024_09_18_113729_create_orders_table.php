@@ -24,8 +24,8 @@ return new class extends Migration
             $table->boolean('invoiced')->default(true);
             $table->integer('cost');
             $table->string('patient_name');
-            $table->date('receive');
-            $table->date('delivery')->nullable();
+            $table->dateTime('receive')->nullable();
+            $table->dateTime('delivery')->nullable();
             $table->string('patient_id');
             $table->foreign('doctor_id')->references('id')->on('doctors')->onDelete('cascade');
             $table->foreign('type_id')->references('id')->on('types')->onDelete('cascade');

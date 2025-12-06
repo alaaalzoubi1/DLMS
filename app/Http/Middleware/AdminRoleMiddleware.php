@@ -14,6 +14,6 @@ class AdminRoleMiddleware
                     return $next($request);
                 }
         }
-        abort(403,"Unauthenticated  ");
+        abort(403,"Unauthenticated");
     }
 }

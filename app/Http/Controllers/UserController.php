@@ -225,7 +225,7 @@ class UserController extends Controller
                 'first_name' => $user->first_name,
                 'last_name' => $user->last_name,
                 'is_available' => $user->is_available,
-                'role' => $user->roles->pluck('name')->first(), // اسم الدور فقط
+                'role' => $user->roles->pluck('name')->first(),
                 'subscriber' => $user->subscribers ? [
                     'id' => $user->subscribers->id,
                     'name' => $user->subscribers->company_name,

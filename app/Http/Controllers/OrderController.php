@@ -408,7 +408,7 @@ class OrderController extends Controller
 
         $data = $request->validated();
 
-//        try {
+        try {
             DB::beginTransaction();
 
             $type = Type::where('id', $data['type_id'])
@@ -451,7 +451,7 @@ class OrderController extends Controller
                 'paid'          => 0,
                 'cost'          => $totalCost,
                 'patient_name'  => $data['patient_name'],
-                'receive'       => now(),
+                'receive'       => null,
                 'delivery'      => null,
                 'patient_id'    => $data['patient_id'] ?? strtoupper(Str::random(9)),
             ]);
@@ -487,13 +487,13 @@ class OrderController extends Controller
                 'order'   => $order->load('products'),
             ], 201);
 
-//        } catch (\Exception $e) {
-//            DB::rollBack();
-//            return response()->json([
-//                'error' => 'Failed to create order.',
-//                'details' => $e->getMessage()
-//            ], 500);
-//        }
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'error' => 'Failed to create order.',
+                'details' => $e->getMessage()
+            ], 500);
+        }
     }
 
 

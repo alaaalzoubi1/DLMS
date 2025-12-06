@@ -51,5 +51,9 @@ class RouteServiceProvider extends ServiceProvider
         Route::prefix('api/doctor')
             ->namespace($this->namespace)
             ->group(base_path('routes/api/doctor.php'));
+        Route::prefix('api/delegate')
+            ->namespace($this->namespace)
+            ->group(base_path('routes/api/delegate.php'));
+
     }
 }
