@@ -19,7 +19,7 @@ class Order extends Model
 
     public function type(): BelongsTo
     {
-        return $this->belongsTo(Type::class);
+        return $this->belongsTo(Type::class)->withTrashed();
     }
 
     public function doctor(): BelongsTo

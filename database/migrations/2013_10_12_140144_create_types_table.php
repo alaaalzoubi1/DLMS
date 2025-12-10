@@ -13,11 +13,16 @@ return new class extends Migration
     {
         Schema::create('types', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('subscriber_id');
+
+            $table->foreignId('subscriber_id')
+                ->constrained()
+                ->cascadeOnDelete()
+                ->index();
+
             $table->enum('type', ['futures', 'new', 'test', 'returned']);
             $table->boolean('invoiced')->default(true);
-            $table->foreign('subscriber_id')->references('id')->on('subscribers')->onDelete('cascade');
-            $table->index(['id', 'subscriber_id']);
+
+            $table->softDeletes();
             $table->timestamps();
         });
     }
