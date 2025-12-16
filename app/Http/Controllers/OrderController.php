@@ -109,7 +109,7 @@ class OrderController extends Controller
     private function createOrderProducts($products, $orderId, $subscriber_id)
     {
         foreach ($products as $product) {
-            if ($product['specialization_subscriber_id'])
+            if (array_key_exists('specialization_subscriber_id',$product))
             {
                 $user = $this->fetchUserWithSpecialization(
                     $product['specialization_subscriber_id'],
