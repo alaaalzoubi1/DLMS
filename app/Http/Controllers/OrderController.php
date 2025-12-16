@@ -41,7 +41,7 @@ class OrderController extends Controller
             'products.*.tooth_color_id'                     => 'required|integer|exists:tooth_colors,id',
             'products.*.tooth_numbers'                      => 'required|array|min:1',
             'products.*.tooth_numbers.*'                    => 'required|string|max:2',
-            'products.*.specialization_subscriber_id'       => 'required|integer|exists:specialization__subscribers,id',
+            'products.*.specialization_subscriber_id'       => 'sometimes|integer|exists:specialization__subscribers,id',
             'products.*.note'                               => 'nullable|string',
         ]);
     }
@@ -127,7 +127,7 @@ class OrderController extends Controller
                 'order_id'                 => $orderId,
                 'tooth_color_id'           => $product['tooth_color_id'],
                 'tooth_numbers'             => json_encode($product['tooth_numbers']),
-                'specialization_users_id'  => $user->specialization_users_id,
+                'specialization_users_id'  => $user->specialization_users_id ?? null,
                 'note'                     => $product['note'] ?? null,
                 'unit_price' => $originalProduct->price,
                 'product_name' => $originalProduct->name
@@ -765,6 +765,50 @@ class OrderController extends Controller
 
         return response()->json(['order' => $order], 200);
     }
+
+    public function technicalOrderDetails(Request $request)
+    {
+        $technical = auth('admin')->user();
+
+        $specializationUserId = $technical->specializationUser->id;
+
+        $order = Order::with([
+            'products' => function ($q) use ($specializationUserId) {
+                $q->where('specialization_users_id', $specializationUserId)
+                    ->select(
+                        'id',
+                        'order_id',
+                        'note',
+                        'tooth_numbers',
+                        'status',
+                        'product_id',
+                        'specialization_users_id',
+                        'tooth_color_id',
+                        'unit_price',
+                        'product_name'
+                    );
+            },
+            'products.specializationUser.user:id,first_name,last_name',
+            'products.toothColor:id,color',
+            'subscriber:id,company_name,tax_number',
+            'doctor:id,first_name,last_name,clinic_id',
+            'doctor.clinic:id,name,tax_number',
+            'type:id,type',
+            'discount:id,type,amount,order_id'
+        ])
+            ->where('id', $request->order_id)
+            ->whereHas('products', function ($q) use ($specializationUserId) {
+                $q->where('specialization_users_id', $specializationUserId);
+            })
+            ->first();
+
+        if (!$order) {
+            return response()->json(['error' => 'Order not found'], 404);
+        }
+
+        return response()->json(['order' => $order], 200);
+    }
+
     public function applyDiscount(StoreOrderDiscountRequest $request)
     {
         $order = Order::with('discount','doctor.account')->findOrFail($request->order_id);
