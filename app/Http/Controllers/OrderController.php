@@ -118,10 +118,9 @@ class OrderController extends Controller
                 if (!$user) {
                     throw new Exception("No user found with the required specialization for subscriber ID {$subscriber_id}.");
                 }
-                $originalProduct = Product::find($product['product_id']);
-
                 $this->incrementUserWorkingOn($user->id);
             }
+            $originalProduct = Product::find($product['product_id']);
 
 
             OrderProduct::create([
@@ -131,7 +130,7 @@ class OrderController extends Controller
                 'tooth_numbers'             => json_encode($product['tooth_numbers']),
                 'specialization_users_id'  => $user->specialization_users_id ?? null,
                 'note'                     => $product['note'] ?? null,
-                'unit_price' => $originalProduct->price,
+                'unit_price' => $originalProduct->final_price,
                 'product_name' => $originalProduct->name
             ]);
         }
