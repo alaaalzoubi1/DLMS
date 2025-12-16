@@ -109,18 +109,20 @@ class OrderController extends Controller
     private function createOrderProducts($products, $orderId, $subscriber_id)
     {
         foreach ($products as $product) {
+            if ($product['specialization_subscriber_id'])
+            {
+                $user = $this->fetchUserWithSpecialization(
+                    $product['specialization_subscriber_id'],
+                    $subscriber_id
+                );
+                if (!$user) {
+                    throw new Exception("No user found with the required specialization for subscriber ID {$subscriber_id}.");
+                }
+                $originalProduct = Product::find($product['product_id']);
 
-            $user = $this->fetchUserWithSpecialization(
-                $product['specialization_subscriber_id'],
-                $subscriber_id
-            );
-
-            if (!$user) {
-                throw new Exception("No user found with the required specialization for subscriber ID {$subscriber_id}.");
+                $this->incrementUserWorkingOn($user->id);
             }
-            $originalProduct = Product::find($product['product_id']);
 
-            $this->incrementUserWorkingOn($user->id);
 
             OrderProduct::create([
                 'product_id'               => $product['product_id'],
