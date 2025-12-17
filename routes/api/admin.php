@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\RegisterController;
 use App\Http\Controllers\Api\LoginController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ClinicController;
+use App\Http\Controllers\ContactInfoController;
 use App\Http\Controllers\DoctorController;
 use App\Http\Controllers\LabHeaderController;
 use App\Http\Controllers\OrderController;
@@ -82,6 +83,11 @@ Route::middleware(['auth:admin', 'admin.role','check.subscriber'])->group(functi
     Route::post('invoice-header/update',[LabHeaderController::class,'update']);
     Route::get('invoice-header',[LabHeaderController::class,'getHeader']);
     Route::delete('invoice-header',[LabHeaderController::class,'delete']);
+
+
+    Route::prefix('contact-info')->group(function () {
+        Route::get('/', [ContactInfoController::class, 'index']);
+    });
 
 
 });

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ContactInfoController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SpecializationSubscriberController;
@@ -24,5 +25,10 @@ Route::middleware(['auth:admin','technical.role','check.subscriber'])->group(fun
     Route::patch('profile',[UserController::class,'technicalUpdateProfile']);
     Route::delete('profile',[UserController::class,'deleteAccount']);
     Route::get('order-details',[OrderController::class,'orderDetails']);
+
+
+    Route::prefix('contact-info')->group(function () {
+        Route::get('/', [ContactInfoController::class, 'index']);
+    });
 
 });

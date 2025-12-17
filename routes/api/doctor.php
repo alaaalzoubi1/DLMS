@@ -3,6 +3,7 @@
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ClinicHeaderController;
 use App\Http\Controllers\ClinicSubscriberController;
+use App\Http\Controllers\ContactInfoController;
 use App\Http\Controllers\DoctorController;
 
 use App\Http\Controllers\OrderController;
@@ -34,5 +35,9 @@ Route::middleware(['auth:api'])->group(function () {
     Route::post('invoice-header/update',[ClinicHeaderController::class,'update']);
     Route::get('invoice-header',[ClinicHeaderController::class,'getHeader']);
     Route::delete('invoice-header',[ClinicHeaderController::class,'delete']);
+
+    Route::prefix('contact-info')->group(function () {
+        Route::get('/', [ContactInfoController::class, 'index']);
+    });
 
 });
