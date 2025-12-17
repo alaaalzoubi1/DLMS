@@ -19,7 +19,7 @@ class ContactInfoController extends Controller
                 'url' => $contact->url,
                 'logo' => $contact->logo,
                 'logo_url' => $contact->logo
-                    ? asset('storage/' . $contact->logo)
+                    ? env('APP_URL') . '/public/storage/' . $contact->logo
                     : null,
             ];
         });
