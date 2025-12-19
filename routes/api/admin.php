@@ -85,9 +85,7 @@ Route::middleware(['auth:admin', 'admin.role','check.subscriber'])->group(functi
     Route::delete('invoice-header',[LabHeaderController::class,'delete']);
 
 
-    Route::prefix('contact-info')->group(function () {
-        Route::get('/', [ContactInfoController::class, 'index']);
-    });
+
 
 
 });
@@ -96,7 +94,9 @@ Route::middleware(['auth:admin', 'admin.role'])->group(function () {
     Route::post('subscribe',[SubscriberController::class,'subscribeToPlan']);
     Route::get('plans', [SubscriptionPlanController::class, 'index']);
     Route::get('remaining-days',[SubscriberController::class,'remainingDays']);
-
+    Route::prefix('contact-info')->group(function () {
+        Route::get('/', [ContactInfoController::class, 'index']);
+    });
 });
 
 
