@@ -17,14 +17,11 @@ class CheckSubscriberActive
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        // جلب subscriber_id من المستخدم (سواء كان دكتور، أدمن، عامل)
         $subscriberId = $user->subscriber_id;
-
         if (!$subscriberId) {
             return response()->json(['error' => 'No subscriber assigned'], 403);
         }
 
-        // التحقق من الكاش
         $isActive = Cache::get("subscriber_active:{$subscriberId}");
 
         if ($isActive === null) {
@@ -36,12 +33,11 @@ class CheckSubscriberActive
 
             $isActive = $subscriber->trial_end_at >= now();
 
-            // نخزّن الحالة ليوم كامل (24 ساعة)
             Cache::put("subscriber_active:{$subscriberId}", $isActive, now()->addDay());
         }
 
         if (!$isActive) {
-            return response()->json(['error' => 'Subscription expired'], 403);
+            return response()->json(['error' => 'انتهى الاشتراك الخاص بك, يرحى تجديد الاشتراك والمحاولة مرة أُخرى'], 403);
         }
 
         return $next($request);
