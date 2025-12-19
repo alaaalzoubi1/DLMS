@@ -28,24 +28,6 @@ class SubscriberController extends Controller
              $companyExists
         );
     }
-
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(StoreSubscriberRequest $request)
-    {
-        //
-    }
-
     /**
      * Display the specified resource.
      */
@@ -58,33 +40,6 @@ class SubscriberController extends Controller
             'data' => $subscriber
         ]);
     }
-
-
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Subscriber $subscriber)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(UpdateSubscriberRequest $request, Subscriber $subscriber)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Subscriber $subscriber)
-    {
-        //
-    }
-
     public function subscribeToPlan(Request $request)
     {
         $request->validate([
@@ -96,8 +51,6 @@ class SubscriberController extends Controller
 
             $plan = SubscriptionPlan::findOrFail($request->plan_id);
 
-            // إذا عنده اشتراك شغال → نضيف الأيام على تاريخ الانتهاء
-            // إذا منتهي → نبدأ من اليوم
             $subscriber = auth('admin')->user()->subscribers;
             $baseDate = $subscriber->trial_end_at && $subscriber->trial_end_at->isFuture()
                 ? $subscriber->trial_end_at
@@ -106,7 +59,6 @@ class SubscriberController extends Controller
             $subscriber->trial_end_at = $baseDate->copy()->addDays($plan->duration_days);
             $subscriber->save();
 
-            // تحديث الكاش
             $cacheKey = "subscriber_active:{$subscriber->id}";
             Cache::forget($cacheKey);
             Cache::put($cacheKey, true, now()->addDay());

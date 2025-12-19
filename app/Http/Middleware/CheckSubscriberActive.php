@@ -37,7 +37,7 @@ class CheckSubscriberActive
         }
 
         if (!$isActive) {
-            return response()->json(['error' => 'انتهى الاشتراك الخاص بك, يرحى تجديد الاشتراك والمحاولة مرة أُخرى'], 403);
+            return response()->json(['error' => 'انتهى الاشتراك الخاص بك, يرجى تجديد الاشتراك والمحاولة مرة أُخرى'], 403);
         }
 
         return $next($request);

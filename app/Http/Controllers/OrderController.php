@@ -582,7 +582,7 @@ class OrderController extends Controller
         }
 
 
-        $orders = $query->with(['type:id,type', 'subscriber:id,company_name,tax_number', 'products','doctor:id,clinic_id,first_name,last_name','doctor.clinic:id,tax_number,name','discount'])
+        $orders = $query->with(['type:id,type', 'subscriber:id,company_name,tax_number', 'products.specializationUser.specializationSubscriber.specialization:id,name','products.specializationUser.specializationSubscriber.users:id,first_name,last_name','doctor:id,clinic_id,first_name,last_name','doctor.clinic:id,tax_number,name','discount'])
             ->latest()
             ->get();
 
