@@ -17,6 +17,8 @@ return new class extends Migration
             $table->integer('duration_days'); // المدة بالأيام
             $table->decimal('price', 10, 2); // المبلغ المطلوب للدفع
             $table->text('description')->nullable(); // وصف للخطة
+            $table->char('country_code', 2);
+            $table->index('country_code');
             $table->softDeletes();
             $table->timestamps();
         });

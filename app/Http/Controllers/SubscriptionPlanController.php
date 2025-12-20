@@ -24,6 +24,7 @@ class SubscriptionPlanController extends Controller
             'duration_days' => 'required|integer|min:1',
             'price'         => 'required|numeric|min:0',
             'description'   => 'nullable|string',
+            'country_code' => 'required|string|size:2|alpha'
         ]);
 
         $plan = SubscriptionPlan::create($validated);
