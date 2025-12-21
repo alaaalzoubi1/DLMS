@@ -536,7 +536,7 @@ class OrderController extends Controller
         }
 
 
-        $orders = $query->with(['type:id,type', 'subscriber:id,company_name,tax_number', 'products','doctor:id,clinic_id,first_name,last_name','doctor.clinic:id,tax_number,name','discount'])
+        $orders = $query->with(['type:id,type', 'subscriber:id,company_name,tax_number', 'products','doctor:id,clinic_id,first_name,last_name','doctor.clinic:id,tax_number,name','discount','files'])
             ->latest()
             ->get();
 
@@ -582,7 +582,14 @@ class OrderController extends Controller
         }
 
 
-        $orders = $query->with(['type:id,type', 'subscriber:id,company_name,tax_number', 'products.specializationUser.specializationSubscriber.specialization:id,name','products.specializationUser.specializationSubscriber.users:id,first_name,last_name','doctor:id,clinic_id,first_name,last_name','doctor.clinic:id,tax_number,name','discount'])
+        $orders = $query->with(['type:id,type',
+            'subscriber:id,company_name,tax_number',
+            'products.specializationUser.specializationSubscriber.specialization:id,name',
+            'products.specializationUser.specializationSubscriber.users:id,first_name,last_name',
+            'doctor:id,clinic_id,first_name,last_name',
+            'doctor.clinic:id,tax_number,name',
+            'discount',
+            'files' => function($q) { $q->Uploaded();}])
             ->latest()
             ->get();
 
@@ -754,6 +761,9 @@ class OrderController extends Controller
             },
             'discount' => function($q){
             $q->select('id','type','amount','order_id');
+            },
+            'files' => function($q){
+                $q->Uploaded();
             }
         ])
             ->select('id', 'paid', 'invoiced', 'cost', 'patient_name', 'receive', 'delivery', 'patient_id', 'status', 'created_at', 'updated_at', 'subscriber_id', 'doctor_id', 'type_id')

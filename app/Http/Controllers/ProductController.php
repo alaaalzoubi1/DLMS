@@ -169,7 +169,8 @@ class ProductController extends Controller
             ->with([
                 'product:name,id',
                 'toothColor:color,id',
-                'specializationUser.specialization:name'
+                'specializationUser.specialization:name',
+                'order.files' => function($q){ $q->Uploaded();},
             ])
             ->orderBy('updated_at', 'desc')
             ->get();

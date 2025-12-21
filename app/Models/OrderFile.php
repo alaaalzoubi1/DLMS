@@ -24,4 +24,8 @@ class OrderFile extends Model
     {
         return $this->belongsTo(Order::class);
     }
+    public function scopeUploaded($query)
+    {
+        return $query->where('status','uploaded');
+    }
 }
