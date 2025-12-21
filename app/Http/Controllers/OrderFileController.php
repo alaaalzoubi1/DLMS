@@ -15,7 +15,7 @@ class OrderFileController extends Controller
             'order_id' => 'required|exists:orders,id',
             'extension' => 'required|string|in:stl,ply,obj,jpg,pdf,xml,html,rar,zip',
             'original_name' => 'required|string',
-            'size' => 'required|integer|max:104857600',
+            'size' => 'required|integer|max:204857600',
         ]);
         $filePath = 'orders/' . $request->order_id . '/' . \Str::uuid() . '.' . $request->extension;
         $file = OrderFile::create([
@@ -82,12 +82,18 @@ class OrderFileController extends Controller
         }
 
         $client = $this->s3Client();
+        $filename = $file->original_name;
+        $extension = strtolower($file->extension);
+
+        if (!str_ends_with($filename, '.' . $extension)) {
+            $filename .= '.' . $file->extension;
+        }
 
         $command = $client->getCommand('GetObject', [
             'Bucket' => config('filesystems.disks.b2.bucket'),
             'Key'    => $file->file_path,
             'ResponseContentDisposition' =>
-                'attachment; filename="' . $file->original_name . '"',
+                'attachment; filename="' . $filename . '"',
         ]);
 
         $presignedRequest = $client->createPresignedRequest(
