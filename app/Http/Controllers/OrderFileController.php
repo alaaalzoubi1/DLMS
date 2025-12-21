@@ -77,7 +77,7 @@ class OrderFileController extends Controller
             'use_path_style_endpoint' => true,
         ]);
     }
-    public function download($id)
+    public function doctorDownload($id)
     {
         $file = OrderFile::with('order:id,doctor_id')->findOrfail($id);
 
@@ -111,5 +111,38 @@ class OrderFileController extends Controller
             'download_url' => (string) $presignedRequest->getUri(),
         ]);
     }
+    public function download($id)
+    {
+        $file = OrderFile::with('order:id,subscriber_id')->findOrfail($id);
 
+        if ($file->status !== 'uploaded' || $file->order->subscriber_id != auth('admin')->user()->subscriber_id) {
+            return response()->json([
+                'message' => 'File not available for download'
+            ], 403);
+        }
+
+        $client = $this->s3Client();
+        $filename = $file->original_name;
+        $extension = strtolower($file->extension);
+
+        if (!str_ends_with($filename, '.' . $extension)) {
+            $filename .= '.' . $extension;
+        }
+
+        $command = $client->getCommand('GetObject', [
+            'Bucket' => config('filesystems.disks.b2.bucket'),
+            'Key'    => $file->file_path,
+            'ResponseContentDisposition' =>
+                'attachment; filename="' . $filename . '"',
+        ]);
+
+        $presignedRequest = $client->createPresignedRequest(
+            $command,
+            '+10 minutes'
+        );
+
+        return response()->json([
+            'download_url' => (string) $presignedRequest->getUri(),
+        ]);
+    }
 }
