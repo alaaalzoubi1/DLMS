@@ -43,7 +43,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::prefix('order-files')->middleware('auth')->group(function () {
         Route::post('/upload', [OrderFileController::class, 'createUpload']);
         Route::post('/{id}/uploaded', [OrderFileController::class, 'markUploaded']);
-        Route::get('/{file}/download', [OrderFileController::class, 'download']);
+        Route::get('/{id}/download', [OrderFileController::class, 'download']);
 
     });
 
