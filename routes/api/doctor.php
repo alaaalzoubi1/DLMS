@@ -7,6 +7,7 @@ use App\Http\Controllers\ContactInfoController;
 use App\Http\Controllers\DoctorController;
 
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\OrderFileController;
 use App\Http\Controllers\SubscriberController;
 use App\Http\Controllers\ToothColorController;
 use Illuminate\Support\Facades\Route;
@@ -39,5 +40,10 @@ Route::middleware(['auth:api'])->group(function () {
     Route::prefix('contact-info')->group(function () {
         Route::get('/', [ContactInfoController::class, 'index']);
     });
+    Route::prefix('order-files')->middleware('auth')->group(function () {
+        Route::post('/upload', [OrderFileController::class, 'createUpload']);
+        Route::post('/{id}/uploaded', [OrderFileController::class, 'markUploaded']);
+    });
+
 
 });

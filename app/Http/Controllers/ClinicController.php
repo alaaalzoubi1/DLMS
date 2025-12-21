@@ -59,9 +59,9 @@ class ClinicController extends Controller
     public function edit($id, Request $request)
     {
         $validated = $request->validate([
-            'name' => 'string|max:255',
-            'has_special_price' => 'boolean',
-            'tax_number' => 'nullable|string|unique:clinics,tax_number',
+            'name' => 'sometimes|string|max:255',
+            'has_special_price' => 'sometimes|boolean',
+            'tax_number' => 'sometimes|string|unique:clinics,tax_number',
         ]);
 
         $clinic = Clinic::find($id);

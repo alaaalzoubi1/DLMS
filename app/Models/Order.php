@@ -44,7 +44,10 @@ class Order extends Model
         return $this ->hasOne(OrderDiscount::class);
     }
 
-
+    public function file(): HasOne
+    {
+        return $this->hasOne(OrderFile::class);
+    }
 
 
 }
