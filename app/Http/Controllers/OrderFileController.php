@@ -13,13 +13,11 @@ class OrderFileController extends Controller
     {
         $request->validate([
             'order_id' => 'required|exists:orders,id',
-            'extension' => 'required|string|max:10',
+            'extension' => 'required|string|in:stl,ply,obj,jpg,pdf,xml,html,rar,zip',
             'original_name' => 'required|string',
             'size' => 'required|integer|max:104857600',
         ]);
-
         $filePath = 'orders/' . $request->order_id . '/' . \Str::uuid() . '.' . $request->extension;
-
         $file = OrderFile::create([
             'order_id' => $request->order_id,
             'file_path' => $filePath,
@@ -28,9 +26,7 @@ class OrderFileController extends Controller
             'size' => $request->size,
             'status' => 'pending',
         ]);
-
         $client = $this->s3Client();
-
         $command = $client->getCommand('PutObject', [
             'Bucket' => config('filesystems.disks.b2.bucket'),
             'Key' => $filePath,
@@ -73,4 +69,35 @@ class OrderFileController extends Controller
             'use_path_style_endpoint' => true,
         ]);
     }
+    public function download($id)
+    {
+        // مثال صلاحيات (اختياري حسب نظامك)
+        // abort_unless(auth()->user()->can('view', $file), 403);
+        $file = OrderFile::with('order:id,doctor_id')->findOrfail($id);
+
+        if ($file->status !== 'uploaded' || $file->order->doctor_id != auth('api')->user()->doctor->id) {
+            return response()->json([
+                'message' => 'File not available for download'
+            ], 403);
+        }
+
+        $client = $this->s3Client();
+
+        $command = $client->getCommand('GetObject', [
+            'Bucket' => config('filesystems.disks.b2.bucket'),
+            'Key'    => $file->file_path,
+            'ResponseContentDisposition' =>
+                'attachment; filename="' . $file->original_name . '"',
+        ]);
+
+        $presignedRequest = $client->createPresignedRequest(
+            $command,
+            '+10 minutes'
+        );
+
+        return response()->json([
+            'download_url' => (string) $presignedRequest->getUri(),
+        ]);
+    }
+
 }
