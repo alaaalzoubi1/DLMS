@@ -124,20 +124,29 @@ class SubscriberController extends Controller
     public function index(Request $request)
     {
         $request->validate([
-           'company_name' => 'sometimes|required|string',
-           'company_code' => 'sometimes|required|string',
-           'tax_number' => 'sometimes|required|string'
+            'company_name' => 'sometimes|string',
+            'company_code' => 'sometimes|string',
+            'tax_number'   => 'sometimes|string',
         ]);
+
         $subscribers = Subscriber::with('users.roles')
-            ->whereIn('tax_number','like',$request->tax_number)
-            ->whereIn('company_name','like',$request->company_name)
-            ->whereIn('company_code','like',$request->company_code)
+            ->when($request->company_name, function ($q) use ($request) {
+                $q->where('company_name', 'like', '%' . $request->company_name);
+            })
+            ->when($request->company_code, function ($q) use ($request) {
+                $q->where('company_code', 'like', '%' . $request->company_code);
+            })
+            ->when($request->tax_number, function ($q) use ($request) {
+                $q->where('tax_number', 'like', '%' . $request->tax_number);
+            })
             ->orderByDesc('created_at')
             ->paginate(20);
+
         return response()->json([
             'data' => $subscribers
         ]);
     }
+
 
 
 }
