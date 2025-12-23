@@ -91,9 +91,7 @@ Route::middleware(['auth:admin', 'admin.role','check.subscriber'])->group(functi
         Route::get('/{id}/download', [OrderFileController::class, 'doctorDownload']);
 
     });
-    Route::prefix('subscribes')->group(function (){
-        Route::get('/',[SubscriberController::class,'index']);
-    });
+
 
 
 });

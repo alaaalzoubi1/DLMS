@@ -2,6 +2,7 @@
 
 
 use App\Http\Controllers\ContactInfoController;
+use App\Http\Controllers\SubscriberController;
 use App\Http\Controllers\SubscriptionPlanController;
 use Illuminate\Support\Facades\Route;
 
@@ -19,5 +20,8 @@ Route::middleware(['auth:admin','super_admin.role'])->group(function () {
         Route::post('/', [ContactInfoController::class, 'store']);
         Route::patch('/{id}', [ContactInfoController::class, 'update']);
         Route::delete('/{id}', [ContactInfoController::class, 'destroy']);
+    });
+    Route::prefix('subscribes')->group(function (){
+        Route::get('/',[SubscriberController::class,'index']);
     });
 });
