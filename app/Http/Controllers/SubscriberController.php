@@ -121,7 +121,20 @@ class SubscriberController extends Controller
             'end_date'      => $end->toDateTimeString(),
         ], 200);
     }
-
+    public function index(Request $request)
+    {
+        $request->validate([
+           'company_name' => 'sometimes|required|string',
+           'company_code' => 'sometimes|required|string',
+           'tax_number' => 'sometimes|required|string'
+        ]);
+        return Subscriber::with('users.roles')
+            ->whereIn('tax_number','like',$request->tax_number)
+            ->whereIn('company_name','like',$request->company_name)
+            ->whereIn('company_code','like',$request->company_code)
+            ->orderByDesc('created_at')
+            ->paginate(20);
+    }
 
 
 }

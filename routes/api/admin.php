@@ -85,13 +85,15 @@ Route::middleware(['auth:admin', 'admin.role','check.subscriber'])->group(functi
     Route::get('invoice-header',[LabHeaderController::class,'getHeader']);
     Route::delete('invoice-header',[LabHeaderController::class,'delete']);
 
-    Route::prefix('order-files')->middleware('auth')->group(function () {
+    Route::prefix('order-files')->group(function () {
         Route::post('/upload', [OrderFileController::class, 'createUpload']);
         Route::post('/{id}/uploaded', [OrderFileController::class, 'markUploaded']);
         Route::get('/{id}/download', [OrderFileController::class, 'doctorDownload']);
 
     });
-
+    Route::prefix('subscribes')->group(function (){
+        Route::get('/',[SubscriberController::class,'index']);
+    });
 
 
 });
