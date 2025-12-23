@@ -131,13 +131,13 @@ class SubscriberController extends Controller
 
         $subscribers = Subscriber::with('users:id,first_name,last_name,email,subscriber_id','users.roles:id,name')
             ->when($request->company_name, function ($q) use ($request) {
-                $q->where('company_name', 'like', '%' . $request->company_name);
+                $q->where('company_name', 'like',   $request->company_name . '%');
             })
             ->when($request->company_code, function ($q) use ($request) {
-                $q->where('company_code', 'like', '%' . $request->company_code);
+                $q->where('company_code', 'like', '%' . $request->company_code . '%');
             })
             ->when($request->tax_number, function ($q) use ($request) {
-                $q->where('tax_number', 'like', '%' . $request->tax_number);
+                $q->where('tax_number', 'like', '%' . $request->tax_number . '%');
             })
             ->orderByDesc('created_at')
             ->paginate(20);
