@@ -23,5 +23,6 @@ Route::middleware(['auth:admin','super_admin.role'])->group(function () {
     });
     Route::prefix('subscribers')->group(function (){
         Route::get('/',[SubscriberController::class,'index']);
+        Route::post('subscribe',[SubscriberController::class,'subscribeToPlan']);
     });
 });

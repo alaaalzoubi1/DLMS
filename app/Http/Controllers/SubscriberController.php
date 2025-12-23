@@ -44,6 +44,7 @@ class SubscriberController extends Controller
     {
         $request->validate([
             'plan_id' => 'required|exists:subscription_plans,id',
+            'subscriber_id' => 'required|exists:subscribers,id'
         ]);
 
         try {
@@ -51,7 +52,7 @@ class SubscriberController extends Controller
 
             $plan = SubscriptionPlan::findOrFail($request->plan_id);
 
-            $subscriber = auth('admin')->user()->subscribers;
+            $subscriber = Subscriber::findOrFail($request->subscriber_id);
             $baseDate = $subscriber->trial_end_at && $subscriber->trial_end_at->isFuture()
                 ? $subscriber->trial_end_at
                 : now();
