@@ -21,7 +21,7 @@ Route::middleware(['auth:admin','super_admin.role'])->group(function () {
         Route::patch('/{id}', [ContactInfoController::class, 'update']);
         Route::delete('/{id}', [ContactInfoController::class, 'destroy']);
     });
-    Route::prefix('subscribes')->group(function (){
+    Route::prefix('subscribers')->group(function (){
         Route::get('/',[SubscriberController::class,'index']);
     });
 });

@@ -128,12 +128,15 @@ class SubscriberController extends Controller
            'company_code' => 'sometimes|required|string',
            'tax_number' => 'sometimes|required|string'
         ]);
-        return Subscriber::with('users.roles')
+        $subscribers = Subscriber::with('users.roles')
             ->whereIn('tax_number','like',$request->tax_number)
             ->whereIn('company_name','like',$request->company_name)
             ->whereIn('company_code','like',$request->company_code)
             ->orderByDesc('created_at')
             ->paginate(20);
+        return response()->json([
+            'data' => $subscribers
+        ]);
     }
 
 
