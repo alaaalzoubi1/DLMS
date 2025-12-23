@@ -129,7 +129,7 @@ class SubscriberController extends Controller
             'tax_number'   => 'sometimes|string',
         ]);
 
-        $subscribers = Subscriber::with('users.roles')
+        $subscribers = Subscriber::with('users:id,first_name,last_name,email,subscriber_id,','users.roles:id,name')
             ->when($request->company_name, function ($q) use ($request) {
                 $q->where('company_name', 'like', '%' . $request->company_name);
             })
