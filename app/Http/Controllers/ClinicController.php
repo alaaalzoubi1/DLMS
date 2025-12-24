@@ -78,7 +78,7 @@ class ClinicController extends Controller
         if ($request->exists('tax_number')) {
             $clinic->tax_number = $validated['tax_number'];
         }
-
+        $clinic->save();
         return response()->json([
             'message' => 'Clinic updated successfully!',
             'clinic' => $clinic,
