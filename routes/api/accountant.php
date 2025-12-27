@@ -4,7 +4,7 @@ use App\Http\Controllers\AccountantController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\UserController;
 
-Route::post('register',[AccountantController::class,'registerDelegate']);
+Route::post('register',[AccountantController::class,'registerAccountant']);
 Route::middleware(['auth:admin','accountant.role','check.subscriber'])->group(function ()
 {
     Route::get('orders/filters',[OrderController::class,'OrdersWithFilters']);
