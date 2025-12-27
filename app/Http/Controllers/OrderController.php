@@ -685,7 +685,7 @@ class OrderController extends Controller
             $orders = Order::with('doctor.account')
                 ->whereIn('id', $orderIds)
                 ->where('subscriber_id', auth('admin')->user()->subscriber_id)
-                ->whereColumn('paid', '=<', 'cost')
+                ->whereColumn('paid', '<=', 'cost')
                 ->orderBy('receive', 'asc')
                 ->lockForUpdate()
                 ->get();
