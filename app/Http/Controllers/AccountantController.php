@@ -78,7 +78,7 @@ class AccountantController extends Controller
         $user = auth('admin')->user();
 
         return response()->json([
-            'delegate' => [
+            'accountant' => [
                 'id' => $user->id,
                 'email' => $user->email,
                 'first_name' => $user->first_name,
