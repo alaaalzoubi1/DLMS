@@ -26,8 +26,6 @@ return new class extends Migration
             $table->unsignedBigInteger('specialization_users_id');
             $table->foreign('specialization_users_id')->references('id')->on('specialization__users')->onDelete('cascade');
             $table->enum('status', ['working', 'finished'])->default('working');
-            $table->unsignedTinyInteger('impression_type')
-                ->comment('1 = digital, 2 = traditional, 3 = both');
             $table->timestamps();
         });
     }
