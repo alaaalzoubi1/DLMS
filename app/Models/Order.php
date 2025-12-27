@@ -21,6 +21,8 @@ class Order extends Model
     protected $casts = [
         'impression_type' => ImpressionType::class,
     ];
+    protected $appends = ['impression_type_label'];
+
     public function type(): BelongsTo
     {
         return $this->belongsTo(Type::class)->withTrashed();
@@ -59,5 +61,10 @@ class Order extends Model
             ImpressionType::BOTH->value,
         ]);
     }
+    public function getImpressionTypeLabelAttribute(): string
+    {
+        return $this->impression_type->label();
+    }
+
 
 }
