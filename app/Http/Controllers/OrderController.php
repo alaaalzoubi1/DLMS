@@ -867,7 +867,7 @@ class OrderController extends Controller
                 $q->Uploaded();
             }
         ])
-            ->select('id', 'paid', 'invoiced', 'cost', 'patient_name', 'receive', 'delivery', 'patient_id', 'status', 'created_at', 'updated_at', 'subscriber_id', 'doctor_id', 'type_id')
+            ->select('id', 'paid', 'invoiced', 'cost', 'patient_name', 'receive', 'delivery', 'patient_id', 'status', 'created_at', 'updated_at', 'subscriber_id', 'doctor_id', 'type_id','impression_type')
             ->where('id', $request->order_id)
             ->first();
 
