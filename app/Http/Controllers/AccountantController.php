@@ -13,7 +13,7 @@ use Illuminate\Validation\ValidationException;
 
 class AccountantController extends Controller
 {
-    public function registerDelegate(Request $request)
+    public function registerAccountant(Request $request)
     {
         $validatedData = $request->validate([
             'company_code' => 'required|string|max:255',
@@ -54,7 +54,7 @@ class AccountantController extends Controller
         $token = Auth::guard('admin')->attempt($credentials);
 
         return response()->json([
-            'message' => 'Technical registered successfully',
+            'message' => 'Accountant registered successfully',
             'company_code' => strtoupper($validatedData['company_code']),
             'first_name' => $validatedData['first_name'],
             'last_name' => $validatedData['last_name'],
