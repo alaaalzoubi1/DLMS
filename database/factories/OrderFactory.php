@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\ImpressionType;
 use App\Models\Doctor;
 use App\Models\Order;
 use App\Models\Subscriber;
@@ -35,6 +36,11 @@ class OrderFactory extends Factory
             'receive' => null,
             'delivery' => null,
             'patient_id' => $this->faker->uuid(),
+            'impression_type' => $this->faker->randomElement([
+                ImpressionType::DIGITAL->value,
+                ImpressionType::TRADITIONAL->value,
+                ImpressionType::BOTH->value,
+            ]),
         ];
     }
 }
