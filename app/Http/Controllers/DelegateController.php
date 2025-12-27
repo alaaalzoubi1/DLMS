@@ -103,6 +103,7 @@ class DelegateController extends Controller
             ->whereNull('receive')
             ->whereNull('delivery')
             ->where('status', 'pending')
+            ->Receivable()
             ->get();
 
         return response()->json([
@@ -119,6 +120,7 @@ class DelegateController extends Controller
             ->whereNotNull('receive')
             ->whereNull('delivery')
             ->where('status', 'completed')
+            ->Receivable()
             ->get();
 
         return response()->json([

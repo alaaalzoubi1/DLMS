@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\ImpressionType;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,9 +16,11 @@ class Order extends Model
     use HasFactory;
     protected $fillable = [
         'doctor_id', 'subscriber_id', 'type_id', 'status', 'invoiced',
-        'paid', 'cost', 'patient_name', 'receive', 'delivery', 'patient_id'
+        'paid', 'cost', 'patient_name', 'receive', 'delivery', 'patient_id','impression_type'
     ];
-
+    protected $casts = [
+        'impression_type' => ImpressionType::class,
+    ];
     public function type(): BelongsTo
     {
         return $this->belongsTo(Type::class)->withTrashed();
@@ -48,6 +52,12 @@ class Order extends Model
     {
         return $this->hasMany(OrderFile::class);
     }
-
+    public function scopeReceivable(Builder $query): Builder
+    {
+        return $query->whereIn('impression_type', [
+            ImpressionType::TRADITIONAL->value,
+            ImpressionType::BOTH->value,
+        ]);
+    }
 
 }

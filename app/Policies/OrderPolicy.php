@@ -73,4 +73,9 @@ class OrderPolicy
         return $user->subscriber_id === $order->subscriber_id;
     }
 
+    public function addPayment($admin, Order $order): bool
+    {
+        return $order->subscriber_id === $admin->subscriber_id;
+    }
+
 }

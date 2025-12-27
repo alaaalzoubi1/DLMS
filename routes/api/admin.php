@@ -71,7 +71,7 @@ Route::middleware(['auth:admin', 'admin.role','check.subscriber'])->group(functi
 //    Route::put('/types/{id}', [TypeController::class, 'updateType']);
     Route::delete('types/{id}',[TypeController::class,'destroy']);
     Route::get('cancel-subscription',[SubscriberController::class,'cancelSubscription']);
-    Route::get('add-payment',[OrderController::class,'adminAddPayment']);
+    Route::get('add-payment',[OrderController::class,'addPayment']);
     Route::get('profile',[UserController::class,'adminProfile']);
     Route::patch('profile',[UserController::class,'adminUpdateProfile']);
     Route::delete('profile',[UserController::class,'deleteAccount']);

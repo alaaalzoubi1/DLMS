@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\ImpressionType;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rules\Enum;
 
 class StoreOrderRequest extends FormRequest
 {
@@ -26,6 +28,7 @@ class StoreOrderRequest extends FormRequest
             'type_id'         => 'required|exists:types,id',
             'patient_name'    => 'required|string|max:50',
             'patient_id'      => 'nullable|string|max:50',
+            'impression_type' => ['required', new Enum(ImpressionType::class)],
 
             'products'                        => 'required|array|min:1',
 

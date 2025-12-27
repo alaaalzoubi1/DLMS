@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Enums\ImpressionType;
 use App\Http\Requests\DoctorOrdersRequest;
 use App\Http\Requests\OrdersWithFilters;
 use App\Http\Requests\StoreOrderDiscountRequest;
@@ -22,6 +23,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rules\Enum;
 
 class OrderController extends Controller
 {
@@ -36,6 +38,7 @@ class OrderController extends Controller
             'receive'       => 'nullable|date_format:Y-m-d H:i:s',
             'delivery'      => 'nullable|date_format:Y-m-d H:i:s',
             'patient_id'    => 'nullable|string|max:255',
+            'impression_type' => ['required', new Enum(ImpressionType::class)],
             'products'                                      => 'required|array',
             'products.*.product_id'                         => 'required|integer|exists:products,id',
             'products.*.tooth_color_id'                     => 'required|integer|exists:tooth_colors,id',
@@ -163,7 +166,8 @@ class OrderController extends Controller
                 'patient_name'  => $data['patient_name'],
                 'receive'       => $data['receive'],
                 'delivery'      => $data['delivery'],
-                'patient_id'    => $patientId
+                'patient_id'    => $patientId,
+                'impression_type'  => $data['impression_type'],
             ]);
 
             $this->createOrderProducts($data['products'], $order->id, $subscriber_id);
@@ -225,7 +229,7 @@ class OrderController extends Controller
             ->with(['products.specializationUser.specialization','products.specializationUser.user:id,first_name,last_name', 'type','doctor','discount']) // Relations
             ->join('types', 'orders.type_id', '=', 'types.id') // Join with the types table
             ->select('orders.*') // Select only the necessary columns from orders
-                ->orderByDesc('updated_at')
+            ->orderByDesc('updated_at')
             ->paginate(10); // Paginate results
 
         // Transform each order to include specialization names for products
@@ -455,6 +459,7 @@ class OrderController extends Controller
                 'receive'       => null,
                 'delivery'      => null,
                 'patient_id'    => $data['patient_id'] ?? strtoupper(Str::random(9)),
+                'impression_type'  => $data['impression_type'],
             ]);
             foreach ($data['products'] as $prod) {
                 $product  = $products[$prod['product_id']];
@@ -596,69 +601,165 @@ class OrderController extends Controller
         return response()->json($orders, 200);
     }
 
-    public function adminAddPayment(Request $request)
+//    public function adminAddPayment(Request $request)
+//    {
+//        $request->validate([
+//            'doctor_id'   => 'required|exists:doctors,id',
+//            'amount'      => 'required|numeric|min:1',
+//            'patient_id'  => 'nullable|string', // اختياري
+//        ]);
+//        $subscriberId = auth('admin')->user()->subscriber_id;
+//        $doctorId = $request->doctor_id;
+//        $amount = $request->amount;
+//        $patientId = $request->patient_id;
+//
+//        try {
+//            DB::beginTransaction();
+//
+//            $ordersQuery = Order::with('doctor.account')
+//                ->where('doctor_id', $doctorId)
+//                ->where('subscriber_id',$subscriberId)
+//                ->whereColumn('paid', '<', 'cost')
+//                ->orderBy('receive', 'asc');
+//
+//            if ($patientId) {
+//                $ordersQuery->where('patient_id', $patientId);
+//            }
+//
+//            $orders = $ordersQuery->lockForUpdate()->get(); // lock لتجنب مشاكل التوازي
+//
+//            $remainingAmount = $amount;
+//
+//            foreach ($orders as $order) {
+//                $toPay = $order->cost - $order->paid;
+//
+//                if ($remainingAmount >= $toPay) {
+//                    $order->paid += $toPay;
+//                    $remainingAmount -= $toPay;
+//                } else {
+//                    $order->paid += $remainingAmount;
+//                    $remainingAmount = 0;
+//                }
+//
+//                $order->save();
+//
+//                if ($remainingAmount <= 0) break;
+//            }
+//
+//            DB::commit();
+//            $actualAppliedAmount = $amount - $remainingAmount;
+//            $title = "دفعة مالية";
+//            $body = "تم إيداع '{$actualAppliedAmount}' في الفواتير";
+//            $token = $orders->first()->doctor->account->FCM_token;
+//            if ($token)
+//                SendFirebaseNotificationJob::dispatch($token, $title, $body);
+//
+//            return response()->json([
+//                'message'          => 'Payment applied successfully',
+//                'remaining_amount' => $remainingAmount,
+//            ], 200);
+//
+//        } catch (\Exception $e) {
+//            DB::rollBack();
+//            return response()->json([
+//                'error'   => 'Payment failed',
+//                'details' => $e->getMessage(),
+//            ], 500);
+//        }
+//    }
+    public function addPayment(Request $request)
     {
         $request->validate([
-            'doctor_id'   => 'required|exists:doctors,id',
-            'amount'      => 'required|numeric|min:1',
-            'patient_id'  => 'nullable|string', // اختياري
+            'amount'     => 'required|numeric|min:1',
+            'order_ids'  => 'required|array|min:1',
+            'order_ids.*'=> 'exists:orders,id',
         ]);
-        $subscriberId = auth('admin')->user()->subscriber_id;
-        $doctorId = $request->doctor_id;
+
         $amount = $request->amount;
-        $patientId = $request->patient_id;
+        $orderIds = $request->order_ids;
+        $remainingAmount = $amount;
+
+        DB::beginTransaction();
 
         try {
-            DB::beginTransaction();
-
-            $ordersQuery = Order::with('doctor.account')
-                ->where('doctor_id', $doctorId)
-                ->where('subscriber_id',$subscriberId)
+            $orders = Order::with('doctor.account')
+                ->whereIn('id', $orderIds)
+                ->where('subscriber_id', auth('admin')->user()->subscriber_id)
                 ->whereColumn('paid', '<', 'cost')
-                ->orderBy('receive', 'asc');
+                ->orderBy('receive', 'asc')
+                ->lockForUpdate()
+                ->get();
 
-            if ($patientId) {
-                $ordersQuery->where('patient_id', $patientId);
+            if ($orders->isEmpty()) {
+                DB::rollBack();
+                return response()->json([
+                    'message' => 'No payable orders found'
+                ], 422);
+            }
+            if ($orders->count() !== count($orderIds)) {
+                DB::rollBack();
+                return response()->json([
+                    'message' => 'One or more orders do not belong to your subscriber'
+                ],403);
             }
 
-            $orders = $ordersQuery->lockForUpdate()->get(); // lock لتجنب مشاكل التوازي
-
-            $remainingAmount = $amount;
+            $doctorPayments = [];
 
             foreach ($orders as $order) {
-                $toPay = $order->cost - $order->paid;
+                if ($remainingAmount <= 0) break;
 
-                if ($remainingAmount >= $toPay) {
-                    $order->paid += $toPay;
-                    $remainingAmount -= $toPay;
-                } else {
-                    $order->paid += $remainingAmount;
-                    $remainingAmount = 0;
-                }
+                $toPay = min(
+                    $order->cost - $order->paid,
+                    $remainingAmount
+                );
 
+                $order->paid += $toPay;
                 $order->save();
 
-                if ($remainingAmount <= 0) break;
+                $remainingAmount -= $toPay;
+
+                $doctorId = $order->doctor_id;
+
+                if (!isset($doctorPayments[$doctorId])) {
+                    $doctorPayments[$doctorId] = [
+                        'amount' => 0,
+                        'doctor' => $order->doctor
+                    ];
+                }
+
+                $doctorPayments[$doctorId]['amount'] += $toPay;
             }
 
             DB::commit();
-            $actualAppliedAmount = $amount - $remainingAmount;
-            $title = "دفعة مالية";
-            $body = "تم إيداع '{$actualAppliedAmount}' في الفواتير";
-            $token = $orders->first()->doctor->account->FCM_token;
-            if ($token)
-                SendFirebaseNotificationJob::dispatch($token, $title, $body);
+
+            // إرسال الإشعارات
+            foreach ($doctorPayments as $data) {
+                $doctor = $data['doctor'];
+                $paidAmount = $data['amount'];
+
+                $token = $doctor->account->FCM_token ?? null;
+
+                if ($token) {
+                    SendFirebaseNotificationJob::dispatch(
+                        $token,
+                        'دفعة مالية',
+                        "تم إضافة دفعة بقيمة {$paidAmount} على فواتيرك"
+                    );
+                }
+            }
 
             return response()->json([
-                'message'          => 'Payment applied successfully',
-                'remaining_amount' => $remainingAmount,
+                'message'           => 'Payment applied successfully',
+                'applied_amount'    => $amount - $remainingAmount,
+                'remaining_amount'  => $remainingAmount,
             ], 200);
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
+
             return response()->json([
-                'error'   => 'Payment failed',
-                'details' => $e->getMessage(),
+                'message' => 'Payment failed',
+                'error'   => $e->getMessage(),
             ], 500);
         }
     }
@@ -760,7 +861,7 @@ class OrderController extends Controller
                 $q->select('id', 'type');
             },
             'discount' => function($q){
-            $q->select('id','type','amount','order_id');
+                $q->select('id','type','amount','order_id');
             },
             'files' => function($q){
                 $q->Uploaded();
