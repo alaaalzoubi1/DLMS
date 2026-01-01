@@ -80,7 +80,6 @@ class OrderFileController extends Controller
     public function doctorDownload($id)
     {
         $file = OrderFile::with('order:id,doctor_id')->findOrfail($id);
-
         if ($file->status !== 'uploaded' || $file->order->doctor_id != auth('api')->user()->doctor->id) {
             return response()->json([
                 'message' => 'File not available for download'

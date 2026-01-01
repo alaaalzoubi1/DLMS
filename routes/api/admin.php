@@ -88,7 +88,7 @@ Route::middleware(['auth:admin', 'admin.role','check.subscriber'])->group(functi
     Route::prefix('order-files')->group(function () {
         Route::post('/upload', [OrderFileController::class, 'createUpload']);
         Route::post('/{id}/uploaded', [OrderFileController::class, 'markUploaded']);
-        Route::get('/{id}/download', [OrderFileController::class, 'doctorDownload']);
+        Route::get('/{id}/download', [OrderFileController::class, 'download']);
 
     });
 

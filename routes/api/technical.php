@@ -28,7 +28,7 @@ Route::middleware(['auth:admin','technical.role','check.subscriber'])->group(fun
     Route::get('order-details',[OrderController::class,'orderDetails']);
 
     Route::prefix('order-files')->middleware('auth')->group(function () {
-        Route::get('/{id}/download', [OrderFileController::class, 'doctorDownload']);
+        Route::get('/{id}/download', [OrderFileController::class, 'download']);
     });
     Route::prefix('contact-info')->group(function () {
         Route::get('/', [ContactInfoController::class, 'index']);
