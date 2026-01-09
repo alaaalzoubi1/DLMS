@@ -2,6 +2,7 @@
 
 
 use App\Http\Controllers\ContactInfoController;
+use App\Http\Controllers\SiteContentController;
 use App\Http\Controllers\SubscriberController;
 use App\Http\Controllers\SubscriptionPlanController;
 use Illuminate\Support\Facades\Route;
@@ -24,5 +25,9 @@ Route::middleware(['auth:admin','super_admin.role'])->group(function () {
     Route::prefix('subscribers')->group(function (){
         Route::get('/',[SubscriberController::class,'index']);
         Route::post('subscribe',[SubscriberController::class,'subscribeToPlan']);
+    });
+    Route::prefix('site-content')->group(function () {
+        Route::post('/', [SiteContentController::class, 'storeOrUpdate']);
+        Route::delete('/{key}', [SiteContentController::class, 'destroy']);
     });
 });

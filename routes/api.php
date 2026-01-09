@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\RegisterController;
 
 use App\Http\Controllers\Api\LoginController;
+use App\Http\Controllers\SiteContentController;
 use App\Http\Controllers\SubscriberController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
@@ -31,3 +32,4 @@ Route::post('/login', [UserController::class, 'login']);
 Route::middleware(['auth:admin'])->group(function () {
     Route::get('logout', [UserController::class, 'logout']);
 });
+Route::get('/site-content', [SiteContentController::class, 'index']);
