@@ -199,15 +199,17 @@
                 <div class="card">
                     <h3>{{ $platform['value']['platform_name']['value'] ?? '' }}</h3>
                     <div class="platform-links">
-                        @foreach($platform['value']['app_links'] as $link)
-                            <a href="{{ $link['url']['value'] }}" target="_blank">
-                                {{ $link['store_name']['value'] }}
+                        {{-- تم إضافة '?? []' لضمان عدم حدوث خطأ --}}
+                        @foreach($platform['value']['app_links'] ?? [] as $link)
+                            <a href="{{ $link['url']['value'] ?? '#' }}" target="_blank">
+                                {{ $link['store_name']['value'] ?? 'تحميل' }}
                             </a>
                         @endforeach
                     </div>
                 </div>
             @elseif($platform['key'] == 'platform_web')
-                <a href="{{ $platform['value']['url']['value'] }}" target="_blank" class="card">
+                 {{-- تم إضافة '?? #' لضمان عدم حدوث خطأ --}}
+                <a href="{{ $platform['value']['url']['value'] ?? '#' }}" target="_blank" class="card">
                     <h3>{{ $platform['value']['platform_name']['value'] ?? '' }}</h3>
                     <p>اضغط هنا للوصول إلى المنصة</p>
                 </a>
