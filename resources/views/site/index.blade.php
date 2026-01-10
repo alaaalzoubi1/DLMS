@@ -2,11 +2,8 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-
     <title>{{ $content['site_content']['site_name'] ?? 'DLMS' }}</title>
-
-    <meta name="description"
-          content="{{ $content['site_content']['hero']['subtitle'] ?? '' }}">
+    <meta name="description" content="{{ $content['site_content']['hero']['subtitle'] ?? '' }}">
 
     <style>
         body {
@@ -99,43 +96,38 @@
 <body>
 
 <header>
-    <h1>
-        {{ $content['site_content']['hero']['title'] ?? 'إدارة مختبر الأسنان' }}
-    </h1>
-
-    <p>
-        {{ $content['site_content']['hero']['subtitle'] ?? '' }}
-    </p>
+    <h1>{{ $content['site_content']['hero']['title'] ?? 'إدارة مختبر الأسنان' }}</h1>
+    <p>{{ $content['site_content']['hero']['subtitle'] ?? '' }}</p>
 </header>
 
 <section>
     <h2>عن النظام</h2>
-
-    <p class="about">
-        {{ $content['site_content']['about']['text'] ?? '' }}
-    </p>
+    <p class="about">{{ $content['site_content']['about']['text'] ?? '' }}</p>
 </section>
 
 <section>
     <h2>المميزات</h2>
-
     <div class="features">
-        @foreach(($content['site_content']['features'] ?? []) as $feature)
+        @foreach($content['site_content']['features'] ?? [] as $feature)
             <div class="feature">
-                {{ $feature }}
+                <h3>{{ $feature['title'] ?? 'ميزة جديدة' }}</h3>
+                <p>{{ $feature['description'] ?? 'وصف الميزة هنا' }}</p>
+                @if(!empty($feature['icon']))
+                    <i class="{{ $feature['icon'] }}"></i>
+                @endif
             </div>
         @endforeach
     </div>
 </section>
 
 <div class="cta">
-    <a href="#">
+    <a href="{{ $content['site_content']['cta']['link'] ?? '#' }}">
         {{ $content['site_content']['cta']['text'] ?? 'ابدأ الآن' }}
     </a>
 </div>
 
 <footer>
-    {{ $content['site_content']['footer']['text'] ?? '' }}
+    <p>{{ $content['site_content']['footer']['text'] ?? '' }}</p>
 </footer>
 
 </body>
