@@ -2,132 +2,124 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>{{ $content['site_content']['site_name'] ?? 'DLMS' }}</title>
-    <meta name="description" content="{{ $content['site_content']['hero']['subtitle'] ?? '' }}">
+    <title>{{ $content['site_content']['site_name']['value'] ?? 'LabBridge' }}</title>
+    <meta name="description" content="{{ $content['site_content']['hero']['value']['subtitle']['value'] ?? '' }}">
 
-    <style>
-        body {
-            margin: 0;
-            font-family: 'Tahoma', sans-serif;
-            background: #f8fafc;
-            color: #1f2937;
-        }
-
-        header {
-            background: linear-gradient(135deg, #2563eb, #1e3a8a);
-            color: white;
-            padding: 90px 20px;
-            text-align: center;
-        }
-
-        header h1 {
-            font-size: 42px;
-            margin-bottom: 15px;
-        }
-
-        header p {
-            font-size: 20px;
-            opacity: 0.95;
-        }
-
-        section {
-            max-width: 1000px;
-            margin: 70px auto;
-            padding: 0 20px;
-        }
-
-        section h2 {
-            font-size: 32px;
-            color: #1e40af;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .about {
-            font-size: 18px;
-            line-height: 1.9;
-            text-align: center;
-        }
-
-        .features {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            margin-top: 40px;
-        }
-
-        .feature {
-            background: white;
-            padding: 25px;
-            border-radius: 14px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.06);
-            font-size: 16px;
-        }
-
-        .cta {
-            text-align: center;
-            margin-top: 80px;
-        }
-
-        .cta a {
-            display: inline-block;
-            background: #22c55e;
-            color: white;
-            padding: 16px 40px;
-            border-radius: 999px;
-            text-decoration: none;
-            font-size: 20px;
-        }
-
-        .cta a:hover {
-            background: #16a34a;
-        }
-
-        footer {
-            background: #020617;
-            color: #9ca3af;
-            text-align: center;
-            padding: 25px;
-            margin-top: 100px;
-            font-size: 14px;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ asset('css/styles.css') }}">
 </head>
 <body>
 
 <header>
-    <h1>{{ $content['site_content']['hero']['title'] ?? 'إدارة مختبر الأسنان' }}</h1>
-    <p>{{ $content['site_content']['hero']['subtitle'] ?? '' }}</p>
+    <div class="container">
+        <img src="{{ asset('images/logo.png') }}" class="logo-img" alt="Logo">
+        <nav>
+            <ul>
+                <li><a href="#">الرئيسية</a></li>
+                <li><a href="#">عن النظام</a></li>
+                <li><a href="#">المميزات</a></li>
+                <li><a href="#">اتصل بنا</a></li>
+            </ul>
+        </nav>
+    </div>
 </header>
 
-<section>
-    <h2>عن النظام</h2>
-    <p class="about">{{ $content['site_content']['about']['text'] ?? '' }}</p>
-</section>
-
-<section>
-    <h2>المميزات</h2>
-    <div class="features">
-        @foreach($content['site_content']['features'] ?? [] as $feature)
-            <div class="feature">
-                <h3>{{ $feature['title'] ?? 'ميزة جديدة' }}</h3>
-                <p>{{ $feature['description'] ?? 'وصف الميزة هنا' }}</p>
-                @if(!empty($feature['icon']))
-                    <i class="{{ $feature['icon'] }}"></i>
-                @endif
+<section class="hero">
+    <div class="container hero-grid">
+        <div class="hero-content">
+            <h1>{{ $content['site_content']['hero']['value']['title']['value'] }}</h1>
+            <p>{{ $content['site_content']['hero']['value']['subtitle']['value'] }}</p>
+            <div class="hero-btns">
+                <a href="#" class="btn-primary">ابدأ الآن</a>
+                <a href="#" class="btn-secondary">تعرف على المزيد</a>
             </div>
-        @endforeach
+        </div>
+        <div class="hero-mockup">
+            <img src="{{ asset('images/mockup.png') }}" class="mockup-laptop" alt="Mockup">
+        </div>
     </div>
 </section>
 
-<div class="cta">
-    <a href="{{ $content['site_content']['cta']['link'] ?? '#' }}">
-        {{ $content['site_content']['cta']['text'] ?? 'ابدأ الآن' }}
-    </a>
-</div>
+<section class="features">
+    <div class="container">
+        <h2 class="section-title">{{ $content['site_content']['features_title']['value'] ?? 'المميزات' }}</h2>
+        <div class="features-grid">
+            @foreach($content['site_content']['features'] as $feature)
+                <div class="feature-card">
+                    <i class="{{ $feature['value']['icon']['value'] }}"></i>
+                    <h3>{{ $feature['value']['title']['value'] }}</h3>
+                    <p>{{ $feature['value']['description']['value'] }}</p>
+                </div>
+            @endforeach
+        </div>
+    </div>
+</section>
+
+<section class="social-proof">
+    <div class="container">
+        <h2 class="section-title">{{ $content['site_content']['social_proof_title']['value'] ?? 'موثوق به من معامل أسنان حقيقية' }}</h2>
+        <div class="stats-grid">
+            @foreach($content['site_content']['social_proof']['value']['stats'] as $stat)
+                <div class="stat-box">
+                    <h3>{{ $stat['value']['number']['value'] }}</h3>
+                    <p>{{ $stat['value']['label']['value'] }}</p>
+                </div>
+            @endforeach
+        </div>
+        <div class="testimonial">
+            <p>"{{ $content['site_content']['social_proof']['value']['testimonial']['value']['quote']['value'] }}"</p>
+            <strong>{{ $content['site_content']['social_proof']['value']['testimonial']['value']['author']['value'] }}</strong>
+        </div>
+    </div>
+</section>
+
+<section class="workflow">
+    <div class="container">
+        <h2 class="section-title">{{ $content['site_content']['workflow_title']['value'] ?? 'كيف تُدار الطلبات في LabBridge؟' }}</h2>
+        <div class="workflow-line">
+            @foreach($content['site_content']['workflow_steps'] as $step)
+                <div class="workflow-step">
+                    <div class="step-icon-wrapper">
+                        <i class="{{ $step['value']['icon']['value'] }}"></i>
+                    </div>
+                    <h4>{{ $step['value']['title']['value'] }}</h4>
+                    <p>{{ $step['value']['description']['value'] }}</p>
+                </div>
+            @endforeach
+        </div>
+    </div>
+</section>
+
+<section class="platforms-download">
+    <div class="container">
+        <h2 class="section-title">{{ $content['site_content']['platforms_title']['value'] ?? 'نظام واحد.. منصات متعددة' }}</h2>
+        <div class="platform-cards-container">
+            @foreach($content['site_content']['platforms'] as $platform)
+                <div class="platform-card">
+                    <h3>{{ $platform['value']['platform_name']['value'] }}</h3>
+                    <div class="app-buttons">
+                        @foreach($platform['value']['app_links'] ?? [] as $link)
+                            <a href="{{ $link['value']['url']['value'] }}" class="app-btn">
+                                <i class="platform-icons fab fa-{{ strtolower($link['value']['platform']['value']) }}"></i>
+                                <div>
+                                    <strong>{{ $link['value']['store_name']['value'] }}</strong>
+                                    <span>احصل عليه من {{ $link['value']['platform']['value'] }}</span>
+                                </div>
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    </div>
+</section>
 
 <footer>
-    <p>{{ $content['site_content']['footer']['text'] ?? '' }}</p>
+    <p>&copy; 2026 LabBridge. جميع الحقوق محفوظة.</p>
+    <div class="footer-links">
+        <a href="#">اتصل بنا</a>
+        <a href="#">سياسة الخصوصية</a>
+        <a href="#">الشروط والأحكام</a>
+    </div>
 </footer>
 
 </body>
