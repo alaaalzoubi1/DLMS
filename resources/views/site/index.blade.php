@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $content['site_name'] }}</title>
+    <title>{{ $content['site_name'] ?? 'Default Site Name' }}</title>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome/css/font-awesome.min.css" rel="stylesheet">
     <style>
         body {
@@ -22,12 +22,12 @@
 </head>
 <body>
     <header>
-        <h1>{{ $content['hero']['title'] }}</h1>
-        <h2>{{ $content['hero']['subtitle'] }}</h2>
+        <h1>{{ $content['hero']['title'] ?? 'Default Hero Title' }}</h1>
+        <h2>{{ $content['hero']['subtitle'] ?? 'Default Hero Subtitle' }}</h2>
     </header>
 
     <section>
-        <h3>{{ $content['features_title'] }}</h3>
+        <h3>{{ $content['features_title'] ?? 'Default Features Title' }}</h3>
         <div class="features">
             @foreach ($content['features'] as $feature)
                 <div class="feature-item">
@@ -40,7 +40,7 @@
     </section>
 
     <section>
-        <h3>{{ $content['social_proof_title'] }}</h3>
+        <h3>{{ $content['social_proof_title'] ?? 'Default Social Proof Title' }}</h3>
         <div class="social-proof">
             @foreach ($content['social_proof']['stats'] as $stat)
                 <div>
@@ -48,14 +48,14 @@
                 </div>
             @endforeach
             <blockquote>
-                <p>{{ $content['social_proof']['testimonial']['quote'] }}</p>
-                <footer>- {{ $content['social_proof']['testimonial']['author'] }}</footer>
+                <p>{{ $content['social_proof']['testimonial']['quote'] ?? 'Default Testimonial Quote' }}</p>
+                <footer>- {{ $content['social_proof']['testimonial']['author'] ?? 'Default Author' }}</footer>
             </blockquote>
         </div>
     </section>
 
     <section>
-        <h3>{{ $content['workflow_title'] }}</h3>
+        <h3>{{ $content['workflow_title'] ?? 'Default Workflow Title' }}</h3>
         <div class="workflow">
             @foreach ($content['workflow_steps'] as $step)
                 <div class="workflow-step">
@@ -68,18 +68,12 @@
     </section>
 
     <section>
-        <h3>{{ $content['platforms_title'] }}</h3>
+        <h3>{{ $content['platforms_title'] ?? 'Default Platforms Title' }}</h3>
         <div class="platforms">
             @foreach ($content['platforms'] as $platform)
                 <div class="platform-item">
                     <h4>{{ $platform['platform_name'] }}</h4>
-                    @if (isset($platform['app_links']))
-                        @foreach ($platform['app_links'] as $app_link)
-                            <a href="{{ $app_link['url'] }}" target="_blank">{{ $app_link['store_name'] }} - {{ $app_link['platform'] }}</a><br>
-                        @endforeach
-                    @else
-                        <a href="{{ $platform['url'] }}" target="_blank">زيارة الموقع</a>
-                    @endif
+                    <a href="{{ $platform['url'] }}" target="_blank">زيارة الموقع</a>
                 </div>
             @endforeach
         </div>
