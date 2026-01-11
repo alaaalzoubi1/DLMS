@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $content['site_name']['value'] }}</title>
-    <link href="https://cdn.jsdelivr.net/npm/font-awesome/css/font-awesome.min.css" rel="stylesheet"> <!-- لجلب أيقونات FontAwesome -->
+    <title>{{ $content['site_name'] }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome/css/font-awesome.min.css" rel="stylesheet">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -22,63 +22,63 @@
 </head>
 <body>
     <header>
-        <h1>{{ $content['hero']['value']['title']['value'] }}</h1>
-        <h2>{{ $content['hero']['value']['subtitle']['value'] }}</h2>
+        <h1>{{ $content['hero']['title'] }}</h1>
+        <h2>{{ $content['hero']['subtitle'] }}</h2>
     </header>
 
     <section>
-        <h3>{{ $content['features_title']['value'] }}</h3>
+        <h3>{{ $content['features_title'] }}</h3>
         <div class="features">
             @foreach ($content['features'] as $feature)
                 <div class="feature-item">
-                    <i class="{{ $feature['value']['icon']['value'] }}"></i>
-                    <h4>{{ $feature['value']['title']['value'] }}</h4>
-                    <p>{{ $feature['value']['description']['value'] }}</p>
+                    <i class="{{ $feature['icon'] }}"></i>
+                    <h4>{{ $feature['title'] }}</h4>
+                    <p>{{ $feature['description'] }}</p>
                 </div>
             @endforeach
         </div>
     </section>
 
     <section>
-        <h3>{{ $content['social_proof_title']['value'] }}</h3>
+        <h3>{{ $content['social_proof_title'] }}</h3>
         <div class="social-proof">
-            @foreach ($content['social_proof']['value']['stats'] as $stat)
+            @foreach ($content['social_proof']['stats'] as $stat)
                 <div>
-                    <strong>{{ $stat['value']['number']['value'] }}</strong> - {{ $stat['value']['label']['value'] }}
+                    <strong>{{ $stat['number'] }}</strong> - {{ $stat['label'] }}
                 </div>
             @endforeach
             <blockquote>
-                <p>{{ $content['social_proof']['value']['testimonial']['value']['quote']['value'] }}</p>
-                <footer>- {{ $content['social_proof']['value']['testimonial']['value']['author']['value'] }}</footer>
+                <p>{{ $content['social_proof']['testimonial']['quote'] }}</p>
+                <footer>- {{ $content['social_proof']['testimonial']['author'] }}</footer>
             </blockquote>
         </div>
     </section>
 
     <section>
-        <h3>{{ $content['workflow_title']['value'] }}</h3>
+        <h3>{{ $content['workflow_title'] }}</h3>
         <div class="workflow">
             @foreach ($content['workflow_steps'] as $step)
                 <div class="workflow-step">
-                    <i class="{{ $step['value']['icon']['value'] }}"></i>
-                    <h4>{{ $step['value']['title']['value'] }}</h4>
-                    <p>{{ $step['value']['description']['value'] }}</p>
+                    <i class="{{ $step['icon'] }}"></i>
+                    <h4>{{ $step['title'] }}</h4>
+                    <p>{{ $step['description'] }}</p>
                 </div>
             @endforeach
         </div>
     </section>
 
     <section>
-        <h3>{{ $content['platforms_title']['value'] }}</h3>
+        <h3>{{ $content['platforms_title'] }}</h3>
         <div class="platforms">
             @foreach ($content['platforms'] as $platform)
                 <div class="platform-item">
-                    <h4>{{ $platform['value']['platform_name']['value'] }}</h4>
-                    @if (isset($platform['value']['app_links']))
-                        @foreach ($platform['value']['app_links'] as $app_link)
-                            <a href="{{ $app_link['url']['value'] }}" target="_blank">{{ $app_link['store_name']['value'] }} - {{ $app_link['platform']['value'] }}</a><br>
+                    <h4>{{ $platform['platform_name'] }}</h4>
+                    @if (isset($platform['app_links']))
+                        @foreach ($platform['app_links'] as $app_link)
+                            <a href="{{ $app_link['url'] }}" target="_blank">{{ $app_link['store_name'] }} - {{ $app_link['platform'] }}</a><br>
                         @endforeach
                     @else
-                        <a href="{{ $platform['value']['url']['value'] }}" target="_blank">زيارة الموقع</a>
+                        <a href="{{ $platform['url'] }}" target="_blank">زيارة الموقع</a>
                     @endif
                 </div>
             @endforeach
