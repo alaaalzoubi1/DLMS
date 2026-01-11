@@ -1,1 +1,89 @@
-<!DOCTYPE html> <html lang="ar" dir="rtl"> <head> <meta charset="UTF-8"> <title>{{ $content['site_content']['site_name'] ?? 'DLMS' }}</title> <meta name="description" content="{{ $content['site_content']['hero']['subtitle'] ?? '' }}"> <style> body { margin: 0; font-family: 'Tahoma', sans-serif; background: #f8fafc; color: #1f2937; } header { background: linear-gradient(135deg, #2563eb, #1e3a8a); color: white; padding: 90px 20px; text-align: center; } header h1 { font-size: 42px; margin-bottom: 15px; } header p { font-size: 20px; opacity: 0.95; } section { max-width: 1000px; margin: 70px auto; padding: 0 20px; } section h2 { font-size: 32px; color: #1e40af; margin-bottom: 20px; text-align: center; } .about { font-size: 18px; line-height: 1.9; text-align: center; } .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-top: 40px; } .feature { background: white; padding: 25px; border-radius: 14px; box-shadow: 0 10px 25px rgba(0,0,0,0.06); font-size: 16px; } .cta { text-align: center; margin-top: 80px; } .cta a { display: inline-block; background: #22c55e; color: white; padding: 16px 40px; border-radius: 999px; text-decoration: none; font-size: 20px; } .cta a:hover { background: #16a34a; } footer { background: #020617; color: #9ca3af; text-align: center; padding: 25px; margin-top: 100px; font-size: 14px; } </style> </head> <body> <header> <h1> {{ $content['site_content']['hero']['title'] ?? 'إدارة مختبر الأسنان' }} </h1> <p> {{ $content['site_content']['hero']['subtitle'] ?? '' }} </p> </header> <section> <h2>عن النظام</h2> <p class="about"> {{ $content['site_content']['about']['text'] ?? '' }} </p> </section> <section> <h2>المميزات</h2> <div class="features"> @foreach(($content['site_content']['features'] ?? []) as $feature) <div class="feature"> {{ $feature }} </div> @endforeach </div> </section> <div class="cta"> <a href="#"> {{ $content['site_content']['cta']['text'] ?? 'ابدأ الآن' }} </a> </div> <footer> {{ $content['site_content']['footer']['text'] ?? '' }} </footer> </body> </html>
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ $content['site_name']['value'] }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome/css/font-awesome.min.css" rel="stylesheet"> <!-- لجلب أيقونات FontAwesome -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            direction: rtl;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .feature-item, .workflow-step, .platform-item {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>{{ $content['hero']['value']['title']['value'] }}</h1>
+        <h2>{{ $content['hero']['value']['subtitle']['value'] }}</h2>
+    </header>
+
+    <section>
+        <h3>{{ $content['features_title']['value'] }}</h3>
+        <div class="features">
+            @foreach ($content['features'] as $feature)
+                <div class="feature-item">
+                    <i class="{{ $feature['value']['icon']['value'] }}"></i>
+                    <h4>{{ $feature['value']['title']['value'] }}</h4>
+                    <p>{{ $feature['value']['description']['value'] }}</p>
+                </div>
+            @endforeach
+        </div>
+    </section>
+
+    <section>
+        <h3>{{ $content['social_proof_title']['value'] }}</h3>
+        <div class="social-proof">
+            @foreach ($content['social_proof']['value']['stats'] as $stat)
+                <div>
+                    <strong>{{ $stat['value']['number']['value'] }}</strong> - {{ $stat['value']['label']['value'] }}
+                </div>
+            @endforeach
+            <blockquote>
+                <p>{{ $content['social_proof']['value']['testimonial']['value']['quote']['value'] }}</p>
+                <footer>- {{ $content['social_proof']['value']['testimonial']['value']['author']['value'] }}</footer>
+            </blockquote>
+        </div>
+    </section>
+
+    <section>
+        <h3>{{ $content['workflow_title']['value'] }}</h3>
+        <div class="workflow">
+            @foreach ($content['workflow_steps'] as $step)
+                <div class="workflow-step">
+                    <i class="{{ $step['value']['icon']['value'] }}"></i>
+                    <h4>{{ $step['value']['title']['value'] }}</h4>
+                    <p>{{ $step['value']['description']['value'] }}</p>
+                </div>
+            @endforeach
+        </div>
+    </section>
+
+    <section>
+        <h3>{{ $content['platforms_title']['value'] }}</h3>
+        <div class="platforms">
+            @foreach ($content['platforms'] as $platform)
+                <div class="platform-item">
+                    <h4>{{ $platform['value']['platform_name']['value'] }}</h4>
+                    @if (isset($platform['value']['app_links']))
+                        @foreach ($platform['value']['app_links'] as $app_link)
+                            <a href="{{ $app_link['url']['value'] }}" target="_blank">{{ $app_link['store_name']['value'] }} - {{ $app_link['platform']['value'] }}</a><br>
+                        @endforeach
+                    @else
+                        <a href="{{ $platform['value']['url']['value'] }}" target="_blank">زيارة الموقع</a>
+                    @endif
+                </div>
+            @endforeach
+        </div>
+    </section>
+
+</body>
+</html>
