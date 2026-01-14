@@ -172,7 +172,7 @@ nav ul li a:hover {
     color: #64748b;
     max-width: 500px;
 }
-.hero-btns { 
+.hero-btns {
     display: flex;
     justify-content: flex-start;
     gap: 15px;
@@ -222,13 +222,13 @@ nav ul li a:hover {
     transform: translateY(-10px);
     box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.08);
 }
-.feature-card h3 { 
+.feature-card h3 {
     margin: 20px 0 10px;
-    font-size: 20px; 
+    font-size: 20px;
 }
-.feature-card i { 
-    font-size: 36px; 
-    color: var(--primary); 
+.feature-card i {
+    font-size: 36px;
+    color: var(--primary);
 }
 
 /* ============================= */
@@ -581,10 +581,10 @@ footer {
     header .header-cta {
         order: 2;
     }
-    
+
     .hero-content h1 { font-size: 34px; }
     .hero-content p { font-size: 16px; }
-    
+
     .mockup-phone {
         position: relative;
         width: 60%;
