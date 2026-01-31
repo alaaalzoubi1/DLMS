@@ -44,14 +44,26 @@ class SiteContentController extends Controller
             'message' => 'Content deleted successfully.'
         ]);
     }
-    public function showWebsite()
-    {
-        $content = Cache::rememberForever('site_content', function () {
-            return SiteContent::pluck('value', 'key');
-        });
+   public function showWebsite(Request $request)
+{
+    $data = Cache::rememberForever('site_content', function () {
+        return SiteContent::pluck('value', 'key');
+    });
 
-        return view('site.index', compact('content'));
+    // تحديد اللغة (افتراضي عربي)
+    $lang = $request->get('lang', 'ar');
+
+    // اختيار المحتوى حسب اللغة
+    if ($lang === 'en' && isset($data['site_content_en'])) {
+        $content = $data['site_content_en'];
+    } else {
+        $content = $data['site_content'];
+        $lang = 'ar';
     }
+
+    return view('site.index', compact('content', 'lang'));
+}
+
 
 
 }
