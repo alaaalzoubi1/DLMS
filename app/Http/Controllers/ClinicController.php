@@ -2,91 +2,112 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreClinicRequest;
 use App\Models\Clinic;
 use App\Models\ClinicProduct;
 use App\Models\ClinicSubscriber;
-use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class ClinicController extends Controller
 {
-    public function store(Request $request)
+    public function store(StoreClinicRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'tax_number' => 'nullable|string|unique:clinics,tax_number',
-        ]);
-        $validated['clinic_code'] = Str::uuid();
+        try {
+            $clinic = DB::transaction(function () use ($request) {
 
-        // Create the clinic
-        $clinic = Clinic::create($validated);
+                $validated = $request->validated();
 
-        // Attach the clinic to the subscriber if authenticated user has a subscriber
+                $clinic = Clinic::create([
+                    'name' => $validated['name'],
+                    'tax_number' => $validated['tax_number'] ?? null,
+                    'commercial_registration' => $validated['commercial_registration'] ?? null,
+                    'clinic_code' => Str::uuid(),
+                ]);
 
-        ClinicSubscriber::create([
-            'clinic_id' => $clinic->id,
-            'subscriber_id' => auth('admin')->user()->subscriber_id,
-        ]);
+                ClinicSubscriber::create([
+                    'clinic_id' => $clinic->id,
+                    'subscriber_id' => auth('admin')->user()->subscriber_id,
+                ]);
 
+                $clinic->address()->create([
+                    'street' => $validated['street'] ?? null,
+                    'building_number' => $validated['building_number'] ?? null,
+                    'additional_number' => $validated['additional_number'] ?? null,
+                    'district' => $validated['district'] ?? null,
+                    'city' => $validated['city'] ?? null,
+                    'postal_code' => $validated['postal_code'] ?? null,
+                    'locationAddress' => $validated['locationAddress'] ?? null,
+                ]);
 
-        return response()->json([
-            'message' => 'Clinic created successfully!',
-            'clinic' => $clinic,
-        ], 201);
-    }
-    public function show()
-    {
-        // Get the subscriber_id from the authenticated user
-        $subscriberId = auth('admin')->user()->subscriber_id;
+                return $clinic;
+            });
 
-        // Ensure the user has a subscriber_id
-        if (!$subscriberId) {
             return response()->json([
-                'message' => 'No subscriber ID found for the authenticated user.',
-            ], 404);
-        }
+                'message' => 'Clinic created successfully!',
+                'clinic' => $clinic->load('address'),
+            ], 201);
 
-        // Fetch all clinics associated with the subscriber_id
-        $clinics = Clinic::with('doctors')->whereHas('subscribers', function ($query) use ($subscriberId) {
-            $query->where('subscriber_id', $subscriberId);
-        })->get();
+        } catch (\Throwable $e) {
+
+            Log::error('Clinic creation failed', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'Something went wrong while creating clinic.'
+            ], 500);
+        }
+    }
+
+    public function show(Request $request)
+    {
+        $admin = auth('admin')->user();
+
+        $clinics = $admin->subscribers
+            ->clinics()
+            ->with(['doctors', 'address'])
+            ->get();
 
         return response()->json([
-            'clinics' => $clinics,
+            'clinics' => $clinics
         ]);
     }
+
     public function edit($id, Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'sometimes|string|max:255',
-            'has_special_price' => 'sometimes|boolean',
-            'tax_number' => 'sometimes|string|unique:clinics,tax_number',
-        ]);
+        $admin = auth('admin')->user();
 
-        $clinic = Clinic::find($id);
+        $clinic = $admin->subscribers
+            ->clinics()
+            ->where('clinics.id', $id)
+            ->first();
+
         if (!$clinic) {
             return response()->json([
                 'message' => 'Clinic not found'
-            ],404);
+            ], 404);
         }
 
-        if ($request->exists('name'))
-            $clinic->name = $validated['name'];
-        if ($request->exists('has_special_price'))
-            $clinic->has_special_price = $validated['has_special_price'];
-        if ($request->exists('tax_number')) {
-            $clinic->tax_number = $validated['tax_number'];
-        }
-        $clinic->save();
+        $validated = $request->validate([
+            'name' => 'sometimes|string|max:255',
+            'has_special_price' => 'sometimes|boolean',
+            'tax_number' => "sometimes|string|unique:clinics,tax_number,{$clinic->id}",
+            'commercial_registration' => "sometimes|string|unique:clinics,commercial_registration,{$clinic->id}",
+        ]);
+
+        $clinic->update($validated);
+
         return response()->json([
             'message' => 'Clinic updated successfully!',
             'clinic' => $clinic,
         ]);
     }
+
     public function destroy($id)
     {
-        // Find the clinic by ID
         $clinic = Clinic::find($id);
 
         if (!$clinic) {
@@ -196,7 +217,54 @@ class ClinicController extends Controller
         ]);
     }
 
+    public function updateAddress($clinicId, Request $request)
+    {
+        $admin = auth('admin')->user();
 
+        $clinic = $admin->subscribers
+            ->clinics()
+            ->with('address')
+            ->where('clinics.id', $clinicId)
+            ->first();
+
+        if (!$clinic) {
+            return response()->json([
+                'message' => 'Clinic not found'
+            ], 404);
+        }
+
+        $validated = $request->validate([
+            'street' => 'sometimes|string|max:255',
+            'building_number' => 'sometimes|string|max:50',
+            'additional_number' => 'sometimes|string|max:50',
+            'district' => 'sometimes|string|max:255',
+            'city' => 'sometimes|string|max:255',
+            'postal_code' => 'sometimes|string|max:20',
+            'locationAddress' => 'sometimes|string|max:500',
+        ]);
+
+        try {
+            DB::transaction(function () use ($clinic, $validated) {
+
+                if ($clinic->address) {
+                    $clinic->address->update($validated);
+                } else {
+                    $clinic->address()->create($validated);
+                }
+            });
+
+            return response()->json([
+                'message' => 'Address updated successfully',
+                'address' => $clinic->fresh()->address
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to update address',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 
 
 

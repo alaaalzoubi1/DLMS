@@ -28,16 +28,13 @@ class UserFactory extends Factory
     public function definition()
     {
         return [
-            'subscriber_id' => Subscriber::inRandomOrder()->first()->id ?? Subscriber::factory(),
-            'email' => $this->faker->unique()->safeEmail,
-            'password' => 12345678,
-            'FCM_token' => $this->faker->optional()->sha256,
-            'is_available' => $this->faker->boolean(90),
-            'first_name' => $this->faker->firstName,
-            'last_name' => $this->faker->lastName,
-            'working_on' => $this->faker->numberBetween(0, 5),
-            'created_at' => now(),
-            'updated_at' => now(),
+            'subscriber_id' => \App\Models\Subscriber::factory(),
+            'email' => fake()->unique()->safeEmail(),
+            'password' => bcrypt('12345678'),
+            'first_name' => fake()->firstName(),
+            'last_name' => fake()->lastName(),
+            'is_available' => true,
+            'working_on' => 0,
         ];
     }
     /**

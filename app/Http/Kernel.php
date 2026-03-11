@@ -71,5 +71,6 @@ class Kernel extends HttpKernel
         'technical.role' => \App\Http\Middleware\TechnicalRoleMiddleware::class,
         'delegate.role' => \App\Http\Middleware\DelegateRoleMiddleware::class,
         'accountant.role' => \App\Http\Middleware\AccountantMiddleware::class,
+        'check.zatca' => \App\Http\Middleware\EnsureZatcaIsCompleted::class,
     ];
 }

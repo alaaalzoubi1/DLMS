@@ -13,6 +13,15 @@ return [
     | a conventional file to locate the various service credentials.
     |
     */
+    'zatca' => [
+        'base_url' => env('ZATCA_BASE_URL'),
+        'environment' => env('ZATCA_ENV'),
+        'initial_invoice_hash' => env(
+            'ZATCA_INITIAL_INVOICE_HASH',
+            'NWZlY2ViNjZmZmM4NmYzOGQ5NTI3ODZjNmQ2OTZjNzljMmRiYzIzOWRkNGU5MWI0NjcyOWQ3M2EyN2ZiNTdlOQ=='
+        ),
+    ],
+
 
     'mailgun' => [
         'domain' => env('MAILGUN_DOMAIN'),

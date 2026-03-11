@@ -22,7 +22,7 @@ return new class extends Migration
             $table->unsignedBigInteger('type_id');
             $table->integer('paid')->default(0);
             $table->boolean('invoiced')->default(true);
-            $table->integer('cost');
+            $table->decimal('cost',15,2);
             $table->string('patient_name');
             $table->dateTime('receive')->nullable();
             $table->dateTime('delivery')->nullable();

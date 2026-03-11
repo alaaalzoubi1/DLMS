@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\RegisterCompanyRequest;
 use App\Http\Requests\UpdateAdminProfileRequest;
 use App\Http\Requests\UpdateTechnicalProfileRequest;
 use App\Jobs\SendFirebaseNotificationJob;
@@ -9,6 +10,7 @@ use App\Models\Subscriber;
 use App\Models\Subscriber_Doctor;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
@@ -22,52 +24,70 @@ use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
-    public function registerCompany(Request $request)
+
+
+    public function registerCompany(RegisterCompanyRequest $request)
     {
-        $validatedData = $request->validate([
-            'company_name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8',
-            'confirmed_password' => 'required|same:password',
-            'first_name' => 'required|string|max:50',
-            'last_name' => 'required|string|max:50',
-            'tax_number' => 'nullable|string|max:20|unique:subscribers',
-            'fcm_token'  => 'nullable|string|max:500',
-        ]);
+        $data = $request->validated();
+        DB::beginTransaction();
+        try {
+            $companyCode = Str::slug($data['company_name']) . Str::random(3);
 
-        $companyCode = Str::slug($validatedData['company_name']) . Str::random(3);
-        $trial_start_at = now();
-        $trial_end_at = Carbon::now()->addDays(14);
+            $subscriber = Subscriber::create([
+                'company_name' => $data['company_name'],
+                'company_code' => strtoupper($companyCode),
+                'trial_start_at' => now(),
+                'trial_end_at' => now()->addDays(14),
+                'tax_number' => $data['tax_number'] ?? null,
+                'commercial_registration' => $data['commercial_registration'] ?? null,
+                'country_code' => $data['country_code'],
+            ]);
 
-        $subscriber = Subscriber::create([
-            'company_name' => $validatedData['company_name'],
-            'company_code' => strtoupper($companyCode),
-            'trial_start_at' => $trial_start_at,
-            'trial_end_at' => $trial_end_at,
-            'tax_number' => $validatedData['tax_number'],
-        ]);
+            $subscriber->address()->create([
+                'street' => $data['street'] ?? null,
+                'building_number' => $data['building_number'] ?? null,
+                'additional_number' => $data['additional_number'] ?? null,
+                'district' => $data['district'],
+                'city' => $data['city'],
+                'postal_code' => $data['postal_code'] ?? null,
+                'locationAddress' => $data['locationAddress'] ?? null,
+            ]);
 
-        $user = User::create([
-            'subscriber_id' => $subscriber->id,
-            'email' => $validatedData['email'],
-            'password' => Hash::make($validatedData['password']),
-            'first_name' => $validatedData['first_name'],
-            'last_name' => $validatedData['last_name'],
-            'FCM_token' => $validatedData['fcm_token']
-        ]);
+            $user = User::create([
+                'subscriber_id' => $subscriber->id,
+                'email' => $data['email'],
+                'password' => Hash::make($data['password']),
+                'first_name' => $data['first_name'],
+                'last_name' => $data['last_name'],
+                'FCM_token' => $data['fcm_token'] ?? null,
+            ]);
 
-        $user->assignRole('admin');
-        $credentials = $request->only('email', 'password');
-        $token = auth('admin')->attempt($credentials);
-        return response()->json([
-            'message' => 'Company registered successfully',
-            'token' => $token,
-        ], 201);
+            $user->assignRole('admin');
+
+            $token = auth('admin')->attempt([
+                'email' => $data['email'],
+                'password' => $data['password']
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Company registered successfully',
+                'token' => $token,
+            ], 201);
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Registration failed',
+                'error' => $e->getMessage()
+            ], 422);
+        }
     }
+
 
     public function login(Request $request): JsonResponse
     {
-        // Validation
         $request->validate([
             'email'      => 'required|email',
             'password'   => 'required|string',
@@ -105,15 +125,7 @@ class UserController extends Controller
         }
     }
 
-    public function adminInfo()
-    {
-        $admin = auth()->user();
-        $company = Subscriber::where('id',$admin->subscriber_id)->first();
-        return response()->json([
-            'admin' => $admin,
-            'company' => $company
-        ]);
-    }
+
 
     public function registerTechnical(Request $request)
     {
@@ -166,53 +178,6 @@ class UserController extends Controller
             'token' => $token,
         ], 201);
     }
-    public function loginTechnical(Request $request): JsonResponse
-    {
-        // Validation
-        $request->validate([
-            'email'      => 'required|email',
-            'password'   => 'required|string',
-            'fcm_token'  => 'nullable|string|max:500',
-        ]);
-
-        try {
-            $credentials = $request->only('email', 'password');
-
-            $token = Auth::guard('admin')->attempt($credentials);
-
-            if (!$token) {
-                return response()->json([
-                    'success' => false,
-                    'error'   => 'Invalid credentials'
-                ], 401);
-            }
-
-            $user = Auth::guard('admin')->user();
-
-            if (!$user->hasRole('technical')) {
-                return response()->json([
-                    'success' => false,
-                    'error'   => 'User does not have technical role'
-                ], 403);
-            }
-
-            // Update FCM token if provided
-            if ($request->filled('fcm_token')) {
-                $user->update(['FCM_token' => $request->fcm_token]);
-            }
-
-            return response()->json([
-                'company_name' => $user->subscribers->company_name,
-                'token'        => $token,
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'error'   => 'Failed to login, please try again.',
-            ], 500);
-        }
-    }
 
     public function technicalProfile(): JsonResponse
     {
@@ -236,7 +201,10 @@ class UserController extends Controller
     }
     public function adminProfile(): JsonResponse
     {
-        $user = auth('admin')->user();
+        $user = auth('admin')
+            ->user()
+            ->load(['roles', 'subscribers.address']);
+
 
         return response()->json([
             'admin' => [
@@ -245,11 +213,17 @@ class UserController extends Controller
                 'first_name' => $user->first_name,
                 'last_name' => $user->last_name,
                 'is_available' => $user->is_available,
-                'role' => $user->roles->pluck('name')->first(), // اسم الدور فقط
+                'role' => $user->roles->pluck('name')->first(),
                 'subscriber' => $user->subscribers ? [
                     'id' => $user->subscribers->id,
                     'name' => $user->subscribers->company_name,
                     'company code' => $user->subscribers->company_code,
+                    'country_code' => $user->subscribers->country_code,
+                    'commercial_registration' => $user->subscribers->commercial_registration,
+                    'tax_number' => $user->subscribers->tax_number,
+                    'trial_start_at' => $user->subscribers->trial_start_at,
+                    'trial_end_at' => $user->subscribers->trial_end_at,
+                    'address' => $user->subscribers->address
                 ] : null,
             ],
         ]);
@@ -393,27 +367,14 @@ class UserController extends Controller
         ]));
 
         if ($request->has('subscriber') && $admin->subscribers) {
-            $admin->subscribers->update([
-                'name' => $request->input('subscriber.name', $admin->subscribers->name),
-                'company_code' => $request->input('subscriber.company_code', $admin->subscribers->company_code),
-            ]);
+            $subscriberData = $request->input('subscriber', []);
+            $admin->subscribers->update($subscriberData);
+
         }
 
         return response()->json([
             'message' => 'Profile updated successfully',
-            'admin' => [
-                'id' => $admin->id,
-                'email' => $admin->email,
-                'first_name' => $admin->first_name,
-                'last_name' => $admin->last_name,
-                'is_available' => $admin->is_available,
-                'role' => $admin->roles->pluck('name')->first(),
-                'subscriber' => $admin->subscribers ? [
-                    'id' => $admin->subscribers->id,
-                    'name' => $admin->subscribers->name,
-                    'company code' => $admin->subscribers->company_code,
-                ] : null,
-            ],
+            'admin' => $admin->load('roles', 'subscribers')
         ]);
     }
 

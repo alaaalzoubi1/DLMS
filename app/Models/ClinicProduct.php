@@ -13,6 +13,9 @@ class ClinicProduct extends Model
         'product_id',
         'price',
     ];
+    protected $casts = [
+        'price' => 'decimal:2'
+    ];
     public function clinic()
     {
         return $this->belongsTo(Clinic::class);

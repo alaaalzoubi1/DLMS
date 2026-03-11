@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Subscriber extends Model
@@ -15,7 +18,8 @@ class Subscriber extends Model
         'trial_start_at',
         'trial_end_at',
         'tax_number',
-
+        'country_code',
+        'commercial_registration',
         ];
     protected $casts = [
         'trial_end_at' => 'datetime',
@@ -46,29 +50,38 @@ class Subscriber extends Model
             'specializations_id'
         )->withTimestamps();
     }
-    public function specialization_subscriber()
+    public function specialization_subscriber(): HasMany
     {
         return $this->hasMany(Specialization_Subscriber::class);
     }
-    public function users()
+    public function users(): HasMany
     {
         return $this->hasMany(User::class);
     }
-    public function categories()
+    public function categories(): HasMany
     {
         return $this->hasMany(Category::class);
     }
-    public function orders()
+    public function orders(): HasMany
     {
         return $this->hasMany(Order::class);
     }
 
-    public function types()
+    public function types(): HasMany
     {
         return $this->hasMany(Type::class);
     }
-    public function toothcolors()
+    public function toothcolors(): HasMany
     {
         return $this->hasMany(ToothColor::class);
+    }
+
+    public function zatcaCredential(): HasOne
+    {
+        return $this->hasOne(SubscriberZatcaCredential::class);
+    }
+    public function address(): MorphOne
+    {
+        return $this->morphOne(Address::class, 'addressable');
     }
 }

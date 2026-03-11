@@ -18,6 +18,9 @@ class Product extends Model
         'tooth_number',
         'specialization_users_id'
     ];
+    protected $casts = [
+        'price' => 'decimal:2'
+    ];
     protected $appends = ['final_price'];
 
     protected $hidden = ['price'];

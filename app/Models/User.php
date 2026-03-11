@@ -16,6 +16,7 @@ class User extends Authenticatable  implements ShouldQueue , JWTSubject
 {
     use HasApiTokens, HasFactory, Notifiable,HasRoles,SoftDeletes;
 
+
     /**
      * The attributes that are mass assignable.
      *

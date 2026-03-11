@@ -20,6 +20,9 @@ class Order extends Model
     ];
     protected $casts = [
         'impression_type' => ImpressionType::class,
+        'delivery' => 'datetime',
+        'receive' => 'datetime',
+        'cost' => 'decimal:2'
     ];
     protected $appends = ['impression_type_label'];
 
@@ -65,6 +68,12 @@ class Order extends Model
     {
         return $this->impression_type->label();
     }
-
-
+    public function zatcaDocument():HasMany
+    {
+        return $this->hasMany(ZatcaDocument::class);
+    }
+    public function creditNotes(): HasMany
+    {
+        return $this->hasMany(CreditNote::class);
+    }
 }

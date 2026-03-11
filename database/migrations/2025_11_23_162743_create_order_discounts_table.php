@@ -16,7 +16,7 @@ return new class extends Migration
             $table->unsignedBigInteger('order_id')->unique();
 
             $table->enum('type', ['percentage', 'fixed']);
-            $table->decimal('amount', 10, 2);
+            $table->decimal('amount', 15, 2);
 
             $table->timestamps();
 

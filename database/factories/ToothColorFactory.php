@@ -21,8 +21,8 @@ class ToothColorFactory extends Factory
     public function definition()
     {
         return [
-            'subscriber_id' => Subscriber::factory(),
-            'color' => $this->faker->safeColorName,
+            'subscriber_id' => \App\Models\Subscriber::factory(),
+            'color' => fake()->safeColorName(),
             'is_deleted' => false,
         ];
     }

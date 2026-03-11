@@ -23,7 +23,6 @@ use Illuminate\Support\Facades\Route;
 
 
 
-Route::post('/register', [RegisterController::class, 'register']);
 
 Route::post('/check_company_code',[SubscriberController::class,'check_company_code']);
 Route::post('/login', [UserController::class, 'login']);

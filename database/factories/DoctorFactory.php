@@ -21,11 +21,9 @@ class DoctorFactory extends Factory
     public function definition()
     {
         return [
-            'first_name' => $this->faker->firstName,
-            'last_name' => $this->faker->lastName,
-            'clinic_id' => Clinic::inRandomOrder()->first()->id ?? Clinic::factory(),
-            'created_at' => now(),
-            'updated_at' => now(),
+            'first_name' => fake()->firstName(),
+            'last_name' => fake()->lastName(),
+            'clinic_id' => \App\Models\Clinic::factory(),
         ];
     }
 }

@@ -3,6 +3,7 @@
 use App\Http\Controllers\AccountantController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Route;
 
 Route::post('register',[AccountantController::class,'registerAccountant']);
 Route::middleware(['auth:admin','accountant.role','check.subscriber'])->group(function ()

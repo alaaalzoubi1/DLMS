@@ -2,6 +2,8 @@
 
 
 use App\Http\Controllers\DelegateController;
+use Illuminate\Support\Facades\Route;
+
 Route::post('register',[DelegateController::class,'registerDelegate']);
 Route::middleware(['auth:admin','delegate.role','check.subscriber'])->group(function ()
 {

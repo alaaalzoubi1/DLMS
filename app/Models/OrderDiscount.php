@@ -17,6 +17,9 @@ class OrderDiscount extends Model
     protected $fillable = [
         'order_id', 'subscriber_id', 'type', 'amount'
     ];
+    protected $casts = [
+        'amount' => 'decimal:2'
+    ];
 
 
 

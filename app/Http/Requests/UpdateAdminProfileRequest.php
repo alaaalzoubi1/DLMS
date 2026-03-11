@@ -8,7 +8,7 @@ class UpdateAdminProfileRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true; // فيك لاحقًا تضيف شرط: return auth('admin')->user()->hasRole('admin');
+        return true;
     }
 
     public function rules(): array
@@ -20,15 +20,28 @@ class UpdateAdminProfileRequest extends FormRequest
             'first_name' => ['sometimes', 'string', 'max:100'],
             'last_name' => ['sometimes', 'string', 'max:100'],
             'email' => ['sometimes', 'email', Rule::unique('users', 'email')->ignore($userId)],
-            'is_available' => ['sometimes', 'boolean'],
 
-            'subscriber.name' => ['sometimes', 'string', 'max:255'],
+            'subscriber.company_name' => ['sometimes', 'string', 'max:255'],
             'subscriber.company_code' => [
                 'sometimes',
                 'string',
                 'max:255',
                 Rule::unique('subscribers', 'company_code')->ignore($subscriberId),
             ],
+            'subscriber.tax_number' => [
+                'sometimes',
+                'string',
+                'max:20',
+                Rule::unique('subscribers', 'tax_number')->ignore($subscriberId),
+            ],
+
+            'subscriber.commercial_registration' => [
+                'sometimes',
+                'string',
+                'max:50',
+                Rule::unique('subscribers', 'commercial_registration')->ignore($subscriberId),
+            ],
+
         ];
     }
 }

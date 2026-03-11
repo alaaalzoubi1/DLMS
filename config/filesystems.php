@@ -65,7 +65,11 @@ return [
             'endpoint' => env('B2_ENDPOINT'),
             'use_path_style_endpoint' => true,
         ],
-
+        'private' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private'),
+            'visibility' => 'private',
+        ],
 
     ],
 

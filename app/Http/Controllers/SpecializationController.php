@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Specialization;
 use App\Models\Specialization_Subscriber;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use function Symfony\Component\String\s;
 
@@ -12,8 +13,8 @@ class SpecializationController extends Controller
     /**
      * Store a newly created specialization or link existing specialization with subscriber.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
+     * @param Request $request
+     * @return JsonResponse
      */
     public function store(Request $request)
     {
@@ -69,6 +70,6 @@ class SpecializationController extends Controller
         $specialization->delete();
         return response()->json([
             'message' => 'Specialization deleted successfully',
-        ], 200);
+        ]);
     }
 }

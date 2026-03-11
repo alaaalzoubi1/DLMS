@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
             $table->unsignedBigInteger('clinic_id');
             $table->foreign('clinic_id')->references('id')->on('clinics')->onDelete('cascade');
-            $table->double('price');
+            $table->decimal('price',15,2);
             $table->unique(['clinic_id', 'product_id']);
             $table->timestamps();
         });

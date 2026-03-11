@@ -33,105 +33,70 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $this->call(RoleSeeder::class);
 
-        Role::create(['name' => 'admin', 'guard_name' => 'admin']);
-        Role::create(['name' => 'technical', 'guard_name' => 'admin']);
-        Role::create(['name' => 'super_admin', 'guard_name' => 'admin']);
-        Role::create(['name' => 'delegate','guard_name' => 'admin']);
-        Role::create(['name' => 'accountant','guard_name' => 'admin']);
+        $subscriber = \App\Models\Subscriber::factory()->create();
+        $subscriber->address()->create(
+            \App\Models\Address::factory()->make()->toArray()
+        );
 
-        $superAdmin = User::factory()->create();
-        $superAdmin->assignRole('super_admin');
+        // admin user
+        $admin = \App\Models\User::factory()->create([
+            'subscriber_id' => $subscriber->id,
+            'email' => 'admin@test.com',
+            'password' => bcrypt('12345678'),
+        ]);
 
-        $clinics = Clinic::factory()->count(10)->create();
-        $specializations = Specialization::factory()->count(20)->create();
-        $subscribers = Subscriber::factory()->count(5)->create();
+        $admin->assignRole('admin');
 
-        foreach ($subscribers as $subscriber) {
-            $specializationSubscribers = collect();
+        // categories + products
+        $categories = \App\Models\Category::factory()
+            ->count(3)
+            ->create(['subscriber_id' => $subscriber->id]);
 
-            foreach ($specializations as $specialization) {
-                $specializationSubscribers->push(Specialization_Subscriber::create([
-                    'subscriber_id' => $subscriber->id,
-                    'specializations_id' => $specialization->id,
-                ]));
-            }
-
-            $categories = Category::factory()->count(rand(2, 5))->create([
-                'subscriber_id' => $subscriber->id,
-            ]);
-
-            foreach ($categories as $category) {
-                Product::factory()->count(rand(3, 10))->create([
-                    'category_id' => $category->id,
-                ]);
-            }
-
-            $admin = User::factory()->create([
-                'subscriber_id' => $subscriber->id,
-            ]);
-            $admin->assignRole('admin');
-
-            $technicals = User::factory()->count(rand(2, 5))->create([
-                'subscriber_id' => $subscriber->id,
-            ]);
-
-            foreach ($technicals as $technical) {
-                $specializationSubscriber = Specialization_Subscriber::where('subscriber_id', $subscriber->id)->inRandomOrder()->first();
-
-                if ($specializationSubscriber) {
-                    Specialization_User::factory()->create([
-                        'user_id' => $technical->id,
-                        'subscriber_specializations_id' => $specializationSubscriber->id,
-                    ]);
-                }
-
-                $technical->assignRole('technical');
-            }
+        foreach ($categories as $category) {
+            \App\Models\Product::factory()
+                ->count(5)
+                ->create(['category_id' => $category->id]);
         }
+
+        // clinics
+        $clinics = \App\Models\Clinic::factory()->count(2)->create();
+
         foreach ($clinics as $clinic) {
-            $doctors = Doctor::factory()->count(rand(3, 6))->create([
-                'clinic_id' => $clinic->id,
-            ]);
-            foreach ($doctors as $doctor) {
-                Doctor_Account::factory()->create([
-                    'doctor_id' => $doctor->id,
-                ]);
-            }
-            if ($clinic->has_special_price){
-            ClinicProduct::factory()->count(rand(0, 6))->create([
-                'clinic_id' => $clinic->id,
-            ]);
-            }
+            $clinic->address()->create(
+                \App\Models\Address::factory()->make()->toArray()
+            );
         }
 
 
-
-        foreach ($subscribers as $subscriber) {
-            ToothColor::factory()->count(rand(3, 6))->create([
-                'subscriber_id' => $subscriber->id,
-            ]);
-            Type::factory()->count(4)->create([
-                'subscriber_id' => $subscriber->id,
-            ]);
-        }
-        foreach ($subscribers as $subscriber){
-            foreach ($clinics as $clinic){
-                ClinicSubscriber::factory()->count(1)->create([
-                    'clinic_id' => $clinic->id,
-                    'subscriber_id' => $subscriber->id,
-                ]);;
-            }
-            $orders = Order::factory()->count(rand(3, 6))->create([
-                'subscriber_id' => $subscriber->id,
-            ]);
-            foreach ($orders as $order){
-                OrderProduct::factory()->count(rand(3, 6))->create([
-                    'order_id' => $order->id,
-                ]);
-            }
+        foreach ($clinics as $clinic) {
+            \App\Models\Doctor::factory()
+                ->count(3)
+                ->create(['clinic_id' => $clinic->id]);
         }
 
+        // types
+        \App\Models\Type::factory()->count(4)->create([
+            'subscriber_id' => $subscriber->id
+        ]);
 
+        // tooth colors
+        \App\Models\ToothColor::factory()->count(5)->create([
+            'subscriber_id' => $subscriber->id
+        ]);
+
+        // orders
+        \App\Models\Order::factory()
+            ->count(5)
+            ->create([
+                'subscriber_id' => $subscriber->id
+            ])
+            ->each(function ($order) {
+                \App\Models\OrderProduct::factory()
+                    ->count(2)
+                    ->create(['order_id' => $order->id]);
+            });
     }
+
 }

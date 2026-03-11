@@ -23,24 +23,17 @@ class OrderFactory extends Factory
 
     public function definition()
     {
-        $type = Type::inRandomOrder()->first() ?? Type::factory()->create();
-
         return [
-            'doctor_id' => Doctor::inRandomOrder()->first()->id ?? Doctor::factory(),
-            'subscriber_id' => $type->subscriber_id,
-            'type_id' => $type->id,
-            'status' => $this->faker->randomElement(['pending', 'completed', 'cancelled']),
-            'paid' => $this->faker->numberBetween(0, 5000),
-            'cost' => $this->faker->numberBetween(500, 10000),
-            'patient_name' => $this->faker->name(),
-            'receive' => null,
-            'delivery' => null,
-            'patient_id' => $this->faker->uuid(),
-            'impression_type' => $this->faker->randomElement([
-                ImpressionType::DIGITAL->value,
-                ImpressionType::TRADITIONAL->value,
-                ImpressionType::BOTH->value,
-            ]),
+            'subscriber_id' => \App\Models\Subscriber::factory(),
+            'doctor_id' => \App\Models\Doctor::factory(),
+            'type_id' => \App\Models\Type::factory(),
+            'paid' => 0,
+            'invoiced' => true,
+            'cost' => fake()->numberBetween(100, 2000),
+            'patient_name' => fake()->name(),
+            'patient_id' => fake()->numerify('########'),
+            'status' => 'pending',
+            'impression_type' => 1,
         ];
     }
 }

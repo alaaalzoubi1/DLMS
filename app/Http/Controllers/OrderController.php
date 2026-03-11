@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Enum;
+use Kreait\Firebase\Exception\Auth\AuthError;
 
 class OrderController extends Controller
 {
@@ -130,7 +131,7 @@ class OrderController extends Controller
                 'product_id'               => $product['product_id'],
                 'order_id'                 => $orderId,
                 'tooth_color_id'           => $product['tooth_color_id'],
-                'tooth_numbers'             => json_encode($product['tooth_numbers']),
+                'tooth_numbers'             => $product['tooth_numbers'],
                 'specialization_users_id'  => $user->specialization_users_id ?? null,
                 'note'                     => $product['note'] ?? null,
                 'unit_price' => $originalProduct->final_price,
@@ -178,72 +179,6 @@ class OrderController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
-
-
-    public function listInvoices($type): \Illuminate\Http\JsonResponse
-    {
-        $validTypes = ['futures', 'returned', 'test', 'new', 'all'];
-
-        if (!in_array($type, $validTypes)) {
-            return response()->json(['message' => 'Invalid type'], 400);
-        }
-
-        $subscriber_id = auth('admin')->user()->subscriber_id;
-
-        $query = Order::query()
-            ->where('orders.subscriber_id', $subscriber_id)
-            ->join('types', 'orders.type_id', '=', 'types.id')
-            ->with(['products.specializationUser.specialization','products.specializationUser.user:id,first_name,last_name', 'type','discount'])
-            ->select('orders.*');
-
-        if ($type !== 'all') {
-            $query->where('types.type', $type);
-        }
-        $query->orderBy('created_at','desc');
-        $orders = $query->paginate(10);
-
-        $orders->getCollection()->transform(function ($order) {
-            $order->products->transform(function ($product) {
-                $product->specialization = $product->specializationUser->specialization->name ?? null;
-                return $product;
-            });
-            return $order;
-        });
-
-        return response()->json($orders, 200);
-    }
-    public function listOrdersByStatus($status): \Illuminate\Http\JsonResponse
-    {
-        $validStatuses = ['pending', 'completed', 'cancelled'];
-
-        if (!in_array($status, $validStatuses)) {
-            return response()->json(['message' => 'Invalid status'], 400);
-        }
-
-        $subscriber_id = auth('admin')->user()->subscriber_id;
-
-        // Query to fetch orders by status
-        $orders = Order::query()
-            ->where('orders.subscriber_id', $subscriber_id)
-            ->where('orders.status', $status) // Filter orders by status
-            ->with(['products.specializationUser.specialization','products.specializationUser.user:id,first_name,last_name', 'type','doctor','discount']) // Relations
-            ->join('types', 'orders.type_id', '=', 'types.id') // Join with the types table
-            ->select('orders.*') // Select only the necessary columns from orders
-            ->orderByDesc('updated_at')
-            ->paginate(10); // Paginate results
-
-        // Transform each order to include specialization names for products
-        $orders->getCollection()->transform(function ($order) {
-            $order->products->transform(function ($product) {
-                $product->specialization = $product->specializationUser->specialization->name ?? null;
-                return $product;
-            });
-            return $order;
-        });
-
-        return response()->json($orders, 200);
-    }
-
 
     public function updateOrderProductSpecializationUser(Request $request): \Illuminate\Http\JsonResponse
     {
@@ -379,7 +314,6 @@ class OrderController extends Controller
 
         $subscriber_id = auth()->user()->subscriber_id;
 
-        // Find the order and ensure it belongs to the authenticated user's subscriber
         $order = Order::where('id', $id)->where('subscriber_id', $subscriber_id)->first();
 
         if (!$order) {
@@ -468,7 +402,7 @@ class OrderController extends Controller
                     'product_id'        => $prod['product_id'],
                     'order_id'          => $order->id,
                     'tooth_color_id'    => $prod['tooth_color_id'],
-                    'tooth_numbers'     => json_encode($prod['tooth_numbers']),
+                    'tooth_numbers'     => $prod['tooth_numbers'],
                     'product_name' =>  $product->name,
                     'note'              => $prod['note'] ?? null,
                     'unit_price' => $product->final_price
@@ -836,7 +770,7 @@ class OrderController extends Controller
             ], 500);
         }
     }
-    public function orderDetails(Request $request)
+    public function orderDetails($id)
     {
         $order = Order::with([
             'products' => function ($q) {
@@ -865,10 +799,29 @@ class OrderController extends Controller
             },
             'files' => function($q){
                 $q->Uploaded();
-            }
+            },
+            'zatcaDocument',
+            'creditNotes.items.orderProduct'
         ])
-            ->select('id', 'paid', 'invoiced', 'cost', 'patient_name', 'receive', 'delivery', 'patient_id', 'status', 'created_at', 'updated_at', 'subscriber_id', 'doctor_id', 'type_id','impression_type')
-            ->where('id', $request->order_id)
+            ->select(
+                'id',
+                'paid',
+                'invoiced',
+                'cost',
+                'patient_name',
+                'receive',
+                'delivery',
+                'patient_id',
+                'status',
+                'created_at',
+                'updated_at',
+                'subscriber_id',
+                'doctor_id',
+                'type_id',
+                'impression_type'
+            )
+
+            ->where('id', $id)
             ->first();
 
         if (!$order) {
@@ -950,7 +903,7 @@ class OrderController extends Controller
 
         $title = "أضيف خصم لفاتورتك";
         $body = "تم إضافة خصم {$discount->amount}% لفاتورتك رقم {$order->id}";
-        $token = $order->doctor->account->FCM_token;
+        $token = $order->doctor->account?->FCM_token;
         if ($token)
             SendFirebaseNotificationJob::dispatch($token, $title, $body);
 

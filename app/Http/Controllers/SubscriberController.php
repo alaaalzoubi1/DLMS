@@ -13,9 +13,7 @@ use Illuminate\Support\Facades\DB;
 
 class SubscriberController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+
     public function check_company_code(Request $request)
     {
         $companyExists = Subscriber::where('company_code', $request->company_code)->select('company_name')->first();
@@ -28,9 +26,6 @@ class SubscriberController extends Controller
              $companyExists
         );
     }
-    /**
-     * Display the specified resource.
-     */
     public function show($id): JsonResponse
     {
         $subscriber = Subscriber::with(['categories.products', 'specializations'])
@@ -148,6 +143,51 @@ class SubscriberController extends Controller
         ]);
     }
 
+    public function updateAddress(Request $request)
+    {
+        $admin = auth('admin')->user();
 
+        $address = $admin->subscribers
+            ->address()
+            ->first();
+
+        if (!$address) {
+            return response()->json([
+                'message' => 'Clinic not found'
+            ], 404);
+        }
+
+        $validated = $request->validate([
+            'street' => 'sometimes|string|max:255',
+            'building_number' => 'sometimes|string|max:50',
+            'additional_number' => 'sometimes|string|max:50',
+            'district' => 'sometimes|string|max:255',
+            'city' => 'sometimes|string|max:255',
+            'postal_code' => 'sometimes|string|max:20',
+            'locationAddress' => 'sometimes|string|max:500',
+        ]);
+
+        try {
+            DB::transaction(function () use ($address, $validated) {
+
+                if ($address) {
+                    $address->update($validated);
+                } else {
+                    $address->create($validated);
+                }
+            });
+
+            return response()->json([
+                'message' => 'Address updated successfully',
+                'address' => $address
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to update address',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 
 }

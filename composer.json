@@ -7,7 +7,6 @@
     "require": {
         "php": "^8.1",
         "aws/aws-sdk-php": "^3.369",
-        "darkaonline/l5-swagger": "^8.6",
         "guzzlehttp/guzzle": "^7.2",
         "kreait/firebase-php": "6.9",
         "laravel/framework": "^10.10",
@@ -15,10 +14,13 @@
         "laravel/tinker": "^2.8",
         "league/flysystem-aws-s3-v3": "3.0",
         "spatie/laravel-permission": "^6.9",
+        "symfony/polyfill-mbstring": "^1.33",
+        "symfony/polyfill-php80": "^1.33",
         "tymon/jwt-auth": "^2.1"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9.1",
+        "knuckleswtf/scribe": "4.30",
         "laravel/pint": "^1.0",
         "laravel/sail": "^1.18",
         "mockery/mockery": "^1.4.4",

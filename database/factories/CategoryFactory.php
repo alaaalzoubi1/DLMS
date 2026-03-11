@@ -18,11 +18,9 @@ class CategoryFactory extends Factory
     public function definition()
     {
         return [
-            'name' => $this->faker->word,
-            'subscriber_id' => Subscriber::inRandomOrder()->first()->id ?? Subscriber::factory(),
-            'is_deleted' => $this->faker->boolean(10), // 10% chance of being deleted
-            'created_at' => now(),
-            'updated_at' => now(),
+            'name' => fake()->word(),
+            'subscriber_id' => \App\Models\Subscriber::factory(),
+            'is_deleted' => false,
         ];
     }
 }

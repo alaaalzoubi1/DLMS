@@ -18,6 +18,8 @@ return new class extends Migration
             $table->dateTime('trial_start_at');
             $table->dateTime('trial_end_at');
             $table->string('tax_number')->nullable()->unique();
+            $table->string('commercial_registration')->nullable()->unique();
+            $table->enum('country_code',['SA','SY']);
             $table->softDeletes();
             $table->timestamps();
         });

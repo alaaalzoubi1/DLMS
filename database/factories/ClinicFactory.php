@@ -18,13 +18,9 @@ class ClinicFactory extends Factory
     public function definition()
     {
         return [
-            'name' => $this->faker->company,
-            'has_special_price' => $this->faker->boolean(30),
-            'tax_number' => $this->faker->optional()->numerify('TX#########'),
-            'clinic_code' => Str::uuid(),
-            'created_at' => now(),
-            'updated_at' => now(),
-
+            'name' => fake()->company(),
+            'has_special_price' => false,
+            'clinic_code' => fake()->uuid(),
         ];
     }
 }

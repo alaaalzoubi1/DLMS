@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class OrderProduct extends Model
 {
@@ -19,7 +20,8 @@ class OrderProduct extends Model
         'unit_price'
     ];
     protected $casts = [
-        'tooth_numbers' => 'array'
+        'tooth_numbers' => 'array',
+        'unit_price' => 'decimal:2'
     ];
     public function product()
     {
@@ -53,5 +55,8 @@ class OrderProduct extends Model
     {
         return $query->where('status','working');
     }
-
+    public function creditNoteItems(): HasMany
+    {
+        return $this->hasMany(CreditNoteItem::class);
+    }
 }

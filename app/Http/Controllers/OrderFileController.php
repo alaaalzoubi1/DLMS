@@ -8,8 +8,13 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Aws\S3\S3Client;
+use Throwable;
+
 class OrderFileController extends Controller
 {
+    /**
+     * @throws Throwable
+     */
     public function createUpload(Request $request)
     {
         DB::beginTransaction();
@@ -21,7 +26,7 @@ class OrderFileController extends Controller
                 'original_name' => 'required|string',
                 'size' => 'required|integer|max:204857600',
             ]);
-            $filePath = 'orders/' . $request->order_id . '/' . \Str::uuid() . '.' . $request->extension;
+            $filePath = 'orders/' . $request->order_id . '/' . Str::uuid() . '.' . $request->extension;
             $file = OrderFile::create([
                 'order_id' => $request->order_id,
                 'file_path' => $filePath,
@@ -42,7 +47,7 @@ class OrderFileController extends Controller
                 '+10 minutes'
             );
             DB::commit();
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             DB::rollBack();
             throw $e;
         }

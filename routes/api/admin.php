@@ -1,9 +1,7 @@
 <?php
 
 
-use App\Http\Controllers\Api\RegisterController;
 
-use App\Http\Controllers\Api\LoginController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ClinicController;
 use App\Http\Controllers\ContactInfoController;
@@ -18,16 +16,71 @@ use App\Http\Controllers\SubscriptionPlanController;
 use App\Http\Controllers\ToothColorController;
 use App\Http\Controllers\TypeController;
 use App\Http\Controllers\UserController;
-use Illuminate\Http\Request;
+use App\Http\Controllers\Zatca\InvoiceController;
+use App\Http\Controllers\Zatca\ZatcaOnboardingController;
 use Illuminate\Support\Facades\Route;
 
-Route::post('/login-admin', [UserController::class, 'loginAdmin']);
 Route::post('/register-company', [UserController::class, 'registerCompany']);
 
 
-Route::middleware(['auth:admin', 'admin.role','check.subscriber'])->group(function () {
-    Route::get('orders/filters',[OrderController::class,'OrdersWithFilters']);
-    Route::get('admin-info', [UserController::class,'adminInfo']);
+Route::middleware(['auth:admin', 'admin.role','check.subscriber','check.zatca'])->group(function () {
+    Route::prefix('types')->group(function (){
+        Route::post('/',[TypeController::class,'createType']);
+        Route::get('/', [TypeController::class, 'listTypes']);
+        Route::delete('/{id}',[TypeController::class,'destroy']);
+    });
+
+    Route::prefix('invoice-header')->group(function (){
+        Route::post('/',[LabHeaderController::class,'store']);
+        Route::post('/update',[LabHeaderController::class,'update']);
+        Route::get('/',[LabHeaderController::class,'getHeader']);
+        Route::delete('/',[LabHeaderController::class,'delete']);
+    });
+
+    Route::prefix('order-files')->group(function () {
+        Route::post('/upload', [OrderFileController::class, 'createUpload']);
+        Route::post('/{id}/uploaded', [OrderFileController::class, 'markUploaded']);
+        Route::get('/{id}/download', [OrderFileController::class, 'download']);
+    });
+
+    Route::prefix('profile')->group(function (){
+        Route::put('/updateAddress',[SubscriberController::class,'updateAddress']);
+        Route::get('/',[UserController::class,'adminProfile']);
+        Route::put('/',[UserController::class,'adminUpdateProfile']);
+        Route::delete('/',[UserController::class,'deleteAccount']);
+    });
+
+    Route::prefix('clinics')->group(function (){
+        Route::post('/', [ClinicController::class, 'store']);
+        Route::get('/', [ClinicController::class, 'show']);
+        Route::put('/updateAddress/{clinicId}',[ClinicController::class,'updateAddress']);
+        Route::put('/{id}', [ClinicController::class, 'edit']);
+        Route::delete('/{id}', [ClinicController::class, 'destroy']);
+    });
+
+    Route::prefix('doctors')->group(function (){
+        Route::post('/', [DoctorController::class, 'store']);
+        Route::get('/{id}', [DoctorController::class, 'show']);
+        Route::delete('/{id}', [DoctorController::class, 'destroy']);
+    });
+
+    Route::prefix('specialization')->group(function (){
+        Route::post('/', [SpecializationController::class, 'store']);
+        Route::get('/', [SpecializationController::class, 'getSpecializationsBySubscriber']);
+        Route::delete('/{id}',[SpecializationController::class,'delete']);
+    });
+
+    Route::prefix('orders')->group(function (){
+        Route::get('/filters',[OrderController::class,'OrdersWithFilters']);
+        Route::post('/',[OrderController::class,'createOrder']);
+        Route::put('/{id}',[OrderController::class,'updateOrder']);
+        Route::post('/invoice/bulk',[InvoiceController::class,'invoiceBulk']);
+        Route::post('credit-note',[InvoiceController::class,'submitCreditNote']);
+        Route::get('/{id}/details',[OrderController::class,'orderDetails']);
+    });
+
+    Route::post('doctor-orders',[OrderController::class,'listDoctorInvoices']);
+    Route::post('from-to-orders',[OrderController::class,'listFromToInvoices']);
     Route::post('add-category',[CategoryController::class,'store']);
     Route::get('show-categories', [CategoryController::class,'show']);
     Route::get('delete-category/{id}',[CategoryController::class,'delete']);
@@ -44,54 +97,26 @@ Route::middleware(['auth:admin', 'admin.role','check.subscriber'])->group(functi
     Route::get('get-doctors',[DoctorController::class,'getDoctors']);
     Route::get('get-technicals',[UserController::class,'getTechnical']);
     Route::post('add-specialization',[SpecializationController::class,'addSpecialization']);
-    Route::post('clinics', [ClinicController::class, 'store']);
-    Route::get('clinics', [ClinicController::class, 'show']);
-    Route::put('clinics/{id}', [ClinicController::class, 'edit']);
-    Route::delete('/clinics/{id}', [ClinicController::class, 'destroy']);
-    Route::post('doctors', [DoctorController::class, 'store']);
-    Route::get('doctors/{id}', [DoctorController::class, 'show']);
+
     Route::get('doctorsByClinic/{id}', [DoctorController::class, 'doctorsByClinic']);
-    Route::delete('doctors/{id}', [DoctorController::class, 'destroy']);
-    Route::post('specializations', [SpecializationController::class, 'store']);
-    Route::get('specializations', [SpecializationController::class, 'getSpecializationsBySubscriber']);
-    Route::delete('specializations/{id}',[SpecializationController::class,'delete']);
+
+
+
     Route::post('add-special-price', [ClinicController::class, 'addSpecialPrice']);
     Route::delete('delete-special-price', [ClinicController::class, 'deleteSpecialPrice']);
     Route::patch('availability/{id}', [UserController::class, 'setAvailability']);
     Route::get('clinics_with_special_price/{$subscriberId}',[ClinicController::class,'clinics_with_special_price']);
     Route::get('get_clinics_with_the_special_price/{id}',[ProductController::class,'get_clinics_with_the_special_price']);
-    Route::post('orders',[OrderController::class,'createOrder']);
-    Route::put('orders/{id}',[OrderController::class,'updateOrder']);
-    Route::get('orders/{type}',[OrderController::class,'listInvoices']);
-    Route::get('listOrdersByStatus/{status}',[OrderController::class,'listOrdersByStatus']);
-    Route::post('doctor-orders',[OrderController::class,'listDoctorInvoices']);
-    Route::post('from-to-orders',[OrderController::class,'listFromToInvoices']);
-    Route::post('/types',[TypeController::class,'createType']);
-    Route::get('/types', [TypeController::class, 'listTypes']);
-//    Route::put('/types/{id}', [TypeController::class, 'updateType']);
-    Route::delete('types/{id}',[TypeController::class,'destroy']);
+
+
+
     Route::get('cancel-subscription',[SubscriberController::class,'cancelSubscription']);
     Route::post('add-payment',[OrderController::class,'addPayment']);
-    Route::get('profile',[UserController::class,'adminProfile']);
-    Route::patch('profile',[UserController::class,'adminUpdateProfile']);
-    Route::delete('profile',[UserController::class,'deleteAccount']);
     Route::patch('order-products/{id}/assign-specialization', [OrderController::class, 'assignSpecialization']);
     Route::get('order-details',[OrderController::class,'orderDetails']);
     Route::post('apply-discount',[OrderController::class,'applyDiscount']);
     Route::put('update-discount',[OrderController::class,'updateDiscount']);
     Route::delete('remove-discount/{discount_id}',[OrderController::class,'removeDiscount']);
-    Route::post('invoice-header',[LabHeaderController::class,'store']);
-    Route::post('invoice-header/update',[LabHeaderController::class,'update']);
-    Route::get('invoice-header',[LabHeaderController::class,'getHeader']);
-    Route::delete('invoice-header',[LabHeaderController::class,'delete']);
-
-    Route::prefix('order-files')->group(function () {
-        Route::post('/upload', [OrderFileController::class, 'createUpload']);
-        Route::post('/{id}/uploaded', [OrderFileController::class, 'markUploaded']);
-        Route::get('/{id}/download', [OrderFileController::class, 'download']);
-
-    });
-
 
 
 });
@@ -101,6 +126,10 @@ Route::middleware(['auth:admin', 'admin.role'])->group(function () {
     Route::get('remaining-days',[SubscriberController::class,'remainingDays']);
     Route::prefix('contact-info')->group(function () {
         Route::get('/', [ContactInfoController::class, 'index']);
+    });
+    Route::prefix('zatca')->group(function (){
+        Route::post('onboard',[ ZatcaOnboardingController::class,'store']);
+        Route::post('renew',[ZatcaOnboardingController::class,'renew']);
     });
 });
 

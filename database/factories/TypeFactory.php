@@ -18,9 +18,9 @@ class TypeFactory extends Factory
     public function definition()
     {
         return [
-            'subscriber_id' => Subscriber::inRandomOrder()->first()->id ?? Subscriber::factory(),
-            'type' => $this->faker->randomElement(['futures', 'new', 'test', 'returned']),
-            'invoiced' => $this->faker->boolean(),
+            'subscriber_id' => \App\Models\Subscriber::factory(),
+            'type' => fake()->randomElement(['futures','new','test','returned']),
+            'invoiced' => true,
         ];
     }
 }

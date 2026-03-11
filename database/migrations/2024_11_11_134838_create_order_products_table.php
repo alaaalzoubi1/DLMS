@@ -17,7 +17,7 @@ return new class extends Migration
             $table->json('tooth_numbers');
             $table->unsignedBigInteger('product_id');
             $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
-            $table->double('unit_price');
+            $table->decimal('unit_price',15,2);
             $table->string('product_name');
             $table->unsignedBigInteger('order_id');
             $table->foreign('order_id')->references('id')->on('orders')->onDelete('cascade');

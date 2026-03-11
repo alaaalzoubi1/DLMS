@@ -9,13 +9,13 @@ class SubscriberFactory extends Factory
     public function definition()
     {
         return [
-            'company_name' => $this->faker->company,
-            'company_code' => strtoupper($this->faker->unique()->bothify('???####')),
+            'company_name' => fake()->company(),
+            'company_code' => fake()->unique()->bothify('COMP-####'),
             'trial_start_at' => now(),
-            'trial_end_at' => now()->addDays(rand(7, 30)),
-            'tax_number' => $this->faker->optional()->numerify('TX#########'),
-            'created_at' => now(),
-            'updated_at' => now(),
+            'trial_end_at' => now()->addMonth(),
+            'tax_number' => fake()->unique()->numerify('##########'),
+            'commercial_registration' => fake()->unique()->numerify('########'),
+            'country_code' => 'SA',
         ];
     }
 }
