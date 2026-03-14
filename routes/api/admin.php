@@ -10,6 +10,7 @@ use App\Http\Controllers\LabHeaderController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\OrderFileController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SpecializationController;
 use App\Http\Controllers\SubscriberController;
 use App\Http\Controllers\SubscriptionPlanController;
@@ -78,7 +79,10 @@ Route::middleware(['auth:admin', 'admin.role','check.subscriber','check.zatca'])
         Route::post('credit-note',[InvoiceController::class,'submitCreditNote']);
         Route::get('/{id}/details',[OrderController::class,'orderDetails']);
     });
-
+    Route::prefix('reports')->group(function () {
+        Route::get('/revenue', [ReportController::class,'revenue']);
+        Route::get('/doctors-due', [ReportController::class,'doctorsDue']);
+    });
     Route::post('doctor-orders',[OrderController::class,'listDoctorInvoices']);
     Route::post('from-to-orders',[OrderController::class,'listFromToInvoices']);
     Route::post('add-category',[CategoryController::class,'store']);

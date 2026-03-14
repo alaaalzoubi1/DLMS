@@ -33,6 +33,9 @@ return new class extends Migration
             $table->unsignedTinyInteger('impression_type')
                 ->comment('1 = digital, 2 = traditional, 3 = both');
             $table->index(['doctor_id', 'patient_id', 'created_at']);
+            $table->index(['subscriber_id', 'created_at']);
+            $table->index(['doctor_id', 'created_at']);
+            $table->index(['status', 'created_at']);
             $table->timestamps();
         });
     }
