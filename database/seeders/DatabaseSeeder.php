@@ -96,7 +96,20 @@ class DatabaseSeeder extends Seeder
                 \App\Models\OrderProduct::factory()
                     ->count(2)
                     ->create(['order_id' => $order->id]);
-            });
+            })
+        $subscriber = \App\Models\Subscriber::factory()->create();
+        $subscriber->address()->create(
+            \App\Models\Address::factory()->make()->toArray()
+        );
+
+        // admin user
+        $admin = \App\Models\User::factory()->create([
+            'subscriber_id' => $subscriber->id,
+            'email' => 'labbridge@alaa.com',
+            'password' => bcrypt('12345678'),
+        ]);
+
+        $admin->assignRole('super_admin');
     }
 
 }

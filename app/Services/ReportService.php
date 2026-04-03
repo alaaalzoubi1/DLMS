@@ -30,10 +30,13 @@ class ReportService
             ->orderBy('period')
             ->get();
     }
-    public function doctorsDue($subscriberId): Collection
+    public function doctorsDue($subscriberId,$doctorId = null): Collection
     {
         return DB::table('orders')
             ->join('doctors', 'orders.doctor_id', '=', 'doctors.id')
+            ->when($doctorId, function ($q) use ($doctorId) {
+                $q->where('orders.doctor_id', $doctorId);
+            })
             ->selectRaw("
             doctors.id as doctor_id,
             CONCAT(doctors.first_name,' ',doctors.last_name) as doctor_name,

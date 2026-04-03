@@ -1,7 +1,4 @@
 <?php
-
-
-
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ClinicController;
 use App\Http\Controllers\ContactInfoController;
@@ -80,7 +77,7 @@ Route::middleware(['auth:admin', 'admin.role','check.subscriber','check.zatca'])
         Route::get('/{id}/details',[OrderController::class,'orderDetails']);
     });
     Route::prefix('reports')->group(function () {
-        Route::get('/revenue', [ReportController::class,'revenue']);
+            Route::get('/revenue', [ReportController::class,'revenue']);
         Route::get('/doctors-due', [ReportController::class,'doctorsDue']);
     });
     Route::post('doctor-orders',[OrderController::class,'listDoctorInvoices']);

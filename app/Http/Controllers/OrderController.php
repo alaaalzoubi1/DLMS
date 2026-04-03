@@ -620,7 +620,7 @@ class OrderController extends Controller
                 ->whereIn('id', $orderIds)
                 ->where('subscriber_id', auth('admin')->user()->subscriber_id)
                 ->whereColumn('paid', '<=', 'cost')
-                ->orderBy('receive', 'asc')
+                ->orderBy('created_at', 'asc')
                 ->lockForUpdate()
                 ->get();
 

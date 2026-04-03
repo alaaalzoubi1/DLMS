@@ -40,9 +40,15 @@ class ReportController extends Controller
 
     public function doctorsDue(Request $request)
     {
+        $request->validate([
+            'doctor_id' => 'nullable|integer|exists:doctors,id'
+        ]);
         $subscriberId = auth('admin')->user()->subscriber_id;
 
-        $report = $this->reportService->doctorsDue($subscriberId);
+        $report = $this->reportService->doctorsDue(
+            $subscriberId,
+            $request->doctor_id
+        );
 
         return response()->json([
             'success' => true,
