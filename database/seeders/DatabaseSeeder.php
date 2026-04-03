@@ -96,16 +96,16 @@ class DatabaseSeeder extends Seeder
                 \App\Models\OrderProduct::factory()
                     ->count(2)
                     ->create(['order_id' => $order->id]);
-            })
-        $subscriber = \App\Models\Subscriber::factory()->create();
-        $subscriber->address()->create(
+            });
+        $subscriber1 = \App\Models\Subscriber::factory()->create();
+        $subscriber1->address()->create(
             \App\Models\Address::factory()->make()->toArray()
         );
 
-        // admin user
-        $admin = \App\Models\User::factory()->create([
-            'subscriber_id' => $subscriber->id,
-            'email' => 'labbridge@alaa.com',
+
+        $super_admin = \App\Models\User::factory()->create([
+            'subscriber_id' => $subscriber1->id,
+            'email' => 'superadmin@labbridge.com',
             'password' => bcrypt('12345678'),
         ]);
 
