@@ -7,11 +7,14 @@ use App\Http\Requests\OrdersWithFilters;
 use App\Http\Requests\StoreOrderDiscountRequest;
 use App\Http\Requests\StoreOrderRequest;
 use App\Http\Requests\UpdateDiscountRequest;
+use App\Http\Resources\OrderResource;
+use App\Http\Resources\OrdersResource;
 use App\Jobs\SendFirebaseNotificationJob;
 use App\Models\Category;
 use App\Models\OrderDiscount;
 use App\Models\Subscriber;
 use App\Models\Type;
+use App\Services\PriceSittingsService;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -19,6 +22,7 @@ use App\Models\User;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\OrderProduct;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -154,14 +158,13 @@ class OrderController extends Controller
             $patientId = $data['patient_id'] ?? strtoupper(Str::random(9));
 
             $totalCost = $this->calculateTotalCost($data['products'], $data['doctor_id']);
-            $invoiced = Type::find($data['type_id'])->invoiced;
 
             $order = Order::create([
                 'doctor_id'     => $data['doctor_id'],
                 'subscriber_id' => $subscriber_id,
                 'status'        => $data['status'],
                 'type_id'       => $data['type_id'],
-                'invoiced'      => $invoiced,
+                'invoiced'      => false,
                 'paid'          => $data['paid'],
                 'cost'          => $totalCost,
                 'patient_name'  => $data['patient_name'],
@@ -304,25 +307,35 @@ class OrderController extends Controller
         $validated = $request->validate([
             'status' => 'sometimes|in:pending,completed,cancelled',
             'type_id' => 'sometimes|exists:types,id',
-            'invoiced' => 'sometimes|boolean',
             'paid' => 'sometimes|integer|min:0',
-            'cost' => 'sometimes|integer|min:0',
             'patient_name' => 'sometimes|string|max:255',
             'receive' => 'sometimes|date',
-            'delivery' => 'sometimes|date|after_or_equal:receive',
+            'delivery' => 'sometimes|date',
         ]);
 
-        $subscriber_id = auth()->user()->subscriber_id;
+        $subscriber_id = auth('admin')->user()->subscriber_id;
 
-        $order = Order::where('id', $id)->where('subscriber_id', $subscriber_id)->first();
+        $order = Order::where('id', $id)
+            ->where('subscriber_id', $subscriber_id)
+            ->first();
 
         if (!$order) {
             return response()->json(['error' => 'Order not found or access denied.'], 404);
         }
 
+        if ($order->invoiced) {
+            return response()->json([
+                'error' => 'Cannot update invoiced order.'
+            ], 403);
+        }
+
+
         $order->update($validated);
 
-        return response()->json(['message' => 'Order updated successfully.', 'order' => $order], 200);
+        return response()->json([
+            'message' => 'Order updated successfully.',
+            'order' => $order
+        ], 200);
     }
 
     public function doctorCreateOrder(StoreOrderRequest $request)
@@ -333,13 +346,13 @@ class OrderController extends Controller
             return response()->json(['error' => 'Only doctors can create orders.'], 403);
         }
 
-        $subscriber = Subscriber::with(['users' => function ($query) {
-            $query->role('admin')->select('id', 'FCM_token');
-        }])->findOrFail($request->subscriber_id);
+        $subscriber = Subscriber::with([
+            'users' => fn ($q) => $q->role('admin')->select('id','FCM_token')
+        ])->findOrFail($request->subscriber_id);
 
         if ($subscriber->trial_end_at < now()) {
             return response()->json([
-                'error' => 'Cannot create order. Subscriber subscription has expired.'
+                'error' => 'Subscriber subscription has expired.'
             ], 403);
         }
 
@@ -347,16 +360,15 @@ class OrderController extends Controller
 
         $data = $request->validated();
 
+        DB::beginTransaction();
+
         try {
-            DB::beginTransaction();
 
             $type = Type::where('id', $data['type_id'])
                 ->where('subscriber_id', $data['subscriber_id'])
                 ->firstOrFail();
 
-            $productIds = collect($data['products'])
-                ->pluck('product_id')
-                ->toArray();
+            $productIds = collect($data['products'])->pluck('product_id');
 
             $categories = Category::where('subscriber_id', $subscriber->id)
                 ->pluck('id');
@@ -366,69 +378,63 @@ class OrderController extends Controller
                 ->get()
                 ->keyBy('id');
 
-            if (count($products) !== count($productIds)) {
+            if ($products->count() !== $productIds->count()) {
                 throw new \Exception("Some products do not belong to subscriber");
             }
 
             $totalCost = 0;
 
             foreach ($data['products'] as $prod) {
-
-                $product  = $products[$prod['product_id']];
-                $teeth    = $prod['tooth_numbers'];
-                $count    = count($teeth);
-
-                $totalCost += ($product->final_price * $count);
+                $product = $products[$prod['product_id']];
+                $totalCost += $product->final_price * count($prod['tooth_numbers']);
             }
 
             $order = Order::create([
-                'doctor_id'     => $doctor->id,
+                'doctor_id' => $doctor->id,
                 'subscriber_id' => $subscriber->id,
-                'type_id'       => $type->id,
-                'invoiced'      => $type->invoiced,
-                'status'        => 'pending',
-                'paid'          => 0,
-                'cost'          => $totalCost,
-                'patient_name'  => $data['patient_name'],
-                'receive'       => null,
-                'delivery'      => null,
-                'patient_id'    => $data['patient_id'] ?? strtoupper(Str::random(9)),
-                'impression_type'  => $data['impression_type'],
+                'type_id' => $type->id,
+                'status' => 'pending',
+                'invoiced' => false,
+                'paid' => 0,
+                'cost' => $totalCost,
+                'patient_name' => $data['patient_name'],
+                'patient_id' => $data['patient_id'] ?? strtoupper(Str::random(9)),
+                'impression_type' => $data['impression_type'],
             ]);
+
             foreach ($data['products'] as $prod) {
-                $product  = $products[$prod['product_id']];
+                $product = $products[$prod['product_id']];
 
                 OrderProduct::create([
-                    'product_id'        => $prod['product_id'],
-                    'order_id'          => $order->id,
-                    'tooth_color_id'    => $prod['tooth_color_id'],
-                    'tooth_numbers'     => $prod['tooth_numbers'],
-                    'product_name' =>  $product->name,
-                    'note'              => $prod['note'] ?? null,
+                    'order_id' => $order->id,
+                    'product_id' => $prod['product_id'],
+                    'tooth_color_id' => $prod['tooth_color_id'],
+                    'tooth_numbers' => $prod['tooth_numbers'],
+                    'product_name' => $product->name,
+                    'note' => $prod['note'] ?? null,
                     'unit_price' => $product->final_price
                 ]);
             }
 
             DB::commit();
-            $categoryList = $products->pluck('category.name')
-                ->unique()
-                ->filter()
-                ->implode('، ');
-            $admin = $subscriber->users->first();
-            $token = $admin->FCM_token ?? null;
-            $title = "طلب جديد من الدكتور '{$doctor->first_name} {$doctor->last_name}'";
 
-            $body = "طلب '{$categoryList}' التي اختارها الدكتور، قم بتحويلها للفني المختص";
-            if ($token)
-                SendFirebaseNotificationJob::dispatch($token, $title, $body);
+            $admin = $subscriber->users->first();
+            if ($admin?->FCM_token) {
+                SendFirebaseNotificationJob::dispatch(
+                    $admin->FCM_token,
+                    "طلب جديد",
+                    "طلب جديد من الطبيب {$doctor->first_name}"
+                );
+            }
 
             return response()->json([
                 'message' => 'Order created successfully.',
-                'order'   => $order->load('products'),
+                'order' => new OrderResource($order)
             ], 201);
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'error' => 'Failed to create order.',
                 'details' => $e->getMessage()
@@ -437,19 +443,21 @@ class OrderController extends Controller
     }
 
 
-
-    public function doctorOrders(DoctorOrdersRequest $request): JsonResponse
+    public function doctorOrders(DoctorOrdersRequest $request)
     {
         $doctor = auth('api')->user()->doctor;
+        $doctorAccountId = auth('api')->id();
 
         $query = Order::where('doctor_id', $doctor->id);
 
         if ($request->filled('patient_name')) {
             $query->where('patient_name', 'like', "%{$request->patient_name}%");
         }
+
         if ($request->filled('patient_id')) {
             $query->where('patient_id', 'like', "%{$request->patient_id}%");
         }
+
         if ($request->filled('from')) {
             $query->whereDate('created_at', '>=', $request->from);
         }
@@ -474,12 +482,37 @@ class OrderController extends Controller
             $query->where('subscriber_id', $request->subscriber_id);
         }
 
+        $orders = $query->with([
+            'type:id,type',
+            'subscriber:id,company_name,tax_number',
+            'orderProducts.toothColor:id,color',
+            'orderProducts.specializationUser',
+            'doctor:id,clinic_id,first_name,last_name',
+            'doctor.clinic:id,tax_number,name',
+            'discount',
+            'files'
+        ])->latest()->get();
 
-        $orders = $query->with(['type:id,type', 'subscriber:id,company_name,tax_number', 'products','doctor:id,clinic_id,first_name,last_name','doctor.clinic:id,tax_number,name','discount','files'])
-            ->latest()
-            ->get();
+        /**
+         * 🔥 STEP 1: collect unique subscriber IDs
+         */
+        $subscriberIds = $orders->pluck('subscriber_id')->unique()->values();
 
-        return response()->json($orders, 200);
+        /**
+         * 🔥 STEP 2: fetch hidden relations in ONE query
+         */
+        $hiddenMap = app(PriceSittingsService::class)
+            ->getHiddenSubscribersForDoctor($doctorAccountId, $subscriberIds);
+
+        /**
+         * 🔥 STEP 3: convert to map for fast lookup
+         * [subscriber_id => true/false]
+         */
+        $hideMap = $hiddenMap->mapWithKeys(fn ($id) => [$id => true]);
+        $request->merge([
+            'hide_map' => $hideMap
+        ]);
+        return OrdersResource::collection($orders);
     }
     public function OrdersWithFilters(OrdersWithFilters $request): JsonResponse
     {
@@ -773,64 +806,42 @@ class OrderController extends Controller
     public function orderDetails($id)
     {
         $order = Order::with([
-            'products' => function ($q) {
-                $q->select('id', 'order_id', 'note', 'tooth_numbers', 'status', 'product_id', 'specialization_users_id', 'tooth_color_id','unit_price','product_name');
-            },
-            'products.specializationUser.user' => function ($q) {
-                $q->select('id', 'first_name', 'last_name');
-            },
-            'products.toothColor' => function ($q) {
-                $q->select('id', 'color');
-            },
-            'subscriber' => function ($q) {
-                $q->select('id', 'company_name', 'tax_number');
-            },
-            'doctor' => function ($q) {
-                $q->select('id', 'first_name', 'last_name', 'clinic_id');
-            },
-            'doctor.clinic' => function ($q) {
-                $q->select('id', 'name', 'tax_number');
-            },
-            'type' => function ($q) {
-                $q->select('id', 'type');
-            },
-            'discount' => function($q){
-                $q->select('id','type','amount','order_id');
-            },
-            'files' => function($q){
-                $q->Uploaded();
-            },
+            'orderProducts',
+            'orderProducts.specializationUser.user:id,first_name,last_name',
+            'orderProducts.toothColor:id,color',
+
+            'subscriber:id,company_name,tax_number',
+            'doctor:id,first_name,last_name,clinic_id',
+            'doctor.clinic:id,name,tax_number',
+
+            'type:id,type',
+            'discount:id,type,amount,order_id',
+            'files' => fn ($q) => $q->Uploaded(),
+
             'zatcaDocument',
             'creditNotes.items.orderProduct'
         ])
-            ->select(
-                'id',
-                'paid',
-                'invoiced',
-                'cost',
-                'patient_name',
-                'receive',
-                'delivery',
-                'patient_id',
-                'status',
-                'created_at',
-                'updated_at',
-                'subscriber_id',
-                'doctor_id',
-                'type_id',
-                'impression_type'
-            )
-
-            ->where('id', $id)
-            ->first();
+            ->select([
+                'id','paid','invoiced','cost','patient_name',
+                'receive','delivery','patient_id','status',
+                'created_at','updated_at',
+                'subscriber_id','doctor_id','type_id','impression_type'
+            ])
+            ->find($id);
 
         if (!$order) {
             return response()->json(['error' => 'Order not found'], 404);
         }
 
-        return response()->json(['order' => $order], 200);
-    }
+        $doctorAccountId = auth('api')->id();
 
+        $hidePrices = app(PriceSittingsService::class)
+            ->shouldHidePrice($doctorAccountId, $order->subscriber_id);
+        $order->hide_price = $hidePrices;
+        return response()->json([
+            'order' => new OrderResource($order)
+        ], 200);
+    }
     public function technicalOrderDetails(Request $request)
     {
         $technical = auth('admin')->user();

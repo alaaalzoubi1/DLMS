@@ -76,4 +76,8 @@ class Order extends Model
     {
         return $this->hasMany(CreditNote::class);
     }
+    public function orderProducts(): HasMany
+    {
+        return $this->hasMany(OrderProduct::class);
+    }
 }

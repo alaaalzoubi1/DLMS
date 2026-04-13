@@ -47,8 +47,8 @@ class UserController extends Controller
                 'street' => $data['street'] ?? null,
                 'building_number' => $data['building_number'] ?? null,
                 'additional_number' => $data['additional_number'] ?? null,
-                'district' => $data['district'],
-                'city' => $data['city'],
+                'district' => $data['district']?? null,
+                'city' => $data['city']?? null,
                 'postal_code' => $data['postal_code'] ?? null,
                 'locationAddress' => $data['locationAddress'] ?? null,
             ]);

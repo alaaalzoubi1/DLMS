@@ -12,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Throwable;
 
 class ZatcaOnboardingController extends Controller
@@ -19,10 +20,10 @@ class ZatcaOnboardingController extends Controller
     public function __construct(
         protected ZatcaOnboardingService $onboardingService
     ) {}
-
     public function store(ZatcaOnboardingRequest $request): JsonResponse
     {
         $subscriber = auth('admin')->user()->subscribers;
+
         $existing = SubscriberZatcaCredential::where('subscriber_id', $subscriber->id)
             ->where('environment', config('services.zatca.environment'))
             ->first();
@@ -32,9 +33,11 @@ class ZatcaOnboardingController extends Controller
                 'message' => 'Subscriber already onboarded for this environment.'
             ], 409);
         }
+
+        $this->validateSubscriberForZatca($subscriber);
+
         $appName = config('app.name');
         $version = config('app.version');
-
 
         $uuid = (string) Str::uuid();
 
@@ -49,19 +52,14 @@ class ZatcaOnboardingController extends Controller
             ),
 
             'organizationIdentifier' => $subscriber->tax_number,
-
             'organizationUnitName' => 'Main Branch',
-
             'organizationName' => $subscriber->company_name,
-
-            'locationAddress' => $subscriber->address->locationAddress,
-
+            'locationAddress' => $subscriber->address?->locationAddress,
             'countryName' => $subscriber->country_code,
-
             'industryBusinessCategory' => 'Dental Laboratory Services',
-
             'functionalityMap' => 'BOTH',
         ];
+
         DB::beginTransaction();
 
         try {
@@ -69,26 +67,32 @@ class ZatcaOnboardingController extends Controller
                 $request->otp,
                 $csrConfig
             );
-            SubscriberZatcaCredential::create(
-                [
-                    'subscriber_id' => $subscriber->id,
-                    'private_key' => $response['privateKey'],
-                    'csr' => $response['csr'],
-                    'binary_security_token' => $response['binarySecurityToken'],
-                    'secret' => $response['secret'],
-                    'last_invoice_hash' => config('services.zatca.initial_invoice_hash'),
-                    'onboarded_at' => now(),
-                    'certificate_expiry_date' => $response['expiryDate'],
-                ]
-            );
+
+            SubscriberZatcaCredential::create([
+                'subscriber_id' => $subscriber->id,
+                'private_key' => $response['privateKey'],
+                'csr' => $response['csr'],
+                'binary_security_token' => $response['binarySecurityToken'],
+                'secret' => $response['secret'],
+                'last_invoice_hash' => config('services.zatca.initial_invoice_hash'),
+                'onboarded_at' => now(),
+                'certificate_expiry_date' => $response['expiryDate'],
+            ]);
 
             DB::commit();
+
             Cache::forget("subscriber_onboarded:{$subscriber->id}");
-            Cache::put("subscriber_onboarded:{$subscriber->id}", true, now()->addHours(12));
+            Cache::put("subscriber_onboarded:{$subscriber->id}", true, now()->addHours(1));
 
             return response()->json([
                 'message' => 'ZATCA onboarding completed successfully.',
             ]);
+
+        } catch (ValidationException $e) {
+            DB::rollBack();
+
+            throw $e;
+
         } catch (Throwable $e) {
             DB::rollBack();
 
@@ -100,8 +104,6 @@ class ZatcaOnboardingController extends Controller
     }
     public function renew(ZatcaOnboardingRequest $request): JsonResponse
     {
-
-
         $subscriber = auth('admin')->user();
 
         $credential = SubscriberZatcaCredential::where('subscriber_id', $subscriber->subscriber_id)
@@ -146,6 +148,34 @@ class ZatcaOnboardingController extends Controller
                 'message' => 'Certificate renewal failed.',
                 'error' => $e->getMessage(),
             ], 422);
+        }
+    }
+    private function validateSubscriberForZatca($subscriber): void
+    {
+        $missingFields = [];
+
+        if (!$subscriber->tax_number) {
+            $missingFields[] = 'tax_number';
+        }
+
+        if (!$subscriber->company_name) {
+            $missingFields[] = 'company_name';
+        }
+
+        if (!$subscriber->country_code) {
+            $missingFields[] = 'country_code';
+        }
+
+        if (!$subscriber->address?->locationAddress) {
+            $missingFields[] = 'locationAddress';
+        }
+
+        if (!empty($missingFields)) {
+            throw ValidationException::withMessages([
+                'subscriber' => [
+                    'Missing required data: ' . implode(', ', $missingFields)
+                ]
+            ]);
         }
     }
 }

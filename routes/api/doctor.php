@@ -34,7 +34,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('products',[ProductController::class,'categoryProducts']);
     Route::patch('profile',[DoctorController::class,'updateProfile']);
     Route::delete('profile',[DoctorController::class,'deleteAccount']);
-    Route::get('order-details',[OrderController::class,'orderDetails']);
+    Route::get('order-details/{id}',[OrderController::class,'orderDetails']);
     Route::post('invoice-header',[ClinicHeaderController::class,'store']);
     Route::post('invoice-header/update',[ClinicHeaderController::class,'update']);
     Route::get('invoice-header',[ClinicHeaderController::class,'getHeader']);

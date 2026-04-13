@@ -63,4 +63,5 @@ class DoctorAccountController extends Controller
     {
         //
     }
+
 }

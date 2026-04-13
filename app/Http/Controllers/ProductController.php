@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\ProductResource;
 use App\Jobs\SendFirebaseNotificationJob;
 use App\Models\Category;
 use App\Models\ClinicProduct;
 use App\Models\OrderProduct;
 use App\Models\Product;
 use App\Models\Specialization_User;
+use App\Services\PriceSittingsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use function Symfony\Component\Translation\t;
@@ -211,9 +213,23 @@ class ProductController extends Controller
 
     public function categoryProducts(Request $request)
     {
+        $doctorAccountId = auth('api')->id();
+        $subscriberId = Category::where('id', $request->category_id)
+            ->value('subscriber_id');
+        $hide = app(PriceSittingsService::class)
+            ->shouldHidePrice($doctorAccountId, $subscriberId);
+
+        $products = Product::where('category_id', $request->category_id)
+            ->where('is_deleted', false)
+            ->paginate(10);
+        $products->getCollection()->transform(function ($product) use ($hide) {
+            $product->hide_price = $hide;
+            return $product;
+        });
         return response()->json([
-            'products' => Product::where('category_id',$request->category_id)
-            ->paginate(10)
+            'products' => ProductResource::collection($products)
+                ->response()
+                ->getData(true)
         ]);
     }
 

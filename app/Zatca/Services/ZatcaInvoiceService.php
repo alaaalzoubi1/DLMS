@@ -10,6 +10,7 @@ use App\ValueObjects\Money;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -40,7 +41,6 @@ class ZatcaInvoiceService
 
             $lastZatcaDoc = $lastDocs[$order->id] ?? null;
 
-            // الحالة 1: لا يوجد مستند سابق
             if (!$lastZatcaDoc) {
 
                 $documents[] = $this->buildInvoiceDocument(
@@ -55,19 +55,16 @@ class ZatcaInvoiceService
 
             $statusCode = $lastZatcaDoc->zatca_http_status;
 
-            // الحالة 2: 404 أو 429 أو 500+
             if (
                 in_array($statusCode, [404, 429]) ||
                 $statusCode >= 500
             ) {
 
-                // إعادة الإرسال بنفس القيم السابقة
                 $documents[] = $lastZatcaDoc->request_payload;
 
                 continue;
             }
 
-            // الحالة 3: 400 → إعادة بناء بسلسلة جديدة
             if ($statusCode == 400) {
 
                 $documents[] = $this->buildInvoiceDocument(
@@ -80,7 +77,6 @@ class ZatcaInvoiceService
                 continue;
             }
 
-            // أي حالة أخرى → تعامل كفاتورة جديدة
             $documents[] = $this->buildInvoiceDocument(
                 $order,
                 $nextIcv,
@@ -250,7 +246,6 @@ class ZatcaInvoiceService
     }
 
     /**
-     * إرسال الفواتير
      * @throws Exception
      */
     public function sendBulkInvoice(array $documents, SubscriberZatcaCredential $credentials): array
@@ -265,9 +260,6 @@ class ZatcaInvoiceService
         return $this->client->post('/submit/bulk', $payload);
     }
 
-    /**
-     * تخزين نتيجة الإرسال وتحديث last_icv / last_invoice_hash
-     */
     public function storeBulkResponse(
         Collection $orders,
         array $documents,
@@ -281,6 +273,7 @@ class ZatcaInvoiceService
 
         $maxIcv = $credentials->last_icv;
         $lastSuccessfulHash = $credentials->last_invoice_hash;
+        $ordersToInvoice = [];
 
         foreach ($response as $index => $invoiceResponse) {
 
@@ -354,33 +347,46 @@ class ZatcaInvoiceService
                 'created_at' => Carbon::now('Asia/Riyadh'),
                 'updated_at' => Carbon::now('Asia/Riyadh'),
             ];
-
-            // تحديث ICV
+            if (in_array($zatcaHttpStatus, [200, 202])) {
+                $ordersToInvoice[] = $order->id;
+            }
             if ($icv > $maxIcv) {
                 $maxIcv = $icv;
             }
 
-            // تحديث hash حتى لو فشلت الفاتورة
             if ($invoiceHash) {
                 $lastSuccessfulHash = $invoiceHash;
             }
         }
 
-        if (!empty($rows)) {
-            ZatcaDocument::insert($rows);
-            $stored = $rows;
-        }
+        DB::transaction(function () use (
+            $rows,
+            $ordersToInvoice,
+            $credentials,
+            $maxIcv,
+            $lastSuccessfulHash
+        ) {
 
-        $credentials->last_icv = $maxIcv;
-        $credentials->last_invoice_hash = $lastSuccessfulHash;
-        $credentials->save();
+            if (!empty($rows)) {
+                ZatcaDocument::insert($rows);
+            }
+
+            if (!empty($ordersToInvoice)) {
+                Order::whereIn('id', array_unique($ordersToInvoice))
+                    ->update(['invoiced' => true]);
+            }
+
+            $credentials->update([
+                'last_icv' => $maxIcv,
+                'last_invoice_hash' => $lastSuccessfulHash,
+            ]);
+
+        });
         return collect($rows)->map(function ($doc) {
-
             $doc['info_messages'] = json_decode($doc['info_messages'], true);
             $doc['error_messages'] = json_decode($doc['error_messages'], true);
             $doc['warning_messages'] = json_decode($doc['warning_messages'], true);
             $doc['request_payload'] = json_decode($doc['request_payload'], true);
-
             return $doc;
         });
     }

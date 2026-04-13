@@ -2,16 +2,16 @@
 
 namespace App\Http\Resources;
 
-use App\Models\SubscriberDoctorPriceSittings;
-use App\Services\PriceSittingsService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use App\Http\Resources\OrderProductResource;
-class OrderResource extends JsonResource
+class OrdersResource extends JsonResource
 {
     public function toArray($request): array
     {
-        $hide = $this->hide_price ?? false;
+        $hideMap = $request->get('hide_map', []);
+
+        $hide = $hideMap[$this->subscriber_id] ?? false;
+
         return [
             'id' => $this->id,
             'subscriber_id' => $this->subscriber_id,

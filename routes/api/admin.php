@@ -6,6 +6,7 @@ use App\Http\Controllers\DoctorController;
 use App\Http\Controllers\LabHeaderController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\OrderFileController;
+use App\Http\Controllers\OrderProductController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SpecializationController;
@@ -21,7 +22,7 @@ use Illuminate\Support\Facades\Route;
 Route::post('/register-company', [UserController::class, 'registerCompany']);
 
 
-Route::middleware(['auth:admin', 'admin.role','check.subscriber','check.zatca'])->group(function () {
+Route::middleware(['auth:admin', 'admin.role','check.subscriber'])->group(function () {
     Route::prefix('types')->group(function (){
         Route::post('/',[TypeController::class,'createType']);
         Route::get('/', [TypeController::class, 'listTypes']);
@@ -60,6 +61,7 @@ Route::middleware(['auth:admin', 'admin.role','check.subscriber','check.zatca'])
         Route::post('/', [DoctorController::class, 'store']);
         Route::get('/{id}', [DoctorController::class, 'show']);
         Route::delete('/{id}', [DoctorController::class, 'destroy']);
+        Route::get('/toggle-price-visibility/{doctorAccountId}',[DoctorController::class,'togglePriceVisibility']);
     });
 
     Route::prefix('specialization')->group(function (){
@@ -72,9 +74,14 @@ Route::middleware(['auth:admin', 'admin.role','check.subscriber','check.zatca'])
         Route::get('/filters',[OrderController::class,'OrdersWithFilters']);
         Route::post('/',[OrderController::class,'createOrder']);
         Route::put('/{id}',[OrderController::class,'updateOrder']);
-        Route::post('/invoice/bulk',[InvoiceController::class,'invoiceBulk']);
-        Route::post('credit-note',[InvoiceController::class,'submitCreditNote']);
+        Route::post('/invoice/bulk',[InvoiceController::class,'invoiceBulk'])->middleware('check.zatca');
+        Route::post('credit-note',[InvoiceController::class,'submitCreditNote'])->middleware('check.zatca');
         Route::get('/{id}/details',[OrderController::class,'orderDetails']);
+        Route::prefix('order-products')->group(function (){
+            Route::post('',[OrderProductController::class,'store']);
+            Route::put('/{id}',[OrderProductController::class,'update']);
+            Route::delete('/{id}',[OrderProductController::class,'destroy']);
+        });
     });
     Route::prefix('reports')->group(function () {
             Route::get('/revenue', [ReportController::class,'revenue']);

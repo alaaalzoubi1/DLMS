@@ -7,6 +7,7 @@ use App\Models\Clinic;
 use App\Models\Doctor;
 use App\Models\Doctor_Account;
 use App\Models\Order;
+use App\Models\SubscriberDoctorPriceSittings;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -189,7 +190,7 @@ class DoctorController extends Controller
                 'email' => $doctor->email,
                 'doctor'=> $doctor->doctor->only(['id','first_name','last_name']),
                 'clinic' => $doctor->doctor->clinic->only(['id','name','clinic_code'])
-        ]]);
+            ]]);
     }
 
 //    public function doctorPatients(Request $request): JsonResponse
@@ -324,6 +325,34 @@ class DoctorController extends Controller
             'message' => 'No authenticated user found'
         ], 404);
     }
+    public function togglePriceVisibility($doctorAccountId)
+    {
+        $subscriberId= auth('admin')->user()->subscriber_id;
+        if (Doctor_Account::where('id',$doctorAccountId)->exists()){
 
 
+            $setting = SubscriberDoctorPriceSittings::firstOrCreate(
+                [
+                    'doctor_account_id' => $doctorAccountId,
+                    'subscriber_id' => $subscriberId,
+                ],
+                [
+                    'hide_prices' => false
+                ]
+            );
+
+            $setting->hide_prices = !$setting->hide_prices;
+            $setting->save();
+
+            return response()->json([
+                'message' => $setting->hide_prices
+                    ? 'Prices are now hidden.'
+                    : 'Prices are now visible.',
+                'hidden' => $setting->hide_prices
+            ]);
+        }
+        return response()->json([
+            'message' => 'doctor not found!'
+        ],404);
+    }
 }
