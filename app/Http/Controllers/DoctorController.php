@@ -355,4 +355,75 @@ class DoctorController extends Controller
             'message' => 'doctor not found!'
         ],404);
     }
+    public function toggleFinancialStatsVisibility($doctorAccountId)
+    {
+        $subscriberId = auth('admin')->user()->subscriber_id;
+
+        if (!Doctor_Account::where('id', $doctorAccountId)->exists()) {
+            return response()->json([
+                'message' => 'Doctor not found!'
+            ], 404);
+        }
+
+        $setting = SubscriberDoctorPriceSittings::firstOrCreate(
+            [
+                'doctor_account_id' => $doctorAccountId,
+                'subscriber_id' => $subscriberId,
+            ],
+            [
+                'hide_prices' => false,
+                'hide_financial_stats' => false,
+            ]
+        );
+
+        $setting->hide_financial_stats = !$setting->hide_financial_stats;
+        $setting->save();
+
+        return response()->json([
+            'message' => $setting->hide_financial_stats
+                ? 'Financial statistics are now hidden.'
+                : 'Financial statistics are now visible.',
+            'hidden' => $setting->hide_financial_stats
+        ]);
+    }
+    public function doctorFinancialStats(Request $request): JsonResponse
+    {
+        $doctor = auth('api')->user()->doctor;
+        $request->validate([
+            'subscriber_id' => 'required|exists:subscribers,id',
+            'status' => 'nullable|in:pending,completed,cancelled',
+            'from' => 'nullable|date',
+            'to' => 'nullable|date',
+        ]);
+
+        $doctorId = $doctor->id;
+        $subscriberId = $request->subscriber_id;
+        $this->authorize('viewFinancialStats', [Doctor_Account::class, $subscriberId]);
+        $stats = Order::where('doctor_id', $doctorId)
+            ->where('subscriber_id', $subscriberId)
+
+            ->when($request->filled('status'), fn ($q) =>
+            $q->where('status', $request->status)
+            )
+
+            ->when($request->filled('from'), fn ($q) =>
+            $q->whereDate('created_at', '>=', $request->from)
+            )
+
+            ->when($request->filled('to'), fn ($q) =>
+            $q->whereDate('created_at', '<=', $request->to)
+            )
+
+            ->selectRaw('
+        SUM(cost) as total_cost,
+        SUM(paid) as total_paid,
+        SUM(cost - paid) as remaining
+    ')
+            ->first();
+        return response()->json([
+            'total_cost' => $stats->total_cost ?? 0,
+            'total_paid' => $stats->total_paid ?? 0,
+            'remaining'  => $stats->remaining ?? 0,
+        ]);
+    }
 }

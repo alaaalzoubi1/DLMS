@@ -36,6 +36,7 @@ return new class extends Migration
             $table->index(['subscriber_id', 'created_at']);
             $table->index(['doctor_id', 'created_at']);
             $table->index(['status', 'created_at']);
+            $table->index(['doctor_id', 'subscriber_id']);
             $table->timestamps();
         });
     }

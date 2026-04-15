@@ -62,9 +62,10 @@ Route::middleware(['auth:admin', 'admin.role','check.subscriber'])->group(functi
         Route::get('/{id}', [DoctorController::class, 'show']);
         Route::delete('/{id}', [DoctorController::class, 'destroy']);
         Route::get('/toggle-price-visibility/{doctorAccountId}',[DoctorController::class,'togglePriceVisibility']);
+        Route::get('toggle-financial-stats-visibility/{doctorAccountId}',[DoctorController::class,'toggleFinancialStatsVisibility']);
     });
 
-    Route::prefix('specialization')->group(function (){
+    Route::prefix('specializations')->group(function (){
         Route::post('/', [SpecializationController::class, 'store']);
         Route::get('/', [SpecializationController::class, 'getSpecializationsBySubscriber']);
         Route::delete('/{id}',[SpecializationController::class,'delete']);

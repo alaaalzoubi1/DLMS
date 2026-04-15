@@ -17,6 +17,7 @@ return new class extends Migration
             $table->unsignedBigInteger('subscriber_id');
 
             $table->boolean('hide_prices')->default(false);
+            $table->boolean('hide_financial_stats')->default(false);
 
             $table->timestamps();
 

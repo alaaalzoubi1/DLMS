@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Route;
 Route::post('/register', [DoctorController::class, 'doctorRegister']);
 Route::post('/login', [DoctorController::class, 'doctorLogin']);
 Route::middleware(['auth:api'])->group(function () {
+    Route::get('FinancialStats',[DoctorController::class,'doctorFinancialStats']);
     Route::get('/clinic-subscribers', [ClinicSubscriberController::class, 'index']);
     Route::post('/clinic-subscribers', [ClinicSubscriberController::class, 'store']);
     Route::delete('/clinic-subscribers/{subscriber}', [ClinicSubscriberController::class, 'destroy']);

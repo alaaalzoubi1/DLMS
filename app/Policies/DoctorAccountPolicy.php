@@ -3,11 +3,19 @@
 namespace App\Policies;
 
 use App\Models\Doctor_Account;
+use App\Models\SubscriberDoctorPriceSittings;
 use App\Models\User;
 use Illuminate\Auth\Access\Response;
 
 class DoctorAccountPolicy
 {
+    public function viewFinancialStats(Doctor_Account $user, int $subscriberId): bool
+    {
+        return !SubscriberDoctorPriceSittings::where('doctor_account_id', $user->id)
+            ->where('subscriber_id', $subscriberId)
+            ->where('hide_financial_stats', true)
+            ->exists();
+    }
     /**
      * Determine whether the user can view any models.
      */
