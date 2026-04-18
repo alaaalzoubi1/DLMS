@@ -7,6 +7,7 @@ use App\Http\Controllers\LabHeaderController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\OrderFileController;
 use App\Http\Controllers\OrderProductController;
+use App\Http\Controllers\OrderProductHistoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SpecializationController;
@@ -79,6 +80,10 @@ Route::middleware(['auth:admin', 'admin.role','check.subscriber'])->group(functi
         Route::post('credit-note',[InvoiceController::class,'submitCreditNote'])->middleware('check.zatca');
         Route::get('/{id}/details',[OrderController::class,'orderDetails']);
         Route::prefix('order-products')->group(function (){
+            Route::prefix('history')->group(function (){
+                Route::get('/', [OrderProductHistoryController::class, 'index']);
+                Route::get('/{orderProductId}', [OrderProductHistoryController::class, 'orderProductHistory']);
+            });
             Route::post('',[OrderProductController::class,'store']);
             Route::put('/{id}',[OrderProductController::class,'update']);
             Route::delete('/{id}',[OrderProductController::class,'destroy']);
@@ -87,6 +92,7 @@ Route::middleware(['auth:admin', 'admin.role','check.subscriber'])->group(functi
     Route::prefix('reports')->group(function () {
             Route::get('/revenue', [ReportController::class,'revenue']);
         Route::get('/doctors-due', [ReportController::class,'doctorsDue']);
+        Route::get('/top-technicians', [OrderProductHistoryController::class, 'topTechnicians']);
     });
     Route::post('doctor-orders',[OrderController::class,'listDoctorInvoices']);
     Route::post('from-to-orders',[OrderController::class,'listFromToInvoices']);

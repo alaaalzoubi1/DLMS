@@ -13,7 +13,7 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
 class Doctor_Account extends Authenticatable implements ShouldQueue , JWTSubject
 {
     use HasFactory,HasApiTokens,SoftDeletes;
-    protected $guard = ["api"];
+    protected array $guard = ["api"];
     protected $fillable = [
         'email',
         'password',

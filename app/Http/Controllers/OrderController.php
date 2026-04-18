@@ -12,6 +12,7 @@ use App\Http\Resources\OrdersResource;
 use App\Jobs\SendFirebaseNotificationJob;
 use App\Models\Category;
 use App\Models\OrderDiscount;
+use App\Models\OrderProductHistory;
 use App\Models\Subscriber;
 use App\Models\Type;
 use App\Services\PriceSittingsService;
@@ -32,6 +33,15 @@ use Kreait\Firebase\Exception\Auth\AuthError;
 
 class OrderController extends Controller
 {
+    private function logOrderProductHistory($orderProductId, $user, $subscriberId)
+    {
+        OrderProductHistory::create([
+            'order_product_id'   => $orderProductId,
+            'user_id'            => $user->id,
+            'subscriber_id'      => $subscriberId,
+            'specialization_name'=> $user->specialization_name ?? null,
+        ]);
+    }
     private function validateOrderRequest($data)
     {
         return Validator::make($data, [
@@ -58,9 +68,14 @@ class OrderController extends Controller
     {
         return User::join('specialization__users', 'users.id', '=', 'specialization__users.user_id')
             ->join('specialization__subscribers', 'specialization__users.subscriber_specializations_id', '=', 'specialization__subscribers.id')
+            ->join('specializations', 'specializations.id', '=', 'specialization__subscribers.specializations_id')
             ->where('specialization__subscribers.id', $specializationSubscriberId)
             ->where('specialization__subscribers.subscriber_id', $subscriberId)
-            ->select('users.*', 'specialization__users.id as specialization_users_id')
+            ->select(
+                'users.*',
+                'specialization__users.id as specialization_users_id',
+                'specializations.name as specialization_name'
+            )
             ->orderBy('users.working_on', 'asc')
             ->first();
     }
@@ -97,9 +112,6 @@ class OrderController extends Controller
         return $totalCost;
     }
 
-
-
-
     private function incrementUserWorkingOn($userId)
     {
         $user = User::findOrFail($userId);
@@ -117,33 +129,41 @@ class OrderController extends Controller
     private function createOrderProducts($products, $orderId, $subscriber_id)
     {
         foreach ($products as $product) {
-            if (array_key_exists('specialization_subscriber_id',$product))
-            {
+
+            $user = null;
+
+            if (array_key_exists('specialization_subscriber_id', $product)) {
+
                 $user = $this->fetchUserWithSpecialization(
                     $product['specialization_subscriber_id'],
                     $subscriber_id
                 );
+
                 if (!$user) {
-                    throw new Exception("No user found with the required specialization for subscriber ID {$subscriber_id}.");
+                    throw new Exception("No user found for specialization.");
                 }
+
                 $this->incrementUserWorkingOn($user->id);
             }
+
             $originalProduct = Product::find($product['product_id']);
 
-
-            OrderProduct::create([
-                'product_id'               => $product['product_id'],
-                'order_id'                 => $orderId,
-                'tooth_color_id'           => $product['tooth_color_id'],
-                'tooth_numbers'             => $product['tooth_numbers'],
-                'specialization_users_id'  => $user->specialization_users_id ?? null,
-                'note'                     => $product['note'] ?? null,
-                'unit_price' => $originalProduct->final_price,
-                'product_name' => $originalProduct->name
+            $orderProduct = OrderProduct::create([
+                'product_id'              => $product['product_id'],
+                'order_id'                => $orderId,
+                'tooth_color_id'          => $product['tooth_color_id'],
+                'tooth_numbers'           => $product['tooth_numbers'],
+                'specialization_users_id' => $user->specialization_users_id ?? null,
+                'note'                    => $product['note'] ?? null,
+                'unit_price'              => $originalProduct->final_price,
+                'product_name'            => $originalProduct->name
             ]);
+
+            if ($user) {
+                $this->logOrderProductHistory($orderProduct->id, $user, $subscriber_id);
+            }
         }
     }
-
     public function createOrder(Request $request)
     {
         $subscriber_id = Auth::guard('admin')->user()->subscriber_id;
@@ -183,7 +203,7 @@ class OrderController extends Controller
         }
     }
 
-    public function updateOrderProductSpecializationUser(Request $request): \Illuminate\Http\JsonResponse
+    public function updateOrderProductSpecializationUser(Request $request): JsonResponse
     {
         $data = $request->only(['order_product_id', 'specialization_subscriber_id']);
 
@@ -199,16 +219,19 @@ class OrderController extends Controller
         try {
             DB::beginTransaction();
 
-            // Fetch the order product
-            $orderProduct = OrderProduct::with('product.category')->findOrFail($data['order_product_id']);
+            $orderProduct = OrderProduct::with('product.category', 'order')->findOrFail($data['order_product_id']);
 
             $currentUser = auth('admin')->user();
-            $this->decrementUserWorkingOn($currentUser->getAuthIdentifier());
 
-            $newUser = $this->fetchUserWithSpecialization($data['specialization_subscriber_id'], $orderProduct->order->subscriber_id);
+            $this->decrementUserWorkingOn($currentUser->id);
+
+            $newUser = $this->fetchUserWithSpecialization(
+                $data['specialization_subscriber_id'],
+                $orderProduct->order->subscriber_id
+            );
 
             if (!$newUser) {
-                throw new Exception("No user found for the provided specialization_subscriber_id and subscriber_id.");
+                throw new Exception("No user found for specialization.");
             }
 
             $orderProduct->specialization_users_id = $newUser->specialization_users_id;
@@ -216,21 +239,25 @@ class OrderController extends Controller
 
             $this->incrementUserWorkingOn($newUser->id);
 
+            $this->logOrderProductHistory($orderProduct->id, $newUser, $orderProduct->order->subscriber_id);
+
             DB::commit();
-            // Variables: $categoryName, $techName
+
             $title = "طلب '{$orderProduct->product->category->name}' جديد";
             $body = "وصلتك حالة جديدة يا '{$newUser->first_name}'!";
             $token = $newUser->FCM_token;
-            if ($token)
+
+            if ($token) {
                 SendFirebaseNotificationJob::dispatch($token, $title, $body);
+            }
 
             return response()->json(['message' => 'Order product updated successfully.'], 200);
-        } catch (Exception $e) {
+
+        } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
-
     public function listDoctorInvoices(Request $request)
     {
         $validated = $request->validate([
@@ -744,6 +771,7 @@ class OrderController extends Controller
         }
 
         $order = $orderProduct->order;
+
         if (!$order) {
             return response()->json(['error' => 'Order not found for this product.'], 404);
         }
@@ -769,7 +797,6 @@ class OrderController extends Controller
                 $subscriberId
             );
 
-
             if (!$user) {
                 DB::rollBack();
                 return response()->json([
@@ -783,12 +810,17 @@ class OrderController extends Controller
                 'specialization_users_id' => $user->specialization_users_id,
             ]);
 
+            $this->logOrderProductHistory($orderProduct->id, $user, $subscriberId);
+
             DB::commit();
+
             $title = "طلب '{$orderProduct->product->category->name}' جديد";
-            $body = "وصلتك حالة جديدة يا '{$user->first_name} '!";
+            $body = "وصلتك حالة جديدة يا '{$user->first_name}'!";
             $token = $user->FCM_token;
-            if ($token)
+
+            if ($token) {
                 SendFirebaseNotificationJob::dispatch($token, $title, $body);
+            }
 
             return response()->json([
                 'message' => 'Technician assigned successfully.',
@@ -802,8 +834,7 @@ class OrderController extends Controller
                 'details' => $e->getMessage()
             ], 500);
         }
-    }
-    public function orderDetails($id)
+    }    public function orderDetails($id)
     {
         $order = Order::with([
             'orderProducts',

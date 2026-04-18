@@ -109,7 +109,7 @@ class DatabaseSeeder extends Seeder
             'password' => bcrypt('12345678'),
         ]);
 
-        $admin->assignRole('super_admin');
+        $super_admin->assignRole('super_admin');
     }
 
 }
