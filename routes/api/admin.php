@@ -92,6 +92,7 @@ Route::middleware(['auth:admin', 'admin.role','check.subscriber'])->group(functi
     Route::prefix('reports')->group(function () {
             Route::get('/revenue', [ReportController::class,'revenue']);
         Route::get('/doctors-due', [ReportController::class,'doctorsDue']);
+        Route::get('/clinic-due',[ReportController::class,'clinicDoctorsDue']);
         Route::get('/top-technicians', [OrderProductHistoryController::class, 'topTechnicians']);
     });
     Route::get('home-page',[SubscriberController::class,'dashboardStats']);

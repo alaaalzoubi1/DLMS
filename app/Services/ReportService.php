@@ -51,4 +51,26 @@ class ReportService
             ->orderByDesc('total_due')
             ->get();
     }
+    public function clinicDoctorsDue($subscriberId, $clinicId): Collection
+    {
+        return DB::table('orders')
+            ->join('doctors', 'orders.doctor_id', '=', 'doctors.id')
+
+            ->where('orders.subscriber_id', $subscriberId)
+            ->where('doctors.clinic_id', $clinicId)
+            ->where('orders.status', '!=', 'cancelled')
+
+            ->selectRaw("
+            doctors.id as doctor_id,
+            CONCAT(doctors.first_name,' ',doctors.last_name) as doctor_name,
+            SUM(orders.cost) as total_cost,
+            SUM(orders.paid) as total_paid,
+            SUM(orders.cost - orders.paid) as total_due
+        ")
+
+            ->groupBy('doctors.id','doctors.first_name','doctors.last_name')
+            ->havingRaw('SUM(orders.cost - orders.paid) > 0')
+            ->orderByDesc('total_due')
+            ->get();
+    }
 }

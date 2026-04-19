@@ -55,4 +55,29 @@ class ReportController extends Controller
             'data' => $report
         ]);
     }
+    public function clinicDoctorsDue(Request $request)
+    {
+        $request->validate([
+            'clinic_id' => 'required|exists:clinics,id'
+        ]);
+
+        $subscriberId = auth('admin')->user()->subscriber_id;
+        $clinicId = $request->clinic_id;
+
+        $doctors = $this->reportService->clinicDoctorsDue($subscriberId, $clinicId);
+
+        $clinicTotals = [
+            'total_cost' => $doctors->sum('total_cost'),
+            'total_paid' => $doctors->sum('total_paid'),
+            'total_due'  => $doctors->sum('total_due'),
+        ];
+
+        return response()->json([
+            'success' => true,
+
+            'clinic_totals' => $clinicTotals,
+
+            'doctors' => $doctors
+        ]);
+    }
 }
