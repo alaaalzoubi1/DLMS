@@ -27,6 +27,7 @@ return new class extends Migration
             $table->foreign('specialization_users_id')->references('id')->on('specialization__users')->onDelete('cascade');
             $table->enum('status', ['working', 'finished'])->default('working');
             $table->timestamps();
+            $table->index(['order_id', 'specialization_users_id']);
         });
     }
 

@@ -94,6 +94,7 @@ Route::middleware(['auth:admin', 'admin.role','check.subscriber'])->group(functi
         Route::get('/doctors-due', [ReportController::class,'doctorsDue']);
         Route::get('/top-technicians', [OrderProductHistoryController::class, 'topTechnicians']);
     });
+    Route::get('home-page',[SubscriberController::class,'dashboardStats']);
     Route::post('doctor-orders',[OrderController::class,'listDoctorInvoices']);
     Route::post('from-to-orders',[OrderController::class,'listFromToInvoices']);
     Route::post('add-category',[CategoryController::class,'store']);

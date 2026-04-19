@@ -189,5 +189,59 @@ class SubscriberController extends Controller
             ], 500);
         }
     }
+    public function dashboardStats(Request $request): JsonResponse
+    {
+        $subscriberId = auth('admin')->user()->subscriber_id;
 
+        $period = $request->get('period', 'all');
+
+        $from = match ($period) {
+            'today' => now()->startOfDay(),
+            'week'  => now()->startOfWeek(),
+            'month' => now()->startOfMonth(),
+            default => null,
+        };
+
+        $cacheKey = "dashboard_stats_{$subscriberId}_{$period}";
+
+        $stats = Cache::remember($cacheKey, now()->addMinutes(2), function () use ($subscriberId, $from) {
+
+            return DB::table('orders')
+                ->where('orders.subscriber_id', $subscriberId)
+
+                ->when($from, fn ($q) =>
+                $q->where('orders.created_at', '>=', $from)
+                )
+
+                ->selectRaw('
+                COUNT(*) as total_orders,
+
+                SUM(
+                    CASE WHEN EXISTS (
+                        SELECT 1 FROM order_products op
+                        WHERE op.order_id = orders.id
+                        AND op.specialization_users_id IS NULL
+                    )
+                    THEN 1 ELSE 0 END
+                ) as needs_assignment,
+
+                SUM(CASE WHEN orders.status = "pending" THEN 1 ELSE 0 END) as pending_orders,
+                SUM(CASE WHEN orders.status = "completed" THEN 1 ELSE 0 END) as completed_orders,
+                SUM(CASE WHEN orders.status = "cancelled" THEN 1 ELSE 0 END) as cancelled_orders,
+
+                SUM(CASE WHEN orders.invoiced = 0 THEN 1 ELSE 0 END) as not_invoiced_orders
+            ')
+                ->first();
+        });
+
+        return response()->json([
+            'period'            => $period,
+            'total_orders'      => (int) $stats->total_orders,
+            'needs_assignment'  => (int) $stats->needs_assignment,
+            'pending'           => (int) $stats->pending_orders,
+            'completed'         => (int) $stats->completed_orders,
+            'cancelled'         => (int) $stats->cancelled_orders,
+            'not_invoiced'      => (int) $stats->not_invoiced_orders,
+        ]);
+    }
 }
