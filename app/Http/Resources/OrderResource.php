@@ -23,6 +23,9 @@ class OrderResource extends JsonResource
 
             'cost' => $hide ? null : $this->cost,
             'paid' => $hide ? null : $this->paid,
+            'receive' => $this->receive,
+            'delivery' => $this->delivery,
+            'impression_type' => $this->impression_type,
 
             'invoiced' => $this->invoiced,
 
@@ -44,6 +47,7 @@ class OrderResource extends JsonResource
             'credit_notes' => $this->whenLoaded('creditNotes'),
 
             'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
         ];
     }
 }
