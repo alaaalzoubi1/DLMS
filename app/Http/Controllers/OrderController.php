@@ -546,7 +546,17 @@ class OrderController extends Controller
         $admin = auth('admin')->user();
 
         $query = Order::where('subscriber_id',$admin->subscriber_id);
+        if ($request->boolean('rejected')) {
+            $query
+                ->whereHas('zatcaDocument', function ($q) {
+                    $q->where('invoice_type', 'TAX_INVOICE');
+                })
 
+                ->whereDoesntHave('zatcaDocument', function ($q) {
+                    $q->where('invoice_type', 'TAX_INVOICE')
+                        ->where('zatca_http_status', '!=', 400);
+                });
+        }
         if ($request->filled('doctor_id')) {
             $query->where('doctor_id', $request->doctor_id);
         }
@@ -588,7 +598,9 @@ class OrderController extends Controller
             'doctor:id,clinic_id,first_name,last_name',
             'doctor.clinic:id,tax_number,name',
             'discount',
-            'files' => function($q) { $q->Uploaded();}])
+            'files' => function($q) { $q->Uploaded();},
+            'zatcaDocument:id,order_id,invoice_type,zatca_http_status,updated_at',
+        ])
             ->latest()
             ->get();
 
