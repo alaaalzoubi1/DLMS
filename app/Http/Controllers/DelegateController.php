@@ -98,7 +98,7 @@ class DelegateController extends Controller
     {
         $subscriberId = auth('admin')->user()->subscriber_id;
 
-        $orders = Order::with('doctor:id,first_name,last_name,clinic_id','doctor.clinic:id,name')
+        $orders = Order::with('doctor:id,first_name,last_name,clinic_id','doctor.clinic:id,name','doctor.clinic.address')
             ->where('subscriber_id', $subscriberId)
             ->whereNull('receive')
             ->whereNull('delivery')
@@ -115,7 +115,7 @@ class DelegateController extends Controller
     {
         $subscriberId = auth('admin')->user()->subscriber_id;
 
-        $orders = Order::with('doctor:id,first_name,last_name,clinic_id','doctor.clinic:id,name')
+        $orders = Order::with('doctor:id,first_name,last_name,clinic_id','doctor.clinic:id,name','doctor.clinic.address')
             ->where('subscriber_id', $subscriberId)
             ->whereNotNull('receive')
             ->whereNull('delivery')
