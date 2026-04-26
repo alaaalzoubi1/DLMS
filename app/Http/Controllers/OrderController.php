@@ -586,9 +586,6 @@ class OrderController extends Controller
             $query->where('type_id', $request->type_id);
         }
 
-        if ($request->filled('subscriber_id')) {
-            $query->where('subscriber_id', $request->subscriber_id);
-        }
 
 
         $orders = $query->with(['type:id,type',
@@ -602,7 +599,7 @@ class OrderController extends Controller
             'zatcaDocument:id,order_id,invoice_type,zatca_http_status,updated_at',
         ])
             ->latest()
-            ->get();
+            ->paginate();
 
         return response()->json($orders, 200);
     }

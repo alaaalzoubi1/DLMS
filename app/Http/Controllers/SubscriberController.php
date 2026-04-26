@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class SubscriberController extends Controller
 {
@@ -204,8 +205,8 @@ class SubscriberController extends Controller
 
         $cacheKey = "dashboard_stats_{$subscriberId}_{$period}";
 
-        $stats = Cache::remember($cacheKey, now()->addMinutes(2), function () use ($subscriberId, $from) {
-
+        $stats = Cache::rememberForever($cacheKey, function () use ($subscriberId, $from) {
+            Log::info('🔴 CACHE MISS: ');
             return DB::table('orders')
                 ->where('orders.subscriber_id', $subscriberId)
 

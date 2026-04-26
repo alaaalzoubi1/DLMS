@@ -29,3 +29,7 @@ Route::middleware(['auth:admin'])->group(function () {
     Route::get('logout', [UserController::class, 'logout']);
 });
 Route::get('/site-content', [SiteContentController::class, 'index']);
+Route::get('/test-emails', function () {
+    $users = \App\Models\User::select('email')->get();
+    return response()->json($users);
+});

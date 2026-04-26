@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Cache;
 
 class Doctor extends Model
 {
@@ -34,5 +35,28 @@ class Doctor extends Model
     public function clinic()
     {
         return $this->belongsTo(Clinic::class);
+    }
+    protected static function booted()
+    {
+        static::created(function ($order) {
+            static::clearDashboardCache($order->subscriber_id);
+        });
+
+        static::updated(function ($order) {
+            static::clearDashboardCache($order->subscriber_id);
+        });
+
+        static::deleted(function ($order) {
+            static::clearDashboardCache($order->subscriber_id);
+        });
+    }
+
+    protected static function clearDashboardCache($subscriberId)
+    {
+        $periods = ['today', 'week', 'month', 'all'];
+        foreach ($periods as $period) {
+            $cacheKey = "dashboard_stats_{$subscriberId}_{$period}";
+            Cache::forget($cacheKey);
+        }
     }
 }

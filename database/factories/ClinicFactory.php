@@ -2,25 +2,21 @@
 
 namespace Database\Factories;
 
+use App\Models\Clinic;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Str;
 
-/**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Clinic>
- */
 class ClinicFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
-    public function definition()
+    protected $model = Clinic::class;
+
+    public function definition(): array
     {
         return [
-            'name' => fake()->company(),
-            'has_special_price' => false,
-            'clinic_code' => fake()->uuid(),
+            'name' => $this->faker->company() . ' Clinic',
+            'has_special_price' => $this->faker->boolean(30),
+            'tax_number' => $this->faker->boolean(50) ? $this->faker->numerify('TAX-######') : null,
+            'clinic_code' => strtoupper($this->faker->unique()->bothify('CLI###')),
+            'commercial_registration' => $this->faker->numerify('CR#######'),
         ];
     }
 }

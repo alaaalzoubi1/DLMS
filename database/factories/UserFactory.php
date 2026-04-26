@@ -2,48 +2,34 @@
 
 namespace Database\Factories;
 
-use App\Models\Subscriber;
 use App\Models\User;
-use Illuminate\Database\Eloquent\Factories\Factory;
+use App\Models\Subscriber;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Factories\Factory;
 
-/**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
- */
 class UserFactory extends Factory
 {
-    /**
-     * The current password being used by the factory.
-     */
-    protected static ?string $password;
-
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     protected $model = User::class;
 
-    public function definition()
+    public function definition(): array
     {
         return [
-            'subscriber_id' => \App\Models\Subscriber::factory(),
-            'email' => fake()->unique()->safeEmail(),
-            'password' => bcrypt('12345678'),
-            'first_name' => fake()->firstName(),
-            'last_name' => fake()->lastName(),
-            'is_available' => true,
-            'working_on' => 0,
+            'first_name' => $this->faker->firstName(),
+            'last_name' => $this->faker->lastName(),
+            'email' => $this->faker->unique()->safeEmail(),
+            'password' => Hash::make('12345678'),
+            'subscriber_id' => Subscriber::factory(),
+            'FCM_token' => $this->faker->optional()->sha256(),
         ];
     }
-    /**
-     * Indicate that the model's email address should be unverified.
-     */
-    public function unverified(): static
+
+    public function configure()
     {
-        return $this->state(fn (array $attributes) => [
-            'email_verified_at' => null,
-        ]);
+        return $this->afterCreating(function (User $user) {
+
+            $user->assignRole('admin');
+
+        });
     }
 }
