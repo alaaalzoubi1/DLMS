@@ -148,15 +148,8 @@ class SubscriberController extends Controller
     {
         $admin = auth('admin')->user();
 
-        $address = $admin->subscribers
-            ->address()
-            ->first();
-
-        if (!$address) {
-            return response()->json([
-                'message' => 'Clinic not found'
-            ], 404);
-        }
+        // Get existing address or null
+        $address = $admin->subscribers->address()->first();
 
         $validated = $request->validate([
             'street' => 'sometimes|string|max:255',
@@ -169,18 +162,18 @@ class SubscriberController extends Controller
         ]);
 
         try {
-            DB::transaction(function () use ($address, $validated) {
-
+            DB::transaction(function () use ($address, $validated, $admin, &$newAddress) {
                 if ($address) {
                     $address->update($validated);
+                    $newAddress = $address;
                 } else {
-                    $address->create($validated);
+                    $newAddress = $admin->subscribers->address()->create($validated);
                 }
             });
 
             return response()->json([
                 'message' => 'Address updated successfully',
-                'address' => $address
+                'address' => $newAddress,
             ]);
 
         } catch (\Exception $e) {

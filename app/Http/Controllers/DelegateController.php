@@ -24,7 +24,7 @@ class DelegateController extends Controller
                 'string',
                 'email',
                 'max:255',
-                Rule::unique(User::class)->ignore(User::where('email', $request->input('email'))->first()),
+                Rule::unique(User::class),
             ],
             'password' => 'required|string|min:8',
             'confirmed_password' => 'required|same:password',
@@ -56,8 +56,8 @@ class DelegateController extends Controller
         $token = Auth::guard('admin')->attempt($credentials);
 
         return response()->json([
-            'message' => 'Technical registered successfully',
-            'company_code' => strtoupper($validatedData['company_code']),
+            'message' => 'Delegate registered successfully',
+            'company_code' => $validatedData['company_code'],
             'first_name' => $validatedData['first_name'],
             'last_name' => $validatedData['last_name'],
             'trial_start_at' => $subscriber->trial_start_at,
