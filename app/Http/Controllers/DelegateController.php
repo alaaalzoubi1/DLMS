@@ -146,25 +146,22 @@ class DelegateController extends Controller
 
         $order->receive = $request->receive;
         $order->save();
-        $admin = $order->subscriber->users->first()->FCM_token;
-        $doctor = $order->doctor->account->FCM_token;
+
+        $adminUser = $order->subscriber->users->first();
+        $adminToken = $adminUser ? $adminUser->FCM_token : null;
+
+        $doctorAccount = $order->doctor->account;
+        $doctorToken = $doctorAccount ? $doctorAccount->FCM_token : null;
+
         $title = "استلام طلب";
         $body = "تم استلام الطلب رقم {$order->id} للمريض {$order->patient_name} في {$order->receive}.";
 
-        if ($admin) {
-            SendFirebaseNotificationJob::dispatch(
-                $admin,
-                $title,
-                $body
-            );
+        if ($adminToken) {
+            SendFirebaseNotificationJob::dispatch($adminToken, $title, $body);
         }
 
-        if ($doctor) {
-            SendFirebaseNotificationJob::dispatch(
-                $doctor,
-                $title,
-                $body
-            );
+        if ($doctorToken) {
+            SendFirebaseNotificationJob::dispatch($doctorToken, $title, $body);
         }
 
         return response()->json([
@@ -174,7 +171,6 @@ class DelegateController extends Controller
                 'receive' => $order->receive,
             ]
         ]);
-
     }
     public function deliverOrder(Request $request)
     {
@@ -190,11 +186,14 @@ class DelegateController extends Controller
 
         $order->delivery = $request->delivery;
         $order->save();
-        $doctor = $order->doctor->account->FCM_token;
+        $doctorAccount = $order->doctor->account;
+        $doctorToken = $doctorAccount ? $doctorAccount->FCM_token : null;
+
+
         $title = "تم توصيل الطلب بنجاح";
         $body  = "تم توصيل الطلب رقم {$order->id} للمريض {$order->patient_name}.";
-        if ($doctor)
-            SendFirebaseNotificationJob::dispatch($doctor,$title,$body);
+        if ($doctorToken)
+            SendFirebaseNotificationJob::dispatch($doctorToken,$title,$body);
         return response()->json([
             'message' => 'تم تسجيل وقت التوصيل بنجاح',
             'data' => [
