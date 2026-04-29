@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
+use Illuminate\Support\Facades\Cache;
 
 class Order extends Model
 {
@@ -22,7 +23,8 @@ class Order extends Model
         'impression_type' => ImpressionType::class,
         'delivery' => 'datetime',
         'receive' => 'datetime',
-        'cost' => 'decimal:2'
+        'cost' => 'decimal:2',
+        'paid' => 'decimal:2'
     ];
     protected $appends = ['impression_type_label'];
 
@@ -79,5 +81,29 @@ class Order extends Model
     public function orderProducts(): HasMany
     {
         return $this->hasMany(OrderProduct::class);
+    }
+    protected static function booted()
+    {
+        static::created(function ($order) {
+            \Log::info('Order created event fired for subscriber: ' . $order->subscriber_id);
+            static::clearDashboardCache($order->subscriber_id);
+        });
+
+        static::updated(function ($order) {
+            static::clearDashboardCache($order->subscriber_id);
+        });
+
+        static::deleted(function ($order) {
+            static::clearDashboardCache($order->subscriber_id);
+        });
+    }
+
+    protected static function clearDashboardCache($subscriberId)
+    {
+        $periods = ['today', 'week', 'month', null];
+        foreach ($periods as $period) {
+            $cacheKey = "dashboard_stats_{$subscriberId}_{$period}";
+            Cache::forget($cacheKey);
+        }
     }
 }

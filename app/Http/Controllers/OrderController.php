@@ -924,7 +924,7 @@ class OrderController extends Controller
 
         return response()->json(['order' => $order], 200);
     }
-
+//TODO can't modify discount if the order invoiced
     public function applyDiscount(StoreOrderDiscountRequest $request)
     {
         $order = Order::with('discount','doctor.account')->findOrFail($request->order_id);

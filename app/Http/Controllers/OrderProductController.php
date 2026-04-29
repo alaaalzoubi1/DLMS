@@ -28,6 +28,7 @@ class OrderProductController extends Controller
     }
     private function recalculateOrderCost($order)
     {
+        //TODO handel the total cost with the discount.
         $total = $order->orderProducts->sum(function ($item) {
             return count($item->tooth_numbers) * $item->unit_price;
         });
