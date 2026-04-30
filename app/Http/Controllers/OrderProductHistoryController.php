@@ -61,6 +61,7 @@ class OrderProductHistoryController extends Controller
             ->groupBy('user_id')
             ->limit(10)
             ->with('user:id,first_name,last_name')
+            ->orderByDesc('total_work')
             ->get();
         return response()->json($top);
     }
