@@ -69,7 +69,7 @@ class DoctorController extends Controller
                 'message' => 'Invalid ID format',
             ], 400);
         }
-        $doctors = Doctor::where('clinic_id',$id)->get();
+        $doctors = Doctor::with('account:doctor_id,id,email')->where('clinic_id',$id)->get();
         return response()->json([
             'doctors' =>$doctors
         ]);
