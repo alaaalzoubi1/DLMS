@@ -43,10 +43,10 @@ class DoctorController extends Controller
     /**
      * Display the specified doctor.
      *
-     * @param  int  $id
+     * @param int $id
      * @return \Illuminate\Http\JsonResponse
      */
-    public function show($id)
+    public function show(int $id)
     {
         // Find the doctor by ID
         $doctor = Doctor::find($id);
@@ -77,10 +77,10 @@ class DoctorController extends Controller
     /**
      * Remove the specified doctor from storage.
      *
-     * @param  int  $id
+     * @param int $id
      * @return \Illuminate\Http\JsonResponse
      */
-    public function destroy($id)
+    public function destroy(int $id)
     {
         // Find the doctor by ID
         $doctor = Doctor::find($id);
@@ -424,6 +424,18 @@ class DoctorController extends Controller
             'total_cost' => $stats->total_cost ?? 0,
             'total_paid' => $stats->total_paid ?? 0,
             'remaining'  => $stats->remaining ?? 0,
+        ]);
+    }
+    public function doctors()
+    {
+        $subscribers = auth('admin')->user()->subscribers()->with('clinics.doctors')->get();
+
+        $doctors = $subscribers->flatMap(function ($subscriber) {
+            return $subscriber->clinics->flatMap->doctors;
+        })->unique('id')->values();
+
+        return response()->json([
+            'doctors' => $doctors->map->only(['first_name', 'last_name'])
         ]);
     }
 }

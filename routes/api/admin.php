@@ -59,6 +59,7 @@ Route::middleware(['auth:admin', 'admin.role','check.subscriber'])->group(functi
     });
 
     Route::prefix('doctors')->group(function (){
+        Route::get('/',[DoctorController::class,'doctors']);
         Route::post('/', [DoctorController::class, 'store']);
         Route::get('/{id}', [DoctorController::class, 'show']);
         Route::delete('/{id}', [DoctorController::class, 'destroy']);

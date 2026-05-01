@@ -54,6 +54,7 @@ Route::middleware(['auth:admin','accountant.role','check.subscriber'])->group(fu
         Route::get('/revenue', [ReportController::class,'revenue']);
         Route::get('/doctors-due', [ReportController::class,'doctorsDue']);
         Route::get('/clinic-due',[ReportController::class,'clinicDoctorsDue']);
+        Route::get('/top-technicians', [OrderProductHistoryController::class, 'topTechnicians']);
     });
 
     Route::prefix('clinics')->group(function () {
@@ -62,6 +63,7 @@ Route::middleware(['auth:admin','accountant.role','check.subscriber'])->group(fu
     });
 
     Route::prefix('doctors')->group(function (){
+        Route::get('/',[DoctorController::class,'doctors']);
         Route::get('/toggle-price-visibility/{doctorAccountId}',[DoctorController::class,'togglePriceVisibility']);
         Route::get('/toggle-financial-stats-visibility/{doctorAccountId}',[DoctorController::class,'toggleFinancialStatsVisibility']);
     });
