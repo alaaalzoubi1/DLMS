@@ -305,8 +305,7 @@ class OrderController extends Controller
 
         $query = Order::
         where('subscriber_id', $subscriber_id)
-            ->where('invoiced', true)
-            ->with(['doctor', 'products.specializationUser.specialization','products.specializationUser.user:id,first_name,last_name']);
+            ->with(['doctor', 'products.specializationUser.specialization','products.specializationUser.user:id,first_name,last_name','zatcaDocument','discount','files','creditNotes']);
 
         if (!empty($validated['from_date']) && !empty($validated['to_date'])) {
             $query->whereBetween('receive', [$validated['from_date'], $validated['to_date']]);
@@ -316,7 +315,7 @@ class OrderController extends Controller
             $query->where('receive', '<=', $validated['to_date']);
         }
 
-        $orders = $query->paginate(10);
+        $orders = $query->get();
 
         $totalCost = $query->sum('cost');
         $paid = $query->sum('paid');
