@@ -544,7 +544,7 @@ class OrderController extends Controller
     public function OrdersWithFilters(OrdersWithFilters $request): JsonResponse
     {
         $admin = auth('admin')->user();
-
+        $per_page = 10;
         $query = Order::where('subscriber_id',$admin->subscriber_id);
         if ($request->boolean('rejected')) {
             $query
@@ -585,6 +585,9 @@ class OrderController extends Controller
         if ($request->filled('type_id')) {
             $query->where('type_id', $request->type_id);
         }
+        if ($request->filled('per_page')){
+            $per_page = $request->per_page;
+        }
 
 
 
@@ -599,7 +602,7 @@ class OrderController extends Controller
             'zatcaDocument:id,order_id,invoice_type,zatca_http_status,updated_at',
         ])
             ->latest()
-            ->paginate();
+            ->paginate($per_page);
 
         return response()->json($orders, 200);
     }
