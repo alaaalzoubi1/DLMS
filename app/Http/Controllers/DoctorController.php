@@ -435,7 +435,7 @@ class DoctorController extends Controller
         })->unique('id')->values();
 
         return response()->json([
-            'doctors' => $doctors->map->only(['first_name', 'last_name'])
+            'doctors' => $doctors->map->only(['id','first_name', 'last_name'])
         ]);
     }
 }
