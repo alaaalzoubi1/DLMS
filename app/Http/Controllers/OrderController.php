@@ -605,6 +605,67 @@ class OrderController extends Controller
 
         return response()->json($orders, 200);
     }
+    public function OrdersWithFiltersAll(OrdersWithFilters $request): JsonResponse
+    {
+        $admin = auth('admin')->user();
+        $query = Order::where('subscriber_id',$admin->subscriber_id);
+        if ($request->boolean('rejected')) {
+            $query
+                ->whereHas('zatcaDocument', function ($q) {
+                    $q->where('invoice_type', 'TAX_INVOICE');
+                })
+
+                ->whereDoesntHave('zatcaDocument', function ($q) {
+                    $q->where('invoice_type', 'TAX_INVOICE')
+                        ->where('zatca_http_status', '!=', 400);
+                });
+        }
+        if ($request->filled('doctor_id')) {
+            $query->where('doctor_id', $request->doctor_id);
+        }
+        if ($request->filled('patient_name')) {
+            $query->where('patient_name', 'like', "%{$request->patient_name}%");
+        }
+        if ($request->filled('patient_id')) {
+            $query->where('patient_id', 'like', "%{$request->patient_id}%");
+        }
+        if ($request->filled('from')) {
+            $query->whereDate('created_at', '>=', $request->from);
+        }
+
+        if ($request->filled('to')) {
+            $query->whereDate('created_at', '<=', $request->to);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('invoiced')) {
+            $query->where('invoiced', (bool) $request->invoiced);
+        }
+
+        if ($request->filled('type_id')) {
+            $query->where('type_id', $request->type_id);
+        }
+
+
+
+        $orders = $query->with(['type:id,type',
+            'subscriber:id,company_name,tax_number',
+            'products.specializationUser.specializationSubscriber.specialization:id,name',
+            'products.specializationUser.specializationSubscriber.users:id,first_name,last_name',
+            'doctor:id,clinic_id,first_name,last_name',
+            'doctor.clinic:id,tax_number,name',
+            'discount',
+            'files' => function($q) { $q->Uploaded();},
+            'zatcaDocument:id,order_id,invoice_type,zatca_http_status,updated_at',
+        ])
+            ->latest()
+            ->get();
+
+        return response()->json($orders, 200);
+    }
 
 //    public function adminAddPayment(Request $request)
 //    {
