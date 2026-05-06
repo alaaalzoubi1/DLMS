@@ -84,7 +84,7 @@ class InvoiceController extends Controller
 
             return response()->json([
                 'success'   => true,
-                'documents' => $stored
+                'documents' => $stored->except('uuid','icv','previous_invoice_hash','invoice_hash','request_payload')
             ]);
 
         } catch (\Exception $e) {
