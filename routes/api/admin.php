@@ -75,7 +75,7 @@ Route::middleware(['auth:admin', 'admin.role','check.subscriber'])->group(functi
     });
 
     Route::prefix('orders')->group(function (){
-        Route::get('/filters/all',[OrderController::class,'OrdersWithFilters']);
+        Route::get('/filters/all',[OrderController::class,'OrdersWithFiltersAll']);
         Route::get('/filters',[OrderController::class,'OrdersWithFilters']);
         Route::post('/',[OrderController::class,'createOrder']);
         Route::put('/{id}',[OrderController::class,'updateOrder']);
