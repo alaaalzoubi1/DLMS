@@ -79,9 +79,11 @@ class InvoiceController extends Controller
             $response = $this->zatcaService->sendBulkInvoice($documents, $credentials);
 
             $stored = $this->zatcaService->storeBulkResponse($orders, $documents, $response, $credentials);
-            $documentsArray = $stored->map(fn($doc) => collect($doc->toArray())
-                ->except(['uuid', 'icv', 'previous_invoice_hash', 'invoice_hash', 'request_payload'])
-                ->all());
+            $documentsArray = $stored->map(function ($document) {
+                return collect($document->toArray())
+                    ->except(['uuid', 'icv', 'previous_invoice_hash', 'invoice_hash', 'request_payload'])
+                    ->all();
+            });
             DB::commit();
 
             return response()->json([
