@@ -15,7 +15,6 @@ class TypeFactory extends Factory
         return [
             'subscriber_id' => Subscriber::factory(),
             'type' => $this->faker->randomElement([1,2,3]),
-            'invoiced' => $this->faker->boolean(70),
         ];
     }
 }
