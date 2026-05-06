@@ -28,7 +28,7 @@ class CreditNoteResource extends JsonResource
                 ];
             }),
 
-            'items' => CreditNoteItemResource::collection($this->whenLoaded('creditNoteItems')),
+            'items' => CreditNoteItemResource::collection($this->whenLoaded('items')),
         ];
     }
 }
