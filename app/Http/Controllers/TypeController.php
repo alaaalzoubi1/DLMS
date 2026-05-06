@@ -27,7 +27,6 @@ class TypeController extends Controller
     {
         $validated = $request->validate([
             'type' => 'required|string|in:futures,new,test,returned',
-            'invoiced' => 'required|boolean',
         ]);
 
         $subscriber_id = Auth::guard('admin')->user()->subscriber_id;
@@ -44,7 +43,6 @@ class TypeController extends Controller
         $type = Type::create([
             'subscriber_id' => $subscriber_id,
             'type' => $validated['type'],
-            'invoiced' => $validated['invoiced'],
         ]);
 
         return response()->json(['message' => 'Type created successfully.', 'type' => $type], 201);
@@ -88,7 +86,6 @@ class TypeController extends Controller
     {
         $validated = $request->validate([
             'type' => 'sometimes|string|in:futures,new,test,returned',
-            'invoiced' => 'sometimes|boolean',
         ]);
 
         $subscriber_id = Auth::guard('admin')->user()->subscriber_id;

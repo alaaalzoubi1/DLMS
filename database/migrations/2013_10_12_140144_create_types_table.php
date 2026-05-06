@@ -20,8 +20,6 @@ return new class extends Migration
                 ->index();
 
             $table->enum('type', ['futures', 'new', 'test', 'returned']);
-            $table->boolean('invoiced')->default(true);
-
             $table->softDeletes();
             $table->timestamps();
         });
