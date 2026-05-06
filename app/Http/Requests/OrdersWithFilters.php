@@ -24,7 +24,7 @@ class OrdersWithFilters extends FormRequest
         return [
             'from'          => ['nullable', 'date'],
             'to'            => ['nullable', 'date', 'after_or_equal:from'],
-            'status'        => ['nullable', 'in:pending,completed,cancelled'],
+            'status'        => ['nullable', 'in:pending,completed,cancelled,in_progress'],
             'invoiced'      => ['nullable', 'boolean'],
             'type_id'       => ['nullable', 'integer', 'exists:types,id'],
             'subscriber_id' => ['nullable', 'integer', 'exists:subscribers,id'],

@@ -29,7 +29,7 @@ return new class extends Migration
             $table->string('patient_id');
             $table->foreign('doctor_id')->references('id')->on('doctors')->onDelete('cascade');
             $table->foreign('type_id')->references('id')->on('types')->onDelete('cascade');
-            $table->enum('status', ['pending', 'completed', 'cancelled']);
+            $table->enum('status', ['pending', 'in_progress', 'completed', 'cancelled']);
             $table->unsignedTinyInteger('impression_type')
                 ->comment('1 = digital, 2 = traditional, 3 = both');
             $table->index(['doctor_id', 'patient_id', 'created_at']);

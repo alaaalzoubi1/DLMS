@@ -820,6 +820,16 @@ class OrderController extends Controller
             $orderProduct->update([
                 'specialization_users_id' => $user->specialization_users_id,
             ]);
+            $allAssigned = OrderProduct::
+                where('order_id', $order->id)
+                ->whereNull('specialization_users_id')
+                ->doesntExist();
+
+            if ($allAssigned && $order->status === 'pending') {
+                $order->update([
+                    'status' => 'in_progress'
+                ]);
+            }
 
             $this->logOrderProductHistory($orderProduct->id, $user, $subscriberId);
 
@@ -845,7 +855,8 @@ class OrderController extends Controller
                 'details' => $e->getMessage()
             ], 500);
         }
-    }    public function orderDetails($id)
+    }
+    public function orderDetails($id)
     {
         $order = Order::with([
             'orderProducts',
