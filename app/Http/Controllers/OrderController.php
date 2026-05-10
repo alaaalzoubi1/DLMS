@@ -921,7 +921,7 @@ class OrderController extends Controller
     {
         $order = Order::with([
             'orderProducts',
-            'orderProducts.specializationUser.user:id,first_name,last_name',
+            'orderProducts.specializationUser.specializationSubscriber.specialization',
             'orderProducts.toothColor:id,color',
 
             'subscriber:id,company_name,tax_number',

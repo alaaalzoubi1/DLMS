@@ -199,7 +199,7 @@ class ProductController extends Controller
             $order->update(['status' => 'completed']);
             $title = "التركيبة جاهزة";
             $body = "الطلب رقم '{$order->id}' انتهى";
-            $token = $order->doctor->account->FCM_token;
+            $token = $order->doctor?->account?->FCM_token;
             if ($token)
                 SendFirebaseNotificationJob::dispatch($token, $title, $body);
         }
