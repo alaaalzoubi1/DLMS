@@ -11,7 +11,6 @@ class OrderProductResource extends JsonResource
     public function toArray($request): array
     {
         $hide = $this->hide_price ?? false;
-
         return [
             'id' => $this->id,
             'note' => $this->note,

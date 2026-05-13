@@ -134,6 +134,7 @@ Route::middleware(['auth:admin', 'admin.role','check.subscriber'])->group(functi
 
     Route::get('cancel-subscription',[SubscriberController::class,'cancelSubscription']);
     Route::post('add-payment',[OrderController::class,'addPayment']);
+    Route::post('add-payment/clinic',[OrderController::class,'addPaymentClinic']);
     Route::patch('order-products/{id}/assign-specialization', [OrderController::class, 'assignSpecialization']);
     Route::get('order-details',[OrderController::class,'orderDetails']);
     Route::post('apply-discount',[OrderController::class,'applyDiscount']);

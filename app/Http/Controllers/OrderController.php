@@ -11,6 +11,7 @@ use App\Http\Resources\OrderResource;
 use App\Http\Resources\OrdersResource;
 use App\Jobs\SendFirebaseNotificationJob;
 use App\Models\Category;
+use App\Models\Clinic;
 use App\Models\OrderDiscount;
 use App\Models\OrderProductHistory;
 use App\Models\Subscriber;
@@ -810,6 +811,115 @@ class OrderController extends Controller
                         $token,
                         'دفعة مالية',
                         "تم إضافة دفعة بقيمة {$paidAmount} على فواتيرك"
+                    );
+                }
+            }
+
+            return response()->json([
+                'message'           => 'Payment applied successfully',
+                'applied_amount'    => $amount - $remainingAmount,
+                'remaining_amount'  => $remainingAmount,
+            ], 200);
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'message' => 'Payment failed',
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
+    }
+    public function addPaymentClinic(Request $request)
+    {
+        $request->validate([
+            'amount'     => 'required|numeric|min:1',
+            'clinic_id'  => 'required|exists:clinics,id',
+        ]);
+
+        $amount = $request->amount;
+        $clinicId = $request->clinic_id;
+        $providedOrderIds = $request->order_ids;
+        $remainingAmount = $amount;
+
+        DB::beginTransaction();
+
+        try {
+            $subscriberId = auth('admin')->user()->subscriber_id;
+
+            $clinic = Clinic::where('id', $clinicId)
+                ->where('subscriber_id', $subscriberId)
+                ->first();
+
+            if (!$clinic) {
+                throw new \Exception('Invalid clinic or not authorized');
+            }
+
+            $query = Order::with('doctor.account')
+                ->where('subscriber_id', $subscriberId)
+                ->whereHas('doctor', fn($q) => $q->where('clinic_id', $clinicId))
+                ->whereColumn('paid', '<', 'cost')
+                ->orderBy('created_at', 'asc');
+
+            if (!empty($providedOrderIds)) {
+                $query->whereIn('id', $providedOrderIds);
+            }
+
+            $orders = $query->lockForUpdate()->get();
+
+            if ($orders->isEmpty()) {
+                DB::rollBack();
+                return response()->json([
+                    'message' => 'No payable orders found for this clinic'
+                ], 422);
+            }
+
+            if (!empty($providedOrderIds) && $orders->count() !== count($providedOrderIds)) {
+                DB::rollBack();
+                return response()->json([
+                    'message' => 'One or more order IDs are invalid, already fully paid, or do not belong to the clinic'
+                ], 403);
+            }
+
+            $doctorPayments = [];
+
+            foreach ($orders as $order) {
+                if ($remainingAmount <= 0) break;
+
+                $toPay = min(
+                    $order->cost - $order->paid,
+                    $remainingAmount
+                );
+
+                $order->paid += $toPay;
+                $order->save();
+
+                $remainingAmount -= $toPay;
+
+                $doctorId = $order->doctor_id;
+
+                if (!isset($doctorPayments[$doctorId])) {
+                    $doctorPayments[$doctorId] = [
+                        'amount' => 0,
+                        'doctor' => $order->doctor
+                    ];
+                }
+
+                $doctorPayments[$doctorId]['amount'] += $toPay;
+            }
+
+            DB::commit();
+
+            foreach ($doctorPayments as $data) {
+                $doctor = $data['doctor'];
+                $paidAmount = $data['amount'];
+                $token = $doctor->account?->FCM_token ?? null;
+
+                if ($token) {
+                    SendFirebaseNotificationJob::dispatch(
+                        $token,
+                        'دفعة مالية',
+                        "تم إضافة دفعة بقيمة {$paidAmount} على فواتير العيادة"
                     );
                 }
             }
