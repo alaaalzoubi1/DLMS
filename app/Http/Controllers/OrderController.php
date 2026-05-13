@@ -839,7 +839,6 @@ class OrderController extends Controller
 
         $amount = $request->amount;
         $clinicId = $request->clinic_id;
-        $providedOrderIds = $request->order_ids;
         $remainingAmount = $amount;
 
         DB::beginTransaction();
@@ -848,7 +847,7 @@ class OrderController extends Controller
             $subscriberId = auth('admin')->user()->subscriber_id;
 
             $clinic = Clinic::where('id', $clinicId)
-                ->where('subscriber_id', $subscriberId)
+                ->whereHas('subscribers', fn($q) => $q->where('subscriber_id', $subscriberId))
                 ->first();
 
             if (!$clinic) {
@@ -861,9 +860,7 @@ class OrderController extends Controller
                 ->whereColumn('paid', '<', 'cost')
                 ->orderBy('created_at', 'asc');
 
-            if (!empty($providedOrderIds)) {
-                $query->whereIn('id', $providedOrderIds);
-            }
+
 
             $orders = $query->lockForUpdate()->get();
 
@@ -886,10 +883,7 @@ class OrderController extends Controller
             foreach ($orders as $order) {
                 if ($remainingAmount <= 0) break;
 
-                $toPay = min(
-                    $order->cost - $order->paid,
-                    $remainingAmount
-                );
+                $toPay = min($order->cost - $order->paid, $remainingAmount);
 
                 $order->paid += $toPay;
                 $order->save();
@@ -939,7 +933,6 @@ class OrderController extends Controller
             ], 500);
         }
     }
-
     public function assignSpecialization(Request $request, $id)
     {
         $request->validate([
