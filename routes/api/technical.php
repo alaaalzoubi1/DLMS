@@ -24,7 +24,7 @@ Route::middleware(['auth:admin','technical.role','check.subscriber'])->group(fun
     Route::get('profile',[UserController::class,'technicalProfile']);
     Route::patch('profile',[UserController::class,'technicalUpdateProfile']);
     Route::delete('profile',[UserController::class,'deleteAccount']);
-    Route::get('order-details',[OrderController::class,'orderDetails']);
+    Route::get('order-details/{id}',[OrderController::class,'orderDetails']);
 
     Route::prefix('order-files')->middleware('auth')->group(function () {
         Route::get('/{id}/download', [OrderFileController::class, 'download']);
