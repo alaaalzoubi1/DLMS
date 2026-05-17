@@ -28,12 +28,29 @@ class OrderProductController extends Controller
     }
     private function recalculateOrderCost($order)
     {
-        //TODO handel the total cost with the discount.
-        $total = $order->orderProducts->sum(function ($item) {
+        $subtotal = $order->orderProducts->sum(function ($item) {
             return count($item->tooth_numbers) * $item->unit_price;
         });
 
+        $discount = $order->discount;
+
+        $total = $subtotal;
+
+        if ($discount) {
+            if ($discount->type === 'percentage') {
+                $total = $subtotal - ($subtotal * $discount->amount / 100);
+            }
+            elseif ($discount->type === 'fixed') {
+                $total = $subtotal - $discount->amount;
+                if ($total < 0) {
+                    $total = 0;
+                }
+            }
+        }
+
         $order->update(['cost' => $total]);
+
+        return $order;
     }
     public function store(Request $request)
     {
@@ -46,7 +63,7 @@ class OrderProductController extends Controller
             'tooth_color_id' => 'required|exists:tooth_colors,id',
         ]);
 
-        $order = Order::with('doctor')->findOrFail($data['order_id']);
+        $order = Order::with('doctor','discount')->findOrFail($data['order_id']);
 
         if ($order->invoiced) {
             return response()->json(['error' => 'Cannot modify invoiced order'], 403);
@@ -78,7 +95,7 @@ class OrderProductController extends Controller
             'specialization_users_id' => 'sometimes|exists:specialization__users,id',
         ]);
 
-        $orderProduct = OrderProduct::with('order.doctor')->findOrFail($id);
+        $orderProduct = OrderProduct::with('order.doctor','order.discount')->findOrFail($id);
         $order = $orderProduct->order;
 
         if ($order->invoiced) {
@@ -102,7 +119,7 @@ class OrderProductController extends Controller
     }
     public function destroy($id)
     {
-        $orderProduct = OrderProduct::with('order')->findOrFail($id);
+        $orderProduct = OrderProduct::with('order.discount')->findOrFail($id);
         $order = $orderProduct->order;
 
         if ($order->invoiced) {

@@ -21,6 +21,9 @@ Route::middleware(['auth:admin','accountant.role','check.subscriber'])->group(fu
     Route::get('me',[AccountantController::class,'accountantProfile']);
     Route::delete('account',[AccountantController::class,'deleteAccount']);
     Route::post('addPayment',[OrderController::class,'addPayment']);
+    Route::post('add-payment/doctor',[OrderController::class,'addPaymentDoctor']);
+    Route::post('add-payment/clinic',[OrderController::class,'addPaymentClinic']);
+
     Route::prefix('orders')->group(function (){
 
         Route::prefix('order-products')->group(function () {

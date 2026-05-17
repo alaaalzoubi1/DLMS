@@ -519,7 +519,7 @@ class OrderController extends Controller
             'doctor.clinic:id,tax_number,name',
             'discount',
             'files'
-        ])->latest()->get();
+        ])->latest()->paginate(20);
 
         /**
          * 🔥 STEP 1: collect unique subscriber IDs
@@ -1210,17 +1210,22 @@ class OrderController extends Controller
 
         return response()->json(['order' => $order], 200);
     }
-//TODO can't modify discount if the order invoiced
     public function applyDiscount(StoreOrderDiscountRequest $request)
     {
         $order = Order::with('discount','doctor.account')->findOrFail($request->order_id);
 
         $this->authorize('DiscountManaging', $order);
+        if ($order->invoiced){
+            return  response()->json([
+                'message' => 'لا يمكن إضافة خصم على طلب مفوتر مسبقاً'
+            ]);
+        }
         if ($order->discount) {
             return response()->json([
                 'error' => 'This order already has a discount.'
             ], 422);
         }
+
         $discount = OrderDiscount::create([
             'order_id'      => $order->id,
             'type'          => $request->type,
