@@ -12,6 +12,7 @@ use App\Http\Resources\OrdersResource;
 use App\Jobs\SendFirebaseNotificationJob;
 use App\Models\Category;
 use App\Models\Clinic;
+use App\Models\Doctor;
 use App\Models\OrderDiscount;
 use App\Models\OrderProductHistory;
 use App\Models\Subscriber;
@@ -931,6 +932,114 @@ class OrderController extends Controller
                 'message' => 'Payment failed',
                 'error'   => $e->getMessage(),
             ], 500);
+        }
+    }
+    public function addPaymentDoctor(Request $request)
+    {
+        $request->validate([
+            'amount'       => 'required|numeric|min:1',
+            'doctor_id'    => 'required|exists:doctors,id',
+            'patient_name' => 'nullable|string',
+            'patient_id'   => 'nullable|string',
+            'order_ids'    => 'nullable|array|min:1',
+            'order_ids.*'  => 'exists:orders,id',
+        ]);
+
+        $amount = $request->amount;
+        $doctorId = $request->doctor_id;
+        $patientName = $request->patient_name;
+        $patientId = $request->patient_id;
+        $providedOrderIds = $request->order_ids ?? [];
+        $remainingAmount = $amount;
+
+        DB::beginTransaction();
+
+        try {
+            $subscriberId = auth('admin')->user()->subscriber_id;
+
+
+            $query = Order::with('doctor.account')
+                ->where('subscriber_id', $subscriberId)
+                ->where('doctor_id', $doctorId)
+                ->whereColumn('paid', '<', 'cost')
+                ->orderBy('created_at', 'asc');
+
+            $query->when($patientName, fn($q) => $q->where('patient_name', 'like', "%{$patientName}%"));
+            $query->when($patientId, fn($q) => $q->where('patient_id', $patientId));
+            $query->when(!empty($providedOrderIds), fn($q) => $q->whereIn('id', $providedOrderIds));
+
+            $orders = $query->lockForUpdate()->get();
+
+            if ($orders->isEmpty()) {
+                DB::rollBack();
+                return response()->json(['message' => 'No payable orders found for this doctor'], 422);
+            }
+
+            if (!empty($providedOrderIds) && $orders->count() !== count($providedOrderIds)) {
+                DB::rollBack();
+                return response()->json([
+                    'message' => 'One or more order IDs are invalid, already fully paid, or do not belong to the doctor/patient'
+                ], 403);
+            }
+
+            $doctorPayments = [];
+            $updates = [];
+
+            foreach ($orders as $order) {
+                if ($remainingAmount <= 0) break;
+
+                $toPay = min($order->cost - $order->paid, $remainingAmount);
+                $newPaid = $order->paid + $toPay;
+
+                $updates[] = [
+                    'id' => $order->id,
+                    'paid' => $newPaid,
+                    'toPay' => $toPay,
+                    'order' => $order
+                ];
+
+                $remainingAmount -= $toPay;
+
+                if (!isset($doctorPayments[$doctorId])) {
+                    $doctorPayments[$doctorId] = [
+                        'amount' => 0,
+                        'doctor' => $order->doctor
+                    ];
+                }
+                $doctorPayments[$doctorId]['amount'] += $toPay;
+            }
+
+            if (!empty($updates)) {
+                $cases = "CASE id ";
+                $ids = [];
+                foreach ($updates as $update) {
+                    $cases .= "WHEN {$update['id']} THEN {$update['paid']} ";
+                    $ids[] = $update['id'];
+                }
+                $cases .= "END";
+                Order::whereIn('id', $ids)->update(['paid' => DB::raw($cases)]);
+            }
+
+            DB::commit();
+
+                foreach ($doctorPayments as $data) {
+                $doctor = $data['doctor'];
+                $paidAmount = $data['amount'];
+                $token = $doctor->account?->FCM_token ?? null;
+                if ($token) {
+                    SendFirebaseNotificationJob::dispatch($token, 'دفعة مالية', "تم إضافة دفعة بقيمة {$paidAmount} على فواتيرك");
+                }
+            }
+
+            return response()->json([
+                'message'          => 'Payment applied successfully',
+                'applied_amount'   => $amount - $remainingAmount,
+                'remaining_amount' => $remainingAmount,
+            ], 200);
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Payment failed', 'error' => $e->getMessage()], 500);
         }
     }
     public function assignSpecialization(Request $request, $id)
