@@ -195,7 +195,11 @@ class OrderController extends Controller
                 'patient_id'    => $patientId,
                 'impression_type'  => $data['impression_type'],
             ]);
-
+            if (is_null($data['patient_id'])) {
+                $autoPatientId = 'PAT-' . $order->id;
+                $order->patient_id = $autoPatientId;
+                $order->save();
+            }
             $this->createOrderProducts($data['products'], $order->id, $subscriber_id);
 
             return response()->json(['message' => 'Order created successfully.', 'order' => $order], 201);
@@ -429,7 +433,11 @@ class OrderController extends Controller
                 'patient_id' => $data['patient_id'] ?? strtoupper(Str::random(9)),
                 'impression_type' => $data['impression_type'],
             ]);
-
+            if (is_null($data['patient_id'])) {
+                $autoPatientId = 'PAT-' . $order->id;
+                $order->patient_id = $autoPatientId;
+                $order->save();
+            }
             foreach ($data['products'] as $prod) {
                 $product = $products[$prod['product_id']];
 
@@ -589,6 +597,9 @@ class OrderController extends Controller
         if ($request->filled('per_page')){
             $per_page = $request->per_page;
         }
+        if ($request->filled('not_paid')){
+            $query->whereColumn('paid','<','cost');
+        }
 
 
 
@@ -650,7 +661,9 @@ class OrderController extends Controller
         if ($request->filled('type_id')) {
             $query->where('type_id', $request->type_id);
         }
-
+        if ($request->filled('not_paid')){
+            $query->whereColumn('paid','<','cost');
+        }
 
 
         $orders = $query->with(['type:id,type',
