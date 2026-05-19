@@ -33,7 +33,8 @@ class OrdersWithFilters extends FormRequest
             'doctor_id'    => ['nullable','integer','exists:doctors,id'],
             'rejected'      => ['nullable', 'boolean'],
             'not_paid' => ['sometimes','boolean'],
-            'per_page' => ['nullable','numeric','integer']
+            'per_page' => ['nullable','numeric','integer'],
+            'order_id' => ['sometimes','numeric','exsits:orders,id']
         ];
     }
 

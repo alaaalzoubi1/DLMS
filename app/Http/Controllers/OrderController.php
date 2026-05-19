@@ -600,6 +600,9 @@ class OrderController extends Controller
         if ($request->filled('not_paid')){
             $query->whereColumn('paid','<','cost');
         }
+        if ($request->filled('order_id')){
+            $query->where('id',$request->order_id);
+        }
 
 
 
@@ -663,6 +666,9 @@ class OrderController extends Controller
         }
         if ($request->filled('not_paid')){
             $query->whereColumn('paid','<','cost');
+        }
+        if ($request->filled('order_id')){
+            $query->where('id',$request->order_id);
         }
 
 
