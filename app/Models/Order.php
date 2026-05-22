@@ -100,7 +100,7 @@ class Order extends Model
 
     protected static function clearDashboardCache($subscriberId)
     {
-        $periods = ['today', 'week', 'month', null];
+        $periods = ['today', 'week', 'month', 'all'];
         foreach ($periods as $period) {
             $cacheKey = "dashboard_stats_{$subscriberId}_{$period}";
             Cache::forget($cacheKey);
