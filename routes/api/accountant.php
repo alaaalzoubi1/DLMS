@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AccountantController;
 use App\Http\Controllers\ClinicController;
+use App\Http\Controllers\CreditNoteController;
 use App\Http\Controllers\DoctorController;
 use App\Http\Controllers\LabHeaderController;
 use App\Http\Controllers\OrderController;
@@ -44,12 +45,15 @@ Route::middleware(['auth:admin','accountant.role','check.subscriber'])->group(fu
             Route::put('',[OrderController::class,'updateDiscount']);
             Route::delete('/{discount_id}',[OrderController::class,'removeDiscount']);
         });
-
-        Route::post('/',[OrderController::class,'createOrder']);
+        Route::get('/filters/all',[OrderController::class,'OrdersWithFiltersAll']);
         Route::get('/filters',[OrderController::class,'OrdersWithFilters']);
+        Route::post('/',[OrderController::class,'createOrder']);
+
         Route::put('/{id}',[OrderController::class,'updateOrder']);
         Route::post('/invoice/bulk',[InvoiceController::class,'invoiceBulk'])->middleware('check.zatca');
         Route::post('/credit-note',[InvoiceController::class,'submitCreditNote'])->middleware('check.zatca');
+        Route::get('/credit-note',[CreditNoteController::class,'index']);
+        Route::get('/credit-note/{id}',[CreditNoteController::class,'show']);
         Route::get('/{id}/details',[OrderController::class,'orderDetails']);
     });
 
