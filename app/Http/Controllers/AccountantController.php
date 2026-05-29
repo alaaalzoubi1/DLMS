@@ -75,7 +75,9 @@ class AccountantController extends Controller
     }
     public function accountantProfile(): JsonResponse
     {
-        $user = auth('admin')->user()->with('subscribers.address');
+        $user = auth('admin')->user()
+            ->load(['roles', 'subscribers.address']);
+
 
         return response()->json([
             'accountant' => [
