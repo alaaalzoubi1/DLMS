@@ -10,13 +10,20 @@ use App\Http\Controllers\OrderProductController;
 use App\Http\Controllers\OrderProductHistoryController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SubscriberController;
+use App\Http\Controllers\TypeController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\Zatca\InvoiceController;
+use App\Http\Controllers\Zatca\ZatcaOnboardingController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('register',[AccountantController::class,'registerAccountant']);
 Route::middleware(['auth:admin','accountant.role','check.subscriber'])->group(function ()
 {
+    Route::prefix('types')->group(function (){
+        Route::post('/',[TypeController::class,'createType']);
+        Route::get('/', [TypeController::class, 'listTypes']);
+        Route::delete('/{id}',[TypeController::class,'destroy']);
+    });
     Route::get('home-page',[SubscriberController::class,'dashboardStats']);
     Route::get('logout',[UserController::class,'logout']);
     Route::get('me',[AccountantController::class,'accountantProfile']);
@@ -80,6 +87,10 @@ Route::middleware(['auth:admin','accountant.role','check.subscriber'])->group(fu
         Route::post('/update',[LabHeaderController::class,'update']);
         Route::get('/',[LabHeaderController::class,'getHeader']);
         Route::delete('/',[LabHeaderController::class,'delete']);
+    });
+    Route::prefix('zatca')->group(function (){
+        Route::post('onboard',[ ZatcaOnboardingController::class,'store']);
+        Route::post('renew',[ZatcaOnboardingController::class,'renew']);
     });
 
 });

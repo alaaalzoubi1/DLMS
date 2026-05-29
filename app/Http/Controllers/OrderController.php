@@ -337,7 +337,7 @@ class OrderController extends Controller
     public function updateOrder(Request $request, $id)
     {
         $validated = $request->validate([
-            'status' => 'sometimes|in:pending,completed,cancelled',
+            'status' => 'sometimes|in:pending,completed,cancelled,in_progress',
             'type_id' => 'sometimes|exists:types,id',
             'paid' => 'sometimes|integer|min:0',
             'patient_name' => 'sometimes|string|max:255',
