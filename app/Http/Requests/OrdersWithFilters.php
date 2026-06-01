@@ -34,7 +34,7 @@ class OrdersWithFilters extends FormRequest
             'rejected'      => ['nullable', 'boolean'],
             'not_paid' => ['sometimes','boolean'],
             'per_page' => ['nullable','numeric','integer'],
-            'order_id' => ['sometimes','numeric','exsits:orders,id']
+            'order_id' => ['sometimes','numeric']
         ];
     }
 
