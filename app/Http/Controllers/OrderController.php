@@ -614,7 +614,7 @@ class OrderController extends Controller
             'doctor.clinic:id,tax_number,name',
             'discount',
             'files' => function($q) { $q->Uploaded();},
-            'zatcaDocument:id,order_id,invoice_type,zatca_http_status,updated_at',
+            'zatcaDocument:id,order_id,invoice_type,zatca_http_status,updated_at,qr_code',
         ])
             ->latest()
             ->paginate($per_page);
@@ -680,7 +680,7 @@ class OrderController extends Controller
             'doctor.clinic:id,tax_number,name',
             'discount',
             'files' => function($q) { $q->Uploaded();},
-            'zatcaDocument:id,order_id,invoice_type,zatca_http_status,updated_at',
+            'zatcaDocument:id,order_id,invoice_type,zatca_http_status,updated_at,qr_code',
         ])
             ->latest()
             ->get();
