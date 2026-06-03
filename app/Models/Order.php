@@ -68,7 +68,7 @@ class Order extends Model
     }
     public function getImpressionTypeLabelAttribute(): string
     {
-        return $this->impression_type->label();
+        return $this->impressionType?->label() ?? '';
     }
     public function zatcaDocument():HasMany
     {
