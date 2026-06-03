@@ -526,7 +526,8 @@ class OrderController extends Controller
             'doctor:id,clinic_id,first_name,last_name',
             'doctor.clinic:id,tax_number,name',
             'discount',
-            'files'
+            'files',
+            'zatcaDocument:id,order_id,invoice_type,zatca_http_status,updated_at,qr_code'
         ])->latest()->paginate(20);
 
         /**
