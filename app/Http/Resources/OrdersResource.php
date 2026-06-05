@@ -25,7 +25,8 @@ class OrdersResource extends JsonResource
             'paid' => $hide ? null : $this->paid,
 
             'invoiced' => $this->invoiced,
-
+            'delivery' => $this->delivery,
+            'receive' => $this->receive,
             'type' => $this->type,
             'subscriber' => $this->subscriber,
             'doctor' => $this->doctor,

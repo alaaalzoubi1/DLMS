@@ -9,6 +9,7 @@ Route::middleware(['auth:admin','delegate.role','check.subscriber'])->group(func
 {
    Route::get('to-receive',[DelegateController::class,'ordersToReceive']);
    Route::get('to-deliver',[DelegateController::class,'ordersReadyForDelivery']);
+   Route::get('orders/filters',[\App\Http\Controllers\OrderController::class,'OrdersWithFilters']);
    Route::patch('deliver',[DelegateController::class,'deliverOrder']);
    Route::patch('receive',[DelegateController::class,'receiveOrder']);
    Route::get('logout',[\App\Http\Controllers\UserController::class,'logout']);

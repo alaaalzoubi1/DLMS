@@ -517,12 +517,17 @@ class OrderController extends Controller
         if ($request->filled('subscriber_id')) {
             $query->where('subscriber_id', $request->subscriber_id);
         }
+        if ($request->filled('order_id')){
+            $query->where('id',$request->order_id);
+        }
 
         $orders = $query->with([
             'type:id,type',
             'subscriber:id,company_name,tax_number',
             'orderProducts.toothColor:id,color',
             'orderProducts.specializationUser',
+            'orderProducts.specializationUser.specializationSubscriber.specialization:id,name',
+            'orderProducts.specializationUser.user:id,first_name,last_name',
             'doctor:id,clinic_id,first_name,last_name',
             'doctor.clinic:id,tax_number,name',
             'discount',
@@ -610,7 +615,7 @@ class OrderController extends Controller
         $orders = $query->with(['type:id,type',
             'subscriber:id,company_name,tax_number',
             'products.specializationUser.specializationSubscriber.specialization:id,name',
-            'products.specializationUser.specializationSubscriber.users:id,first_name,last_name',
+            'products.specializationUser.user:id,first_name,last_name',
             'doctor:id,clinic_id,first_name,last_name',
             'doctor.clinic:id,tax_number,name',
             'discount',

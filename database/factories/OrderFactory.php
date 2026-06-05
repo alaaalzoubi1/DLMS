@@ -21,7 +21,7 @@ class OrderFactory extends Factory
             'doctor_id' => Doctor::factory(),
             'subscriber_id' => Subscriber::factory(),
             'type_id' => Type::factory(),
-            'status' => $this->faker->randomElement(['pending', 'processing', 'completed', 'cancelled']),
+            'status' => $this->faker->randomElement(['pending', 'in_progress', 'completed', 'cancelled']),
             'invoiced' => $this->faker->boolean(80),
             'paid' => $this->faker->boolean(50),
             'cost' => $this->faker->randomFloat(2, 50, 5000),
