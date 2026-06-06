@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ContactInfoController;
+use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\OrderFileController;
 use App\Http\Controllers\ProductController;
@@ -10,6 +11,8 @@ use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/register-technical', [UserController::class, 'registerTechnical']);
+Route::post('/password/reset', [ForgotPasswordController::class, 'resetPassword']);
+Route::post('/password/forgot', [ForgotPasswordController::class, 'requestResetCode']);
 Route::middleware(['auth:admin','technical.role','check.subscriber'])->group(function () {
     Route::post('add-specialization', [SpecializationUserController::class, 'addUserSpecialization']);
     Route::get('subscriber-specializations', [SpecializationSubscriberController::class, 'getSubscriberSpecializations']);

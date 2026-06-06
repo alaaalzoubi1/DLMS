@@ -6,6 +6,7 @@ use App\Http\Controllers\ClinicSubscriberController;
 use App\Http\Controllers\ContactInfoController;
 use App\Http\Controllers\DoctorController;
 
+use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\OrderFileController;
 use App\Http\Controllers\ProductController;
@@ -17,6 +18,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('/register', [DoctorController::class, 'doctorRegister']);
 Route::post('/login', [DoctorController::class, 'doctorLogin']);
+Route::post('/password/reset', [ForgotPasswordController::class, 'doctorResetPassword']);
+Route::post('/password/forgot', [ForgotPasswordController::class, 'doctorRequestResetCode']);
 Route::middleware(['auth:api'])->group(function () {
     Route::get('FinancialStats',[DoctorController::class,'doctorFinancialStats']);
     Route::get('/clinic-subscribers', [ClinicSubscriberController::class, 'index']);

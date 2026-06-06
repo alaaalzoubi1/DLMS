@@ -4,6 +4,7 @@ use App\Http\Controllers\ClinicController;
 use App\Http\Controllers\ContactInfoController;
 use App\Http\Controllers\CreditNoteController;
 use App\Http\Controllers\DoctorController;
+use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\LabHeaderController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\OrderFileController;
@@ -22,7 +23,8 @@ use App\Http\Controllers\Zatca\ZatcaOnboardingController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/register-company', [UserController::class, 'registerCompany']);
-
+Route::post('/password/reset', [ForgotPasswordController::class, 'resetPassword']);
+Route::post('/password/forgot', [ForgotPasswordController::class, 'requestResetCode']);
 
 Route::middleware(['auth:admin', 'admin.role','check.subscriber'])->group(function () {
     Route::prefix('types')->group(function (){

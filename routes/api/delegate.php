@@ -2,9 +2,12 @@
 
 
 use App\Http\Controllers\DelegateController;
+use App\Http\Controllers\ForgotPasswordController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('register',[DelegateController::class,'registerDelegate']);
+Route::post('/password/reset', [ForgotPasswordController::class, 'resetPassword']);
+Route::post('/password/forgot', [ForgotPasswordController::class, 'requestResetCode']);
 Route::middleware(['auth:admin','delegate.role','check.subscriber'])->group(function ()
 {
    Route::get('to-receive',[DelegateController::class,'ordersToReceive']);

@@ -30,7 +30,9 @@ class User extends Authenticatable  implements ShouldQueue , JWTSubject
         'last_name',
         'first_name',
         'subscriber_id',
-        'FCM_token'
+        'FCM_token',
+        'reset_expires_at',
+        'reset_code'
     ];
 
     /**
@@ -41,6 +43,8 @@ class User extends Authenticatable  implements ShouldQueue , JWTSubject
     protected $hidden = [
         'password',
         'remember_token',
+        'reset_code',
+        'reset_expires_at'
     ];
 
     /**
@@ -51,6 +55,7 @@ class User extends Authenticatable  implements ShouldQueue , JWTSubject
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'reset_expires_at' => 'datetime'
     ];
     public function getJWTIdentifier()
     {

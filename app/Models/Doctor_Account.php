@@ -7,22 +7,27 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
 class Doctor_Account extends Authenticatable implements ShouldQueue , JWTSubject
 {
-    use HasFactory,HasApiTokens,SoftDeletes;
+    use HasFactory,HasApiTokens,SoftDeletes,Notifiable;
     protected array $guard = ["api"];
     protected $fillable = [
         'email',
         'password',
         'doctor_id',
-        'FCM_token'
+        'FCM_token',
+        'reset_code',
+        'reset_expires_at'
     ];
     protected $hidden = [
         'password',
         'remember_token',
+        'reset_code',
+        'reset_expires_at'
     ];
     /**
      * The attributes that should be cast.
@@ -32,6 +37,7 @@ class Doctor_Account extends Authenticatable implements ShouldQueue , JWTSubject
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'reset_expires_at' => 'datetime'
     ];
 
 
