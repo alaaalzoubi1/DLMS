@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AccountantController;
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ClinicController;
 use App\Http\Controllers\CreditNoteController;
 use App\Http\Controllers\DoctorController;
@@ -9,6 +10,7 @@ use App\Http\Controllers\LabHeaderController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\OrderProductController;
 use App\Http\Controllers\OrderProductHistoryController;
+use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SubscriberController;
 use App\Http\Controllers\TypeController;
@@ -34,7 +36,19 @@ Route::middleware(['auth:admin','accountant.role','check.subscriber'])->group(fu
     Route::post('addPayment',[OrderController::class,'addPayment']);
     Route::post('add-payment/doctor',[OrderController::class,'addPaymentDoctor']);
     Route::post('add-payment/clinic',[OrderController::class,'addPaymentClinic']);
-
+    Route::post('add-category',[CategoryController::class,'store']);
+    Route::get('show-categories', [CategoryController::class,'show']);
+    Route::get('delete-category/{id}',[CategoryController::class,'delete']);
+    Route::post('add-product',[ProductController::class,'store']);
+    Route::get('showProductsByCategory/{category_id}',[ProductController::class,'showByCategory']);
+    Route::post('edit-category',[CategoryController::class,'update']);
+    Route::delete('delete-product/{id}',[ProductController::class,'delete']);
+    Route::patch('/products/{id}', [ProductController::class, 'updateName']);
+    Route::post('update-price',[ProductController::class,'updatePrice']);
+    Route::post('add-special-price', [ClinicController::class, 'addSpecialPrice']);
+    Route::delete('delete-special-price', [ClinicController::class, 'deleteSpecialPrice']);
+    Route::get('clinics_with_special_price/{$subscriberId}',[ClinicController::class,'clinics_with_special_price']);
+    Route::get('get_clinics_with_the_special_price/{id}',[ProductController::class,'get_clinics_with_the_special_price']);
     Route::prefix('orders')->group(function (){
 
         Route::prefix('order-products')->group(function () {

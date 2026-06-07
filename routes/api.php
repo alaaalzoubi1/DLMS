@@ -16,7 +16,9 @@ use Illuminate\Support\Facades\Route;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
+Route::get('doctor/refresh',[\App\Http\Controllers\AuthController::class,'doctorRefresh']);
 
+Route::get('refresh',[\App\Http\Controllers\AuthController::class,'refresh']);
 
 
 
