@@ -861,6 +861,8 @@ class OrderController extends Controller
         $request->validate([
             'amount'     => 'required|numeric|min:1',
             'clinic_id'  => 'required|exists:clinics,id',
+            'from'  => 'nullable|date',
+            'to'    => 'nullable|date|after_or_equal:from_date',
         ]);
 
         $amount = $request->amount;
@@ -884,6 +886,12 @@ class OrderController extends Controller
                 ->where('subscriber_id', $subscriberId)
                 ->whereHas('doctor', fn($q) => $q->where('clinic_id', $clinicId))
                 ->whereColumn('paid', '<', 'cost')
+                ->when($request->filled('from_date'), function ($q) use ($request) {
+                    $q->whereDate('created_at', '>=', $request->from);
+                })
+                ->when($request->filled('to_date'), function ($q) use ($request) {
+                    $q->whereDate('created_at', '<=', $request->to);
+                })
                 ->orderBy('created_at', 'asc');
 
 
