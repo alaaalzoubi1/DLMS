@@ -67,6 +67,7 @@ Route::middleware(['auth:admin', 'admin.role','check.subscriber'])->group(functi
         Route::get('/{id}', [DoctorController::class, 'show']);
         Route::delete('/{id}', [DoctorController::class, 'destroy']);
         Route::get('/toggle-price-visibility/{doctorAccountId}',[DoctorController::class,'togglePriceVisibility']);
+        Route::get('/toggle-specialization-info-visibility/{doctorAccountId}',[DoctorController::class,'toggleSpecializationInfoVisibility']);
         Route::get('toggle-financial-stats-visibility/{doctorAccountId}',[DoctorController::class,'toggleFinancialStatsVisibility']);
     });
 

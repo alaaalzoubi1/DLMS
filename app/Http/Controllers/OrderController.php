@@ -379,7 +379,7 @@ class OrderController extends Controller
         }
 
         $subscriber = Subscriber::with([
-            'users' => fn ($q) => $q->role('admin')->select('id','FCM_token')
+            'users' => fn ($q) => $q->role('admin')->select('id','FCM_token','subscriber_id')
         ])->findOrFail($request->subscriber_id);
 
         if ($subscriber->trial_end_at < now()) {
@@ -517,8 +517,9 @@ class OrderController extends Controller
         if ($request->filled('subscriber_id')) {
             $query->where('subscriber_id', $request->subscriber_id);
         }
-        if ($request->filled('order_id')){
-            $query->where('id',$request->order_id);
+
+        if ($request->filled('order_id')) {
+            $query->where('id', $request->order_id);
         }
 
         $orders = $query->with([
@@ -535,25 +536,21 @@ class OrderController extends Controller
             'zatcaDocument:id,order_id,invoice_type,zatca_http_status,updated_at,qr_code'
         ])->latest()->paginate(20);
 
-        /**
-         * 🔥 STEP 1: collect unique subscriber IDs
-         */
         $subscriberIds = $orders->pluck('subscriber_id')->unique()->values();
 
-        /**
-         * 🔥 STEP 2: fetch hidden relations in ONE query
-         */
-        $hiddenMap = app(PriceSittingsService::class)
-            ->getHiddenSubscribersForDoctor($doctorAccountId, $subscriberIds);
+        $priceHiddenMap = app(PriceSittingsService::class)
+            ->getHiddenSubscribersForDoctor($doctorAccountId, $subscriberIds)
+            ->mapWithKeys(fn($id) => [$id => true]);
 
-        /**
-         * 🔥 STEP 3: convert to map for fast lookup
-         * [subscriber_id => true/false]
-         */
-        $hideMap = $hiddenMap->mapWithKeys(fn ($id) => [$id => true]);
+        $specializationHiddenMap = app(PriceSittingsService::class)
+            ->getSubscribersWithHiddenSpecializationInfo($doctorAccountId, $subscriberIds)
+            ->mapWithKeys(fn($id) => [$id => true]);
+
         $request->merge([
-            'hide_map' => $hideMap
+            'hide_map' => $priceHiddenMap,
+            'hide_specialization_map' => $specializationHiddenMap,
         ]);
+
         return OrdersResource::collection($orders);
     }
     public function OrdersWithFilters(OrdersWithFilters $request): JsonResponse
@@ -1194,9 +1191,18 @@ class OrderController extends Controller
 
         $doctorAccountId = auth('api')->id();
 
-        $hidePrices = app(PriceSittingsService::class)
-            ->shouldHidePrice($doctorAccountId, $order->subscriber_id);
-        $order->hide_price = $hidePrices;
+        $service = app(PriceSittingsService::class);
+
+        $order->hide_price = $service->shouldHidePrice(
+            $doctorAccountId,
+            $order->subscriber_id
+        );
+
+        $order->hide_specialization = $service->shouldHideSpecializationInfo(
+            $doctorAccountId,
+            $order->subscriber_id
+        );
+
         return response()->json([
             'order' => new OrderResource($order)
         ], 200);

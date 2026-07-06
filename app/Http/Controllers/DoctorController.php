@@ -386,6 +386,38 @@ class DoctorController extends Controller
             'hidden' => $setting->hide_financial_stats
         ]);
     }
+    public function toggleSpecializationInfoVisibility($doctorAccountId)
+    {
+        $subscriberId = auth('admin')->user()->subscriber_id;
+
+        if (!Doctor_Account::where('id', $doctorAccountId)->exists()) {
+            return response()->json([
+                'message' => 'Doctor not found!'
+            ], 404);
+        }
+
+        $setting = SubscriberDoctorPriceSittings::firstOrCreate(
+            [
+                'doctor_account_id' => $doctorAccountId,
+                'subscriber_id' => $subscriberId,
+            ],
+            [
+                'hide_prices' => false,
+                'hide_financial_stats' => false,
+                'hide_specialization_info' => false,
+            ]
+        );
+
+        $setting->hide_specialization_info = !$setting->hide_specialization_info;
+        $setting->save();
+
+        return response()->json([
+            'message' => $setting->hide_specialization_info
+                ? 'Specialization information is now hidden.'
+                : 'Specialization information is now visible.',
+            'hidden' => $setting->hide_specialization_info,
+        ]);
+    }
     public function doctorFinancialStats(Request $request): JsonResponse
     {
         $doctor = auth('api')->user()->doctor;

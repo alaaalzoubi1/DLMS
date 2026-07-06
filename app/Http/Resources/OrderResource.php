@@ -11,7 +11,9 @@ class OrderResource extends JsonResource
 {
     public function toArray($request): array
     {
-        $hide = $this->hide_price ?? false;
+        $hidePrice = $this->hide_price ?? false;
+        $hideSpecialization = $this->hide_specialization ?? false;
+
         return [
             'id' => $this->id,
             'subscriber_id' => $this->subscriber_id,
@@ -21,8 +23,9 @@ class OrderResource extends JsonResource
             'patient_name' => $this->patient_name,
             'patient_id' => $this->patient_id,
 
-            'cost' => $hide ? null : $this->cost,
-            'paid' => $hide ? null : $this->paid,
+            'cost' => $hidePrice ? null : $this->cost,
+            'paid' => $hidePrice ? null : $this->paid,
+
             'receive' => $this->receive,
             'delivery' => $this->delivery,
             'impression_type' => $this->impression_type,
@@ -34,8 +37,10 @@ class OrderResource extends JsonResource
             'doctor' => $this->doctor,
 
             'products' => OrderProductResource::collection(
-                $this->orderProducts->map(function ($product) use ($hide) {
-                    $product->hide_price = $hide;
+                $this->orderProducts->map(function ($product) use ($hidePrice, $hideSpecialization) {
+                    $product->hide_price = $hidePrice;
+                    $product->hide_specialization = $hideSpecialization;
+
                     return $product;
                 })
             ),
