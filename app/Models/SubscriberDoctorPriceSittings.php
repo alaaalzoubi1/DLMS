@@ -10,6 +10,8 @@ class SubscriberDoctorPriceSittings extends Model
     protected $fillable =  [
         'doctor_account_id',
         'subscriber_id',
-        'hide_prices'
+        'hide_prices',
+        'hide_specialization_info',
+        'hide_financial_stats'
     ];
 }
