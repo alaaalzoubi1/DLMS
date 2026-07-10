@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\RegisterCompanyRequest;
 use App\Http\Requests\UpdateAdminProfileRequest;
 use App\Http\Requests\UpdateTechnicalProfileRequest;
+use App\Enums\NotificationType;
 use App\Jobs\SendFirebaseNotificationJob;
 use App\Models\Subscriber;
 use App\Models\Subscriber_Doctor;
@@ -277,7 +278,7 @@ class UserController extends Controller
         }
         $token = $user->FCM_token;
         if ($token)
-            SendFirebaseNotificationJob::dispatch($token, $title, $body);
+            SendFirebaseNotificationJob::dispatch($token, $title, $body, NotificationType::AVAILABILITY_CHANGED);
 
         return response()->json([
             'message' => 'User availability updated successfully',
@@ -315,7 +316,7 @@ class UserController extends Controller
         $token = $admin->FCM_token ?? null;
 
         if ($token) {
-            SendFirebaseNotificationJob::dispatch($token, $title, $body);
+            SendFirebaseNotificationJob::dispatch($token, $title, $body, NotificationType::AVAILABILITY_CHANGED);
         }
 
         return response()->json([

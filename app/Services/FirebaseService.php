@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\NotificationType;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Kreait\Firebase\Factory;
@@ -28,18 +29,39 @@ class FirebaseService
         $this->messaging = $factory->createMessaging();
     }
 
-    public function sendNotification(string $deviceToken, string $title, string $body): void
-    {
+    /**
+     * Send an FCM push notification.
+     *
+     * @param array $extraData Additional key/value pairs merged into the FCM
+     *                         `data` payload (merged on top of the type payload).
+     */
+    public function sendNotification(
+        string $deviceToken,
+        string $title,
+        string $body,
+        ?NotificationType $type = null,
+        array $extraData = [],
+    ): void {
         try {
             $message = CloudMessage::withTarget('token', $deviceToken)
                 ->withNotification(Notification::create($title, $body));
+
+            $data = $extraData;
+            if ($type !== null) {
+                $data = array_merge($type->toData(), $data);
+            }
+            if (!empty($data)) {
+                // FCM data values must be strings.
+                $message = $message->withData(array_map('strval', $data));
+            }
 
             $this->messaging->send($message);
         } catch (\Throwable $e) {
             Log::error('FCM send failed: ' . $e->getMessage(), [
                 'token' => $deviceToken,
                 'title' => $title,
-                'body' => $body,
+                'body'  => $body,
+                'type'  => $type?->value,
             ]);
         }
     }

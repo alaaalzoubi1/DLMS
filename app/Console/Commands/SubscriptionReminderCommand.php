@@ -3,6 +3,7 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\NotificationType;
 use App\Models\Subscriber;
 use App\Models\User;
 use Carbon\Carbon;
@@ -55,7 +56,7 @@ class SubscriptionReminderCommand extends Command
                 $token = $admin->FCM_token ?? null;
 
                 if ($token) {
-                    SendFirebaseNotificationJob::dispatch($token, $title, $body);
+                    SendFirebaseNotificationJob::dispatch($token, $title, $body, NotificationType::SUBSCRIPTION_REMINDER);
                 }
             }
         }

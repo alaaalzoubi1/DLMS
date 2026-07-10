@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 use App\Enums\ImpressionType;
+use App\Enums\NotificationType;
 use App\Http\Requests\DoctorOrdersRequest;
 use App\Http\Requests\OrdersWithFilters;
 use App\Http\Requests\StoreOrderDiscountRequest;
@@ -254,7 +255,7 @@ class OrderController extends Controller
             $token = $newUser->FCM_token;
 
             if ($token) {
-                SendFirebaseNotificationJob::dispatch($token, $title, $body);
+                SendFirebaseNotificationJob::dispatch($token, $title, $body, NotificationType::NEW_ORDER_ASSIGNMENT);
             }
 
             return response()->json(['message' => 'Order product updated successfully.'], 200);
@@ -459,7 +460,8 @@ class OrderController extends Controller
                 SendFirebaseNotificationJob::dispatch(
                     $admin->FCM_token,
                     "طلب جديد",
-                    "طلب جديد من الطبيب {$doctor->first_name}"
+                    "طلب جديد من الطبيب {$doctor->first_name}",
+                    NotificationType::NEW_ORDER
                 );
             }
 
@@ -833,7 +835,8 @@ class OrderController extends Controller
                     SendFirebaseNotificationJob::dispatch(
                         $token,
                         'دفعة مالية',
-                        "تم إضافة دفعة بقيمة {$paidAmount} على فواتيرك"
+                        "تم إضافة دفعة بقيمة {$paidAmount} على فواتيرك",
+                        NotificationType::PAYMENT
                     );
                 }
             }
@@ -944,7 +947,8 @@ class OrderController extends Controller
                     SendFirebaseNotificationJob::dispatch(
                         $token,
                         'دفعة مالية',
-                        "تم إضافة دفعة بقيمة {$paidAmount} على فواتير العيادة"
+                        "تم إضافة دفعة بقيمة {$paidAmount} على فواتير العيادة",
+                        NotificationType::PAYMENT
                     );
                 }
             }
@@ -1057,7 +1061,7 @@ class OrderController extends Controller
                 $paidAmount = $data['amount'];
                 $token = $doctor->account?->FCM_token ?? null;
                 if ($token) {
-                    SendFirebaseNotificationJob::dispatch($token, 'دفعة مالية', "تم إضافة دفعة بقيمة {$paidAmount} على فواتيرك");
+                    SendFirebaseNotificationJob::dispatch($token, 'دفعة مالية', "تم إضافة دفعة بقيمة {$paidAmount} على فواتيرك", NotificationType::PAYMENT);
                 }
             }
 
@@ -1143,7 +1147,7 @@ class OrderController extends Controller
             $token = $user->FCM_token;
 
             if ($token) {
-                SendFirebaseNotificationJob::dispatch($token, $title, $body);
+                SendFirebaseNotificationJob::dispatch($token, $title, $body, NotificationType::NEW_ORDER_ASSIGNMENT);
             }
 
             return response()->json([
@@ -1286,7 +1290,7 @@ class OrderController extends Controller
         $body = "تم إضافة خصم {$discount->amount}% لفاتورتك رقم {$order->id}";
         $token = $order->doctor->account?->FCM_token;
         if ($token)
-            SendFirebaseNotificationJob::dispatch($token, $title, $body);
+            SendFirebaseNotificationJob::dispatch($token, $title, $body, NotificationType::DISCOUNT);
 
         return response()->json([
             'message' => 'Discount applied successfully',

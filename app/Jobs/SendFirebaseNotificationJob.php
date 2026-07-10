@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\NotificationType;
 use App\Services\FirebaseService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -16,16 +17,34 @@ class SendFirebaseNotificationJob implements ShouldQueue
     protected string $token;
     protected string $title;
     protected string $body;
+    protected ?NotificationType $type;
+    protected array $data;
 
-    public function __construct(string $token, string $title, string $body)
-    {
+    /**
+     * @param array $data Additional key/value pairs merged into the FCM `data` payload.
+     */
+    public function __construct(
+        string $token,
+        string $title,
+        string $body,
+        ?NotificationType $type = null,
+        array $data = [],
+    ) {
         $this->token = $token;
         $this->title = $title;
         $this->body = $body;
+        $this->type = $type;
+        $this->data = $data;
     }
 
     public function handle(FirebaseService $firebaseService): void
     {
-        $firebaseService->sendNotification($this->token, $this->title, $this->body);
+        $firebaseService->sendNotification(
+            $this->token,
+            $this->title,
+            $this->body,
+            $this->type,
+            $this->data,
+        );
     }
 }

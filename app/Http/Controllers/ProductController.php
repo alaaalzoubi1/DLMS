@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\NotificationType;
 use App\Http\Resources\ProductResource;
 use App\Jobs\SendFirebaseNotificationJob;
 use App\Models\Category;
@@ -201,7 +202,7 @@ class ProductController extends Controller
             $body = "الطلب رقم '{$order->id}' انتهى";
             $token = $order->doctor?->account?->FCM_token;
             if ($token)
-                SendFirebaseNotificationJob::dispatch($token, $title, $body);
+                SendFirebaseNotificationJob::dispatch($token, $title, $body, NotificationType::ORDER_COMPLETED);
         }
 
         return response()->json([

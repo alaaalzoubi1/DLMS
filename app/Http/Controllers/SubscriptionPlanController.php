@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\NotificationType;
 use App\Jobs\SendFirebaseNotificationJob;
 use App\Models\SubscriptionPlan;
 use App\Models\User;
@@ -35,7 +36,7 @@ class SubscriptionPlanController extends Controller
         {
             $token = $admin->FCM_token;
             if($token)
-                SendFirebaseNotificationJob::dispatch($token, $title, $body);
+                SendFirebaseNotificationJob::dispatch($token, $title, $body, NotificationType::NEW_SUBSCRIPTION_PLAN);
         }
 
 

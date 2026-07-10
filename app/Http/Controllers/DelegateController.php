@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\NotificationType;
 use App\Jobs\SendFirebaseNotificationJob;
 use App\Models\Order;
 use App\Models\Subscriber;
@@ -157,11 +158,11 @@ class DelegateController extends Controller
         $body = "تم استلام الطلب رقم {$order->id} للمريض {$order->patient_name} في {$order->receive}.";
 
         if ($adminToken) {
-            SendFirebaseNotificationJob::dispatch($adminToken, $title, $body);
+            SendFirebaseNotificationJob::dispatch($adminToken, $title, $body, NotificationType::ORDER_RECEIVED);
         }
 
         if ($doctorToken) {
-            SendFirebaseNotificationJob::dispatch($doctorToken, $title, $body);
+            SendFirebaseNotificationJob::dispatch($doctorToken, $title, $body, NotificationType::ORDER_RECEIVED);
         }
 
         return response()->json([
@@ -193,7 +194,7 @@ class DelegateController extends Controller
         $title = "تم توصيل الطلب بنجاح";
         $body  = "تم توصيل الطلب رقم {$order->id} للمريض {$order->patient_name}.";
         if ($doctorToken)
-            SendFirebaseNotificationJob::dispatch($doctorToken,$title,$body);
+            SendFirebaseNotificationJob::dispatch($doctorToken,$title,$body, NotificationType::ORDER_DELIVERED);
         return response()->json([
             'message' => 'تم تسجيل وقت التوصيل بنجاح',
             'data' => [
