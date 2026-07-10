@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\LegalDocumentController;
 use App\Http\Controllers\SiteContentController;
 use App\Http\Controllers\SubscriberController;
 use App\Http\Controllers\UserController;
@@ -34,4 +35,8 @@ Route::get('/site-content', [SiteContentController::class, 'index']);
 Route::get('/test-emails', function () {
     $users = \App\Models\User::select('email')->get();
     return response()->json($users);
+});
+Route::middleware('throttle:60,1')->group(function () {
+    Route::get('/legal/{type}', [LegalDocumentController::class, 'show'])
+        ->name('legal.show');
 });

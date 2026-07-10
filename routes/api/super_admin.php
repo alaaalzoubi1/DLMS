@@ -1,6 +1,7 @@
 <?php
 
 
+use App\Http\Controllers\LegalDocumentController;
 use App\Http\Controllers\ContactInfoController;
 use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\SiteContentController;
@@ -11,6 +12,7 @@ use Illuminate\Support\Facades\Route;
 Route::post('/password/reset', [ForgotPasswordController::class, 'resetPassword']);
 Route::post('/password/forgot', [ForgotPasswordController::class, 'requestResetCode']);
 Route::middleware(['auth:admin','super_admin.role'])->group(function () {
+    Route::post('/legal/{type}', [LegalDocumentController::class, 'update']);
     Route::prefix('plans')->group(function (){
         Route::get('/', [SubscriptionPlanController::class, 'index']);
         Route::post('/', [SubscriptionPlanController::class, 'store']);
