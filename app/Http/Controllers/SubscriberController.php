@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\ProductResource;
 use App\Models\Subscriber;
 use App\Http\Requests\StoreSubscriberRequest;
 use App\Http\Requests\UpdateSubscriberRequest;
 use App\Models\SubscriptionPlan;
+use App\Services\PriceSittingsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -29,12 +31,29 @@ class SubscriberController extends Controller
     }
     public function show($id): JsonResponse
     {
+        $doctorAccountId = auth('api')->id();
         $subscriber = Subscriber::with(['categories.products', 'specializations'])
             ->findOrFail($id);
 
-        return response()->json([
-            'data' => $subscriber
-        ]);
+        $hide = app(PriceSittingsService::class)
+            ->shouldHidePrice($doctorAccountId, $subscriber->id);
+
+        $subscriber->categories->each(function ($category) use ($hide) {
+            $category->products->each(function ($product) use ($hide) {
+                $product->hide_price = $hide;
+            });
+        });
+
+        $data = $subscriber->toArray();
+        $data['categories'] = $subscriber->categories->map(function ($category) {
+            $cat = $category->toArray();
+            $cat['products'] = ProductResource::collection($category->products)
+                ->response()
+                ->getData(true);
+            return $cat;
+        })->toArray();
+
+        return response()->json(['data' => $data]);
     }
     public function subscribeToPlan(Request $request)
     {
