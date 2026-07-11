@@ -1056,7 +1056,7 @@ class OrderController extends Controller
 
             DB::commit();
 
-                foreach ($doctorPayments as $data) {
+            foreach ($doctorPayments as $data) {
                 $doctor = $data['doctor'];
                 $paidAmount = $data['amount'];
                 $token = $doctor->account?->FCM_token ?? null;
@@ -1128,7 +1128,7 @@ class OrderController extends Controller
                 'specialization_users_id' => $user->specialization_users_id,
             ]);
             $allAssigned = OrderProduct::
-                where('order_id', $order->id)
+            where('order_id', $order->id)
                 ->whereNull('specialization_users_id')
                 ->doesntExist();
 
@@ -1196,17 +1196,17 @@ class OrderController extends Controller
         $doctorAccountId = auth('api')->id();
 
         $service = app(PriceSittingsService::class);
+        if (!is_null($doctorAccountId)) {
+            $order->hide_price = $service->shouldHidePrice(
+                $doctorAccountId,
+                $order->subscriber_id
+            );
 
-        $order->hide_price = $service->shouldHidePrice(
-            $doctorAccountId,
-            $order->subscriber_id
-        );
-
-        $order->hide_specialization = $service->shouldHideSpecializationInfo(
-            $doctorAccountId,
-            $order->subscriber_id
-        );
-
+            $order->hide_specialization = $service->shouldHideSpecializationInfo(
+                $doctorAccountId,
+                $order->subscriber_id
+            );
+        }
         return response()->json([
             'order' => new OrderResource($order),
         ], 200);
