@@ -14,7 +14,7 @@ class PriceSittingsService
             ->where('hide_prices', true)
             ->exists();
     }
-    public function shouldHideSpecializationInfo(int $doctorAccountId, int $subscriberId): bool
+    public function shouldHideSpecializationInfo($doctorAccountId,$subscriberId): bool
     {
         return SubscriberDoctorPriceSittings::where([
             'doctor_account_id' => $doctorAccountId,
