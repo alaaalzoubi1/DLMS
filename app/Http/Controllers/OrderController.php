@@ -1209,7 +1209,6 @@ class OrderController extends Controller
 
         return response()->json([
             'order' => new OrderResource($order),
-            'id' => $doctorAccountId
         ], 200);
     }
     public function technicalOrderDetails(Request $request)
